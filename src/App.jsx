@@ -7,6 +7,7 @@ import RapidTriage from './pages/RapidTriage/RapidTriage';
 import EmergencyActive from './pages/EmergencyActive/EmergencyActive';
 import PatientIdentity from './pages/PatientIdentity/PatientIdentity';
 import InformedConsent from './pages/InformedConsent/InformedConsent';
+import YourStory from './pages/YourStory/YourStory';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('portal');
@@ -37,6 +38,14 @@ export default function App() {
     return (
       <div className="app-shell">
         <EmergencyActive symptoms={pageProps.symptoms} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'story') {
+    return (
+      <div className="app-shell">
+        <YourStory onNavigate={handleNavigate} />
       </div>
     );
   }
