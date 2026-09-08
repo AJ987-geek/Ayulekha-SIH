@@ -1,0 +1,31 @@
+.swiss-card {
+  border: 1px solid var(--hairline-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.card-data {
+  background-color: var(--data-surface);
+}
+
+.card-narrative {
+  background-color: var(--raised-canvas);
+}
+
+.swiss-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--hairline-inner);
+}
+
+.swiss-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.swiss-card-body {
+  padding: 24px;
+}

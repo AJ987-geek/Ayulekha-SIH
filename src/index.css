@@ -1,0 +1,118 @@
+:root {
+  /* === AUBERGINE & OYSTER COLOUR TOKENS === */
+
+  /* Material Design Semantic */
+  --surface: #fff7fc;
+  --surface-dim: #e3d6e4;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #fdeffe;
+  --surface-container: #f7eaf8;
+  --surface-container-high: #f2e4f2;
+  --surface-container-highest: #ecdeed;
+  --on-surface: #201923;
+  --on-surface-variant: #4c444c;
+  --outline: #7e747c;
+  --outline-variant: #cfc3cc;
+  --primary: #331737;
+  --on-primary: #ffffff;
+  --primary-container: #4a2c4e;
+  --on-primary-container: #ba94bc;
+  --secondary: #7b580c;
+  --on-secondary: #ffffff;
+  --secondary-container: #fecd79;
+  --on-secondary-container: #785508;
+  --tertiary: #002819;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #00402a;
+  --on-tertiary-container: #66af8c;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+  --background: #fff7fc;
+  --on-background: #201923;
+  --inverse-surface: #362e38;
+  --inverse-on-surface: #faecfb;
+  --inverse-primary: #e2b9e4;
+  --primary-fixed: #ffd6ff;
+  --primary-fixed-dim: #e2b9e4;
+  --secondary-fixed: #ffdea9;
+  --secondary-fixed-dim: #efbf6c;
+  --tertiary-fixed: #a8f2cc;
+
+  /* Brand Semantic Aliases */
+  --canvas-bg: var(--surface);
+  --raised-canvas: var(--surface-container);
+  --data-surface: var(--surface-container-lowest);
+  --ink-primary: var(--on-surface);
+  --ink-secondary: var(--on-surface-variant);
+  --ink-muted: var(--outline);
+  --brand-aubergine-base: var(--primary-container);
+  --brand-aubergine-deep: var(--primary);
+  --brand-aubergine-light: #6e4573;
+  --brand-aubergine-tint: var(--surface-container-high);
+  --brand-brass-base: #9a7328;
+  --brand-brass-text: #7a5a1c;
+  --status-critical: var(--error);
+  --status-warning: var(--secondary);
+  --hairline-border: var(--outline-variant);
+  --hairline-inner: var(--surface-container-high);
+
+  /* Typography */
+  --font-body: 'Mukta', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Elevation */
+  --soft-lift: 0 1px 3px rgba(33, 26, 36, 0.06);
+}
+
+/* Global utility */
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--canvas-bg);
+  color: var(--ink-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: transparent;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}

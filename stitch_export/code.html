@@ -1,0 +1,481 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&amp;family=Mukta:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "primary-fixed-dim": "#e2b9e4",
+          "on-surface": "#201923",
+          "secondary-fixed": "#ffdea9",
+          "on-secondary-container": "#785508",
+          "error": "#ba1a1a",
+          "surface-container-highest": "#ecdeed",
+          "on-tertiary-container": "#66af8c",
+          "on-surface-variant": "#4c444c",
+          "surface-container-lowest": "#ffffff",
+          "on-secondary-fixed": "#271900",
+          "surface-container-high": "#f2e4f2",
+          "primary-fixed": "#ffd6ff",
+          "on-primary-fixed": "#2c1031",
+          "inverse-primary": "#e2b9e4",
+          "surface": "#fff7fc",
+          "tertiary-fixed-dim": "#8cd6b1",
+          "surface-tint": "#745377",
+          "on-tertiary-fixed": "#002114",
+          "primary": "#331737",
+          "on-secondary-fixed-variant": "#5f4100",
+          "surface-container": "#f7eaf8",
+          "outline-variant": "#cfc3cc",
+          "on-background": "#201923",
+          "inverse-surface": "#362e38",
+          "on-error-container": "#93000a",
+          "tertiary-fixed": "#a8f2cc",
+          "outline": "#7e747c",
+          "on-primary": "#ffffff",
+          "surface-container-low": "#fdeffe",
+          "tertiary-container": "#00402a",
+          "surface-variant": "#ecdeed",
+          "background": "#fff7fc",
+          "secondary": "#7b580c",
+          "on-error": "#ffffff",
+          "inverse-on-surface": "#faecfb",
+          "surface-dim": "#e3d6e4",
+          "on-primary-container": "#ba94bc",
+          "surface-bright": "#fff7fc",
+          "on-tertiary-fixed-variant": "#005237",
+          "primary-container": "#4a2c4e",
+          "on-secondary": "#ffffff",
+          "error-container": "#ffdad6",
+          "tertiary": "#002819",
+          "on-primary-fixed-variant": "#5b3c5f",
+          "on-tertiary": "#ffffff",
+          "secondary-fixed-dim": "#efbf6c",
+          "secondary-container": "#fecd79"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "margin-mobile": "1.5rem",
+          "space-lg": "1.5rem",
+          "space-sm": "0.75rem",
+          "touch-min": "3.5rem",
+          "margin-desktop": "4rem",
+          "space-2xl": "3rem",
+          "space-xs": "0.5rem",
+          "space-3xl": "4rem",
+          "gutter-desktop": "2rem",
+          "space-md": "1rem",
+          "gutter-mobile": "1rem",
+          "space-xl": "2rem",
+          "button-height-lg": "4rem",
+          "space-2xs": "0.25rem"
+        },
+        "fontFamily": {
+          "body-lg": [
+            "Mukta"
+          ],
+          "headline-lg-mobile": [
+            "Mukta"
+          ],
+          "headline-lg": [
+            "Mukta"
+          ],
+          "body-sm": [
+            "Mukta"
+          ],
+          "mono-token": [
+            "IBM Plex Mono"
+          ],
+          "body-md": [
+            "Mukta"
+          ],
+          "caption": [
+            "Mukta"
+          ],
+          "mono-label": [
+            "IBM Plex Mono"
+          ],
+          "display-title-mobile": [
+            "Mukta"
+          ],
+          "headline-sm": [
+            "Mukta"
+          ],
+          "display-title": [
+            "Mukta"
+          ],
+          "headline-md": [
+            "Mukta"
+          ]
+        },
+        "fontSize": {
+          "body-lg": [
+            "20px",
+            {
+              "lineHeight": "32px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "44px",
+            {
+              "lineHeight": "52px",
+              "letterSpacing": "-0.015em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-sm": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ],
+          "mono-token": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.04em",
+              "fontWeight": "500"
+            }
+          ],
+          "body-md": [
+            "18px",
+            {
+              "lineHeight": "28px",
+              "fontWeight": "400"
+            }
+          ],
+          "caption": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "400"
+            }
+          ],
+          "mono-label": [
+            "11px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "600"
+            }
+          ],
+          "display-title-mobile": [
+            "38px",
+            {
+              "lineHeight": "46px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-sm": [
+            "22px",
+            {
+              "lineHeight": "30px",
+              "fontWeight": "500"
+            }
+          ],
+          "display-title": [
+            "56px",
+            {
+              "lineHeight": "64px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-md": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md border-b border-outline-variant"><div class="h-20 max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Minimalist Swiss editorial healthcare cross logo with thin aubergine lines and a central brass dot, accompanied by Mukta typography for AYULEAKHA and IBM Plex Mono for subtext.. Brand logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VrSIUPUCUiA-bAnTwuG12gt5vDpkCRagIVbVbkXK1eZz3NF46ffMQCk0e9I3K3sTiTvjX_0ourH3RJolPLK_jKguTJlC3AyHCsfeoRwc7ozVhKum0LwVAMAep0KrhP8oa5gR49lVpesI2fFyglChqfz_aNcyqW6a0XRo8zj-1r7zp28fvUWs3WywkrLGDuuBJSYN5GS63-91XzYu7vm7iRpXF3tpjdB9KptOdov9MeeRDHLruYVEcqzak"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">AYULEAKHA</span><span class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-widest mt-0.5">AIIMS OPD Health Portal</span></div></div><div class="flex items-center gap-space-xl"><nav class="hidden lg:flex items-center gap-space-lg" data-active-classes="text-primary font-semibold"><a aria-current="page" class="transition-colors text-primary font-semibold" data-path="portal-gateway" href="#">Patient Portal</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="opd-schedule" href="#">OPD Schedule</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="verify-abha" href="#">Verify ABHA</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="clinical-guidelines" href="#">Clinical Guidelines</a></nav><div class="hidden sm:flex items-center gap-space-xs border border-outline-variant rounded-lg px-space-sm py-1 bg-surface-container-lowest"><span class="font-mono-label text-mono-label text-outline uppercase">Emergency</span><span class="font-mono-token text-mono-token text-error font-medium">011-26588500</span><span class="font-mono-token text-mono-token text-outline">/</span><span class="font-mono-token text-mono-token text-error font-medium">102</span></div><div class="flex items-center border border-outline-variant rounded-lg overflow-hidden bg-surface-container-lowest"><button class="px-space-xs py-1 font-mono-label text-mono-label text-on-primary bg-primary-container transition-colors" type="button">EN</button><button class="px-space-xs py-1 font-mono-label text-mono-label text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button">हिन्दी</button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-280px)]"><div class="flex flex-col w-full">
+<!-- Subtle Architectural Atmosphere Background Elements -->
+<div class="relative w-full overflow-hidden bg-surface pb-space-3xl">
+<!-- Faint structural watermarks -->
+<div class="pointer-events-none absolute right-0 top-0 -mr-24 -mt-24 h-96 w-96 rounded-full bg-primary-fixed-dim/20 blur-3xl"></div>
+<div class="pointer-events-none absolute left-1/4 top-1/2 -ml-32 h-64 w-64 rounded-full bg-secondary-fixed/20 blur-2xl"></div>
+<div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop pt-space-xl">
+<!-- Operational Telemetry Bar -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-xs pb-space-md border-b border-outline-variant">
+<div class="flex items-center gap-space-xs">
+<span class="inline-block w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse"></span>
+<span class="font-mono-token text-mono-token text-primary font-medium tracking-wide">AIIMS NEW DELHI · CENTRAL OPD GATEWAY</span>
+<span class="text-outline-variant">/</span>
+<span class="font-mono-token text-mono-token text-on-surface-variant">SESSION 2024–25</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm font-mono-label text-mono-label text-on-surface-variant">
+<span class="px-space-xs py-0.5 bg-surface-container-high rounded-sm text-secondary font-semibold">ABDM M1·M2·M3</span>
+<span class="text-outline-variant">•</span>
+<span class="">SYSTEM LOAD: 41%</span>
+<span class="text-outline-variant">•</span>
+<span class="text-on-tertiary-container font-medium">QUEUE ENGINE NORMAL</span>
+</div>
+</div>
+<!-- Hero Header Context -->
+<div class="mt-space-2xl grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-end">
+<div class="lg:col-span-8 space-y-space-sm"><div class="inline-flex items-center gap-space-xs bg-surface-container-high px-space-sm py-1 rounded-full"><span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span><span class="font-mono-label text-mono-label text-secondary uppercase tracking-wider">Clinical Auth Protocol v4.8 · नैदानिक प्रमाणीकरण</span></div><h1 class="font-display-title text-display-title text-primary tracking-tight leading-tight">Select your portal to continue.<br><span class="font-headline-lg text-primary/80 font-medium text-[32px]">जारी रखने के लिए अपना पोर्टल चुनें।</span></h1><p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl font-light">Unified AIIMS outpatient check-in, clinical EHR consultation narrative, and counter terminal administration system.<br><span class="font-body-sm text-on-surface-variant/90 block mt-1">एम्स ओपीडी चेक-इन, इलेक्ट्रॉनिक स्वास्थ्य परामर्श और काउंटर टर्मिनल प्रबंधन प्रणाली।</span></p></div>
+<div class="lg:col-span-4 flex flex-col items-start lg:items-end justify-end">
+<div class="bg-surface-container-lowest p-space-md border border-outline-variant rounded-xl w-full sm:w-auto shadow-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">domain</span>
+</div>
+<div class="flex flex-col">
+<span class="font-mono-label text-mono-label text-outline uppercase tracking-wider">Active Campus Node</span>
+<span class="font-headline-sm text-headline-sm text-on-surface leading-none">Ansari Nagar West</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 3-Role Gateway Cards Grid -->
+<div class="mt-space-2xl grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+<!-- CARD 1: Patient / Citizen -->
+<div class="role-card group cursor-pointer relative bg-surface-container-lowest border-2 border-primary-container p-space-xl rounded-xl transition-all duration-300 hover:shadow-md flex flex-col justify-between" id="card-patient" onclick="switchRole('patient')"><div class="absolute -top-3 right-space-xl bg-primary text-on-primary font-mono-label text-mono-label px-space-sm py-0.5 rounded-full tracking-wider uppercase">Active Selection · चयनित</div><div class="space-y-space-md"><div class="flex items-center justify-between"><div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[28px]">personal_injury</span></div><span class="font-mono-token text-mono-token bg-surface-container px-space-xs py-1 rounded text-primary font-medium">Self Check-in · स्वयं चेक-इन</span></div><div><span class="font-mono-label text-mono-label text-secondary uppercase tracking-widest block mb-1">Role 01 · भूमिका ०१</span><h2 class="font-headline-md text-headline-md text-primary font-semibold">Patient / Citizen<span class="block text-headline-sm font-medium text-primary/85">(मरीज़ / नागरिक)</span></h2><p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">Check in with ABHA, UHID, or mobile number. Provide symptoms while waiting.<br><span class="text-[14px] text-on-surface-variant/90 block mt-0.5">आभा (ABHA), यूएचआईडी या मोबाइल नंबर से चेक-इन करें। प्रतीक्षा के दौरान अपने लक्षण बताएं।</span></p></div><div class="pt-space-xs space-y-1.5 border-t border-outline-variant"><span class="font-mono-label text-mono-label text-outline uppercase block">Fast Access Methods · त्वरित माध्यम</span><ul class="text-body-sm font-body-sm text-on-surface space-y-1"><li class="flex items-start gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary mt-0.5">check_circle</span><div><span class="">ABHA ID / 14-digit OTP</span><span class="block text-caption text-on-surface-variant">आभा संख्या / 14-अंकीय ओटीपी</span></div></li><li class="flex items-start gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary mt-0.5">check_circle</span><div><span class="">10-Digit Mobile Token</span><span class="block text-caption text-on-surface-variant">10-अंकीय मोबाइल टोकन</span></div></li><li class="flex items-start gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary mt-0.5">check_circle</span><div><span class="">Scan QR on Printed OPD Slip</span><span class="block text-caption text-on-surface-variant">मुद्रित पर्ची पर क्यूआर स्कैन करें</span></div></li></ul></div></div><div class="mt-space-xl pt-space-md border-t border-outline-variant"><button class="w-full h-12 bg-primary-container text-on-primary font-headline-sm text-body-md rounded-lg flex items-center justify-center gap-space-xs group-hover:bg-primary transition-colors" type="button"><span class="">Patient Sign In / मरीज़ प्रवेश</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></button><span class="block text-center font-mono-label text-mono-label text-outline mt-2">No password required · Instant OTP / पासवर्ड मुक्त</span></div></div>
+<!-- CARD 2: Doctor / Clinician -->
+<div class="role-card group cursor-pointer relative bg-surface-container-lowest border border-outline-variant hover:border-primary-container p-space-xl rounded-xl transition-all duration-300 hover:shadow-md flex flex-col justify-between" id="card-doctor" onclick="switchRole('doctor')"><div class="space-y-space-md"><div class="flex items-center justify-between"><div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[28px]">stethoscope</span></div><span class="font-mono-token text-mono-token bg-secondary-container/40 text-on-secondary-container px-space-xs py-1 rounded font-medium">Clinical Consult &amp; EHR</span></div><div><span class="font-mono-label text-mono-label text-secondary uppercase tracking-widest block mb-1">Role 02 · Recommended</span><h2 class="font-headline-md text-headline-md text-primary font-semibold">Doctor / Clinician<span class="block text-headline-sm font-medium text-primary/85">(चिकित्सक / डॉक्टर)</span></h2><p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">Review pre-consult briefs, voice intake summaries, and sign clinical discharge.<br><span class="text-[14px] text-on-surface-variant/90 block mt-0.5">परामर्श-पूर्व विवरण और वॉयस सारांश देखें।</span></p></div><div class="pt-space-xs space-y-1.5 border-t border-outline-variant"><span class="font-mono-label text-mono-label text-outline uppercase block">Institutional Gateway · संस्थागत प्रवेश</span><ul class="text-body-sm font-body-sm text-on-surface space-y-1"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-on-tertiary-container">check_circle</span><span class="">NMC / State Council Digital ID</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-on-tertiary-container">check_circle</span><span class="">AIIMS Intranet Kerberos SSO</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-on-tertiary-container">check_circle</span><span class="">Smart Card / FIDO2 USB Token</span></li></ul></div></div><div class="mt-space-xl pt-space-md border-t border-outline-variant"><button class="w-full h-12 bg-surface-container text-primary font-headline-sm text-body-md rounded-lg flex items-center justify-center gap-space-xs group-hover:bg-primary-container group-hover:text-on-primary transition-colors border border-outline-variant" type="button"><span class="">Doctor Sign In / डॉक्टर प्रवेश</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></button><span class="block text-center font-mono-label text-mono-label text-outline mt-2">NMC registry verification active · एनएमसी सत्यापित</span></div></div>
+<!-- CARD 3: OPD Admin & Desk -->
+<div class="role-card group cursor-pointer relative bg-surface-container-lowest border border-outline-variant hover:border-primary-container p-space-xl rounded-xl transition-all duration-300 hover:shadow-md flex flex-col justify-between" id="card-admin" onclick="switchRole('admin')"><div class="space-y-space-md"><div class="flex items-center justify-between"><div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[28px]">point_of_sale</span></div><span class="font-mono-token text-mono-token bg-surface-container px-space-xs py-1 rounded text-primary font-medium">Counter &amp; Triage Dispatch</span></div><div><span class="font-mono-label text-mono-label text-secondary uppercase tracking-widest block mb-1">Role 03 · भूमिका ०३</span><h2 class="font-headline-md text-headline-md text-primary font-semibold">OPD Admin &amp; Desk<span class="block text-headline-sm font-medium text-primary/85">(ओपीडी व्यवस्थापक एवं डेस्क)</span></h2><p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">Operate token generation, thermal slip printing, and room day-board.<br><span class="text-[14px] text-on-surface-variant/90 block mt-0.5">टोकन जनरेशन, थर्मल पर्ची प्रिंटिंग और डे-बोर्ड प्रबंधन।</span></p></div><div class="pt-space-xs space-y-1.5 border-t border-outline-variant"><span class="font-mono-label text-mono-label text-outline uppercase block">Desk Hardware Auth · हार्डवेयर प्रमाणीकरण</span><ul class="text-body-sm font-body-sm text-on-surface space-y-1"><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span><span class="">Terminal Station Key &amp; PIN</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span><span class="">Biometric Fingerprint Scanner</span></li><li class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-secondary">check_circle</span><span class="">Supervisor Handover Pass</span></li></ul></div></div><div class="mt-space-xl pt-space-md border-t border-outline-variant"><button class="w-full h-12 bg-surface-container text-primary font-headline-sm text-body-md rounded-lg flex items-center justify-center gap-space-xs group-hover:bg-primary-container group-hover:text-on-primary transition-colors border border-outline-variant" type="button"><span class="">Admin Desk Sign In / एडमिन प्रवेश</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></button><span class="block text-center font-mono-label text-mono-label text-outline mt-2">Restricted to AIIMS LAN subnet · केवल एम्स लैन</span></div></div>
+</div>
+<!-- Authentication Modular Panel Section -->
+<div class="mt-space-3xl grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
+<!-- Left Editorial Column: Guidance & Instructions -->
+<div class="lg:col-span-5 space-y-space-lg">
+<div class="bg-surface-container p-space-xl rounded-xl space-y-space-md border border-outline-variant">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">info</span>
+<span class="font-mono-label text-mono-label uppercase tracking-wider font-semibold">Authentication Guidance</span>
+</div>
+<div class="space-y-space-sm text-on-surface font-body-sm">
+<p class="font-headline-sm text-headline-sm text-primary leading-snug">
+                Single sign-on architecture powered by the Ayushman Bharat Digital Mission.
+              </p>
+<p class="text-on-surface-variant leading-relaxed">
+                Patients who already possess an ABHA address (<span class="font-mono-token text-mono-token text-primary">user@abdm</span>) can instantly connect their longitudinal health history without filling physical forms at the registry desk.
+              </p>
+</div>
+<div class="pt-space-sm border-t border-outline-variant/60 grid grid-cols-2 gap-space-md">
+<div class="flex flex-col">
+<span class="font-mono-label text-mono-label text-outline uppercase">Daily Patient Footfall</span>
+<span class="font-headline-md text-headline-md text-primary font-bold">12,480+</span>
+</div>
+<div class="flex flex-col">
+<span class="font-mono-label text-mono-label text-outline uppercase">Average Wait Time</span>
+<span class="font-headline-md text-headline-md text-secondary font-bold">18 Mins</span>
+</div>
+</div>
+</div>
+<!-- Direct Help Card -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-secondary-fixed/50 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-md text-primary font-medium">Need sign-in assistance?</span>
+<span class="font-body-sm text-caption text-on-surface-variant">Desk 01, Ground Floor Helpdesk</span>
+</div>
+</div>
+<a class="font-mono-token text-mono-token text-secondary font-semibold hover:underline flex items-center gap-1" href="#">
+<span class="">View Guide</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Right Column: Contextual Interactive Dynamic Form Form -->
+<div class="lg:col-span-7 bg-surface-container-lowest p-space-xl sm:p-space-2xl rounded-xl border border-outline-variant shadow-sm">
+<!-- Segmented Tab Toggle -->
+<div class="flex items-center p-1 bg-surface-container rounded-lg border border-outline-variant mb-space-xl">
+<button class="flex-1 py-2 rounded-md font-mono-token text-mono-token text-center transition-all bg-primary-container text-on-primary font-semibold shadow-sm" id="tab-patient" onclick="switchRole('patient')" type="button">
+              Patient Check-in
+            </button>
+<button class="flex-1 py-2 rounded-md font-mono-token text-mono-token text-center transition-all text-on-surface-variant hover:text-on-surface" id="tab-doctor" onclick="switchRole('doctor')" type="button">
+              Doctor Console
+            </button>
+<button class="flex-1 py-2 rounded-md font-mono-token text-mono-token text-center transition-all text-on-surface-variant hover:text-on-surface" id="tab-admin" onclick="switchRole('admin')" type="button">
+              Desk Terminal
+            </button>
+</div>
+<!-- FORM 1: Patient Login -->
+<form class="space-y-space-lg" id="form-patient" onsubmit="event.preventDefault(); triggerAuthSuccess('Patient');"><div class="flex items-center justify-between pb-space-xs border-b border-outline-variant"><div><span class="font-mono-label text-mono-label text-secondary uppercase tracking-widest block">Direct OTP Gateway · सीधा ओटीपी पोर्टल</span><h3 class="font-headline-sm text-headline-sm text-primary">Patient Fast Check-in / मरीज़ त्वरित चेक-इन</h3></div><div class="flex items-center gap-space-2xs"><span class="font-mono-label text-mono-label text-outline mr-1">LANG:</span><select class="bg-surface-container text-on-surface font-mono-token text-mono-token px-2 py-1 rounded border border-outline-variant focus:outline-none focus:border-primary"><option selected="">English / हिन्दी</option><option>हिन्दी (Hindi)</option><option>English</option><option>বাংলা (Bengali)</option><option>தமிழ் (Tamil)</option></select></div></div><div class="space-y-1.5"><label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="patient-id-input">14-digit ABHA Number or Registered Mobile / 14-अंकीय आभा संख्या या पंजीकृत मोबाइल</label><div class="relative flex items-center"><span class="absolute left-4 text-outline flex items-center"><span class="material-symbols-outlined text-[20px]">badge</span></span><input class="w-full h-14 pl-12 pr-28 bg-surface-container-lowest text-on-surface font-body-md text-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container placeholder:text-outline/60" id="patient-id-input" placeholder="e.g. 9876543210 or 91-XXXX-XXXX-XXXX" required="" type="text"><button class="absolute right-2 px-space-sm h-10 bg-surface-container hover:bg-surface-container-high text-primary font-mono-token text-mono-token rounded font-medium border border-outline-variant transition-colors" onclick="sendMockOtp(this)" type="button">Get OTP / ओटीपी प्राप्त करें</button></div><div class="flex items-center justify-between text-caption font-caption text-on-surface-variant pt-1"><span class="">Format: ABHA Number without hyphens or standard mobile / बिना हाइफ़न के</span><a class="text-secondary hover:underline" href="#">Forgot ABHA? / आभा भूल गए?</a></div></div><div class="space-y-1.5"><label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="patient-otp-input">6-Digit Aadhaar / ABDM Secure OTP / 6-अंकीय आधार / आबीडीएम ओटीपी</label><div class="relative flex items-center"><span class="absolute left-4 text-outline flex items-center"><span class="material-symbols-outlined text-[20px]">password</span></span><input class="w-full h-14 pl-12 pr-4 tracking-widest font-mono-token text-headline-sm bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" id="patient-otp-input" maxlength="6" placeholder="• • • • • •" type="text"></div><span class="font-caption text-caption text-outline" id="otp-status-msg">Enter the OTP sent via SMS to your registered Aadhaar mobile. / पंजीकृत आधार मोबाइल पर भेजा गया ओटीपी दर्ज करें।</span></div><div class="flex items-start gap-space-sm pt-space-xs"><input checked="" class="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary-container cursor-pointer" id="consent-check" type="checkbox"><label class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer" for="consent-check">I hereby grant consent to AIIMS OPD to fetch my linked demographic data and register my visit token under the ABDM sandbox framework. / मैं एम्स ओपीडी को मेरा डेटा प्राप्त करने एवं आबीडीएम टोकन पंजीकृत करने की अनुमति देता/देती हूँ।</label></div><button class="w-full h-14 bg-primary-container hover:bg-primary text-on-primary font-headline-sm text-body-md rounded-lg flex items-center justify-center gap-space-sm transition-all shadow-sm" type="submit"><span class="material-symbols-outlined text-[20px]">login</span><span class="">Verify &amp; Proceed to Consultation Queue / सत्यापित करें और परामर्श कतार में जाएं</span></button></form>
+<!-- FORM 2: Doctor Login (Initially Hidden) -->
+<form class="hidden space-y-space-lg" id="form-doctor" onsubmit="event.preventDefault(); triggerAuthSuccess('Doctor');">
+<div class="pb-space-xs border-b border-outline-variant">
+<span class="font-mono-label text-mono-label text-secondary uppercase tracking-widest block">Clinical Faculty Access</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Doctor &amp; Consultant Login</h3>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="space-y-1.5">
+<label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="doctor-id">
+                  NMC / AIIMS Staff ID
+                </label>
+<input class="w-full h-14 px-4 bg-surface-container-lowest text-on-surface font-body-md text-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container" id="doctor-id" placeholder="AIIMS-DOC-8821" required="" type="text">
+</div>
+<div class="space-y-1.5">
+<label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="room-select">
+                  Assigned OPD Room / Clinic
+                </label>
+<select class="w-full h-14 px-4 bg-surface-container-lowest text-on-surface font-body-md text-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container" id="room-select">
+<option>Room 101 - General Medicine</option>
+<option>Room 102 - Cardiology OPD</option>
+<option>Room 105 - Endocrinology &amp; Diabetes</option>
+<option>Room 108 - Orthopaedics Trauma</option>
+<option>Room 112 - Pulmonology &amp; Chest</option>
+<option>Room 118 - Paediatric Care</option>
+</select>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="doctor-password">
+                Institutional Passkey or Kerberos Password
+              </label>
+<div class="relative flex items-center">
+<input class="w-full h-14 px-4 bg-surface-container-lowest text-on-surface font-body-md text-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container" id="doctor-password" placeholder="••••••••••••" required="" type="password">
+</div>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<label class="flex items-center gap-2 text-on-surface-variant cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary-container" type="checkbox">
+<span class="">Keep hardware token active for 8-hour shift</span>
+</label>
+<a class="text-secondary hover:underline" href="#">Reset Passkey</a>
+</div>
+<button class="w-full h-14 bg-primary-container hover:bg-primary text-on-primary font-headline-sm text-body-md rounded-lg flex items-center justify-center gap-space-sm transition-all shadow-sm" type="submit">
+<span class="material-symbols-outlined text-[20px]">medical_services</span>
+<span class="">Authenticate &amp; Open Consultation EHR</span>
+</button>
+</form>
+<!-- FORM 3: Admin Desk Login (Initially Hidden) -->
+<form class="hidden space-y-space-lg" id="form-admin" onsubmit="event.preventDefault(); triggerAuthSuccess('OPD Desk Admin');">
+<div class="pb-space-xs border-b border-outline-variant">
+<span class="font-mono-label text-mono-label text-secondary uppercase tracking-widest block">Counter Operations</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Terminal &amp; Dispatch Desk Sign In</h3>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="space-y-1.5">
+<label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="terminal-id">
+                  Counter Terminal ID
+                </label>
+<input class="w-full h-14 px-4 bg-surface-container font-mono-token text-body-md text-on-surface border border-outline-variant rounded-lg" id="terminal-id" readonly="" type="text" value="CTR-04B-GROUND">
+</div>
+<div class="space-y-1.5">
+<label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="shift-select">
+                  Duty Shift Roster
+                </label>
+<select class="w-full h-14 px-4 bg-surface-container-lowest text-on-surface font-body-md text-body-md border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container" id="shift-select">
+<option>Morning Shift (07:30 - 14:00)</option>
+<option>Afternoon Shift (13:30 - 20:00)</option>
+<option>Night / Emergency Shift</option>
+</select>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="font-mono-label text-mono-label text-on-surface-variant uppercase tracking-wider block" for="operator-pin">
+                Operator Employee PIN (6 Digits)
+              </label>
+<input class="w-full h-14 px-4 tracking-widest font-mono-token text-headline-sm bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container" id="operator-pin" maxlength="6" placeholder="Enter PIN" required="" type="password">
+</div>
+<div class="p-space-sm bg-surface-container rounded-lg flex items-center gap-space-sm border border-outline-variant">
+<span class="material-symbols-outlined text-secondary text-[20px]">print</span>
+<span class="font-mono-token text-mono-token text-on-surface-variant">Thermal Receipt Printer: Online (Citizen PR-80)</span>
+</div>
+<button class="w-full h-14 bg-primary-container hover:bg-primary text-on-primary font-headline-sm text-body-md rounded-lg flex items-center justify-center gap-space-sm transition-all shadow-sm" type="submit">
+<span class="material-symbols-outlined text-[20px]">desk</span>
+<span class="">Open Desk Queue Manager</span>
+</button>
+</form>
+</div>
+</div>
+<!-- Persistent Red-Flag Emergency Triage Reminder Banner -->
+<div class="mt-space-3xl rounded-xl bg-error-container/40 border border-error-container p-space-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md"><div class="flex items-start gap-space-md"><div class="w-10 h-10 rounded-full bg-error text-on-error flex items-center justify-center shrink-0 mt-0.5"><span class="material-symbols-outlined text-[22px]">e911_emergency</span></div><div class="space-y-0.5"><div class="flex items-center gap-space-xs"><span class="font-mono-token text-mono-token text-error font-semibold uppercase tracking-wider">Clinical Red-Flag Alert · आपातकालीन चेतावनी</span><span class="font-mono-token text-mono-token text-outline">• Immediate Life Support / जीवन रक्षा सहायता</span></div><p class="font-body-md text-body-md text-on-surface font-medium">Experiencing acute chest pain, severe breathlessness, stroke symptoms, or sudden trauma?<br><span class="text-[16px] text-error font-semibold">क्या सीने में तेज़ दर्द, सांस लेने में अत्यधिक कठिनाई, स्ट्रोक के लक्षण या अचानक गंभीर चोट है?</span></p><p class="font-body-sm text-body-sm text-on-surface-variant">Do not wait for online check-in or regular OPD token calls. Proceed directly to <span class="font-semibold text-primary">Emergency Triage (Ground Floor, Gate 2)</span> or contact immediate casualty response at <span class="font-mono-token text-mono-token font-bold text-error">011-26588500</span> / <span class="font-mono-token text-mono-token font-bold text-error">102</span>.<br><span class="text-[14px] text-on-surface-variant block mt-0.5">ऑनलाइन चेक-इन या कतार की प्रतीक्षा न करें। तुरंत आपातकालीन वार्ड (भूतल, गेट 2) जाएं।</span></p></div></div><a class="shrink-0 h-11 px-space-md bg-error text-on-error font-headline-sm text-body-sm rounded-lg flex items-center gap-space-xs hover:opacity-95 transition-opacity" href="tel:01126588500"><span class="material-symbols-outlined text-[18px]">call</span><span class="">Call Casualty 24/7 / आपातकालीन सहायता 24/7 (011-26588500 / 102)</span></a></div>
+</div>
+</div>
+<script>
+    function switchRole(roleKey) {
+      // Form sections
+      const forms = {
+        patient: document.getElementById('form-patient'),
+        doctor: document.getElementById('form-doctor'),
+        admin: document.getElementById('form-admin')
+      };
+
+      // Segmented Tabs
+      const tabs = {
+        patient: document.getElementById('tab-patient'),
+        doctor: document.getElementById('tab-doctor'),
+        admin: document.getElementById('tab-admin')
+      };
+
+      // Top Cards
+      const cards = {
+        patient: document.getElementById('card-patient'),
+        doctor: document.getElementById('card-doctor'),
+        admin: document.getElementById('card-admin')
+      };
+
+      // Reset all tabs
+      Object.keys(tabs).forEach(k => {
+        tabs[k].className = 'flex-1 py-2 rounded-md font-mono-token text-mono-token text-center transition-all text-on-surface-variant hover:text-on-surface';
+        forms[k].classList.add('hidden');
+        cards[k].classList.remove('border-2', 'border-primary-container');
+        cards[k].classList.add('border', 'border-outline-variant');
+      });
+
+      // Activate chosen
+      tabs[roleKey].className = 'flex-1 py-2 rounded-md font-mono-token text-mono-token text-center transition-all bg-primary-container text-on-primary font-semibold shadow-sm';
+      forms[roleKey].classList.remove('hidden');
+      cards[roleKey].classList.remove('border', 'border-outline-variant');
+      cards[roleKey].classList.add('border-2', 'border-primary-container');
+    }
+
+    function sendMockOtp(btnElement) {
+      const input = document.getElementById('patient-id-input');
+      const msg = document.getElementById('otp-status-msg');
+      if (!input.value.trim()) {
+        input.focus();
+        msg.textContent = 'Please provide a valid ABHA ID or 10-digit mobile number first.';
+        msg.className = 'font-caption text-caption text-error font-medium';
+        return;
+      }
+      btnElement.textContent = 'OTP Sent ✓';
+      btnElement.disabled = true;
+      btnElement.className = 'absolute right-2 px-space-sm h-10 bg-surface-container-high text-on-tertiary-container font-mono-token text-mono-token rounded font-medium border border-outline-variant';
+      msg.textContent = 'One-time authorization code sent to ' + input.value.slice(-4) + ' • Expires in 04:59';
+      msg.className = 'font-caption text-caption text-on-tertiary-container font-medium';
+      
+      const otpInput = document.getElementById('patient-otp-input');
+      otpInput.focus();
+      otpInput.value = '482910';
+    }
+
+    function triggerAuthSuccess(roleName) {
+      const banner = document.createElement('div');
+      banner.className = 'fixed bottom-6 right-6 z-50 bg-primary text-on-primary px-space-lg py-space-md rounded-lg shadow-xl flex items-center gap-space-sm border border-outline-variant animate-bounce';
+      banner.innerHTML = '<span class="material-symbols-outlined text-tertiary-fixed">verified</span><div class="flex flex-col"><span class="font-headline-sm text-body-md font-semibold">Authenticating ' + roleName + ' Session</span><span class="font-mono-token text-mono-token text-surface-container">Connecting to AIIMS FHIR Cluster...</span></div>';
+      document.body.appendChild(banner);
+      setTimeout(() => {
+        banner.remove();
+      }, 3500);
+    }
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-outline-variant py-space-2xl"><div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin-desktop"><div class="grid grid-cols-1 md:grid-cols-3 gap-space-xl pb-space-xl border-b border-outline-variant"><div class="flex flex-col gap-space-xs"><span class="font-mono-label text-mono-label text-secondary uppercase tracking-wider">ABDM Compliance</span><p class="font-body-sm text-body-sm text-on-surface-variant">Fully compliant with Ayushman Bharat Digital Mission (ABDM) standards for secure digital health record orchestration and patient-mediated consent architecture.</p></div><div class="flex flex-col gap-space-xs"><span class="font-mono-label text-mono-label text-secondary uppercase tracking-wider">National Health Authority</span><p class="font-body-sm text-body-sm text-on-surface-variant">Endorsed by the National Health Authority (NHA) &amp; Ministry of Health and Family Welfare (MoHFW), Government of India for AIIMS OPD operations.</p></div><div class="flex flex-col gap-space-xs"><span class="font-mono-label text-mono-label text-secondary uppercase tracking-wider">Clinical Security Notice</span><p class="font-body-sm text-body-sm text-on-surface-variant">256-bit cryptographic transport security. Health records are encrypted at rest and transmitted strictly via authorized FHIR/HL7 clinical interfaces.</p></div></div><div class="pt-space-md flex flex-col sm:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><span class="font-mono-label text-mono-label text-on-surface-variant">© 2024 AYULEAKHA · ALL INDIA INSTITUTE OF MEDICAL SCIENCES</span></div><div class="flex items-center gap-space-lg"><a class="font-mono-token text-mono-token text-on-surface-variant hover:text-on-surface transition-colors" data-path="patient-privacy" href="#">Privacy Policy</a><a class="font-mono-token text-mono-token text-on-surface-variant hover:text-on-surface transition-colors" data-path="consent-charter" href="#">Consent Charter</a><a class="font-mono-token text-mono-token text-on-surface-variant hover:text-on-surface transition-colors" data-path="system-telemetry" href="#">System Status</a></div></div></div></footer>
+
+</body></html>

@@ -1,0 +1,50 @@
+.swiss-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: 18px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  min-height: 56px;
+  background-color: var(--brand-aubergine-base);
+  color: #ffffff;
+  width: 100%;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--brand-aubergine-deep);
+}
+
+.btn-secondary {
+  min-height: 56px;
+  background-color: transparent;
+  border: 1px solid var(--hairline-border);
+  color: var(--ink-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--brand-aubergine-tint);
+  border-color: var(--brand-aubergine-light);
+}
+
+.btn-emergency {
+  min-height: 56px;
+  background-color: transparent;
+  border: 1px solid var(--status-critical);
+  color: var(--status-critical);
+  width: 100%;
+}
+
+.btn-emergency:hover:not(:disabled) {
+  background-color: var(--status-critical);
+  color: #ffffff;
+}

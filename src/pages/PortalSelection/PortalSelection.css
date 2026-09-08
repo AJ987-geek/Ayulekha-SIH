@@ -1,0 +1,5 @@
+.portal-main {
+  background: var(--canvas-bg);
+  min-height: calc(100vh - 120px);
+  padding-bottom: 64px;
+}
