@@ -1,13 +1,58 @@
+import { useState } from 'react';
 import './index.css';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import PortalSelection from './pages/PortalSelection/PortalSelection';
+import RapidTriage from './pages/RapidTriage/RapidTriage';
+import EmergencyActive from './pages/EmergencyActive/EmergencyActive';
+import PatientIdentity from './pages/PatientIdentity/PatientIdentity';
+import InformedConsent from './pages/InformedConsent/InformedConsent';
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState('portal');
+  const [pageProps, setPageProps] = useState({});
+
+  const handleNavigate = (page, props = {}) => {
+    setCurrentPage(page);
+    setPageProps(props);
+  };
+
+  if (currentPage === 'identity') {
+    return (
+      <div className="app-shell">
+        <PatientIdentity onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'consent') {
+    return (
+      <div className="app-shell">
+        <InformedConsent onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'emergency') {
+    return (
+      <div className="app-shell">
+        <EmergencyActive symptoms={pageProps.symptoms} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'triage') {
+    return (
+      <div className="app-shell">
+        <RapidTriage onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Header />
-      <PortalSelection />
+      <PortalSelection onNavigate={handleNavigate} />
       <Footer />
     </div>
   );

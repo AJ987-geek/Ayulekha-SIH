@@ -18,7 +18,7 @@ const CARDS = [
     ],
     featuresLabel: 'Fast Access Methods · त्वरित माध्यम',
     featuresIconColor: 'icon-secondary',
-    btnLabel: 'Patient  / मरीज़ प्रवेश',
+    btnLabel: 'Patient Register/ मरीज़ प्रवेश',
     btnNote: 'No password required · Instant OTP / पासवर्ड मुक्त',
   },
   {
@@ -63,7 +63,7 @@ const CARDS = [
   },
 ];
 
-export default function PortalCards({ activeRole, onRoleSwitch }) {
+export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
   return (
     <div className="portal-cards-section">
       <div className="portal-cards-grid">
@@ -116,7 +116,16 @@ export default function PortalCards({ activeRole, onRoleSwitch }) {
               </div>
 
               <div className="card-footer">
-                <button className={`card-btn ${isActive ? 'btn-active' : 'btn-inactive'}`} type="button">
+                <button 
+                  className={`card-btn ${isActive ? 'btn-active' : 'btn-inactive'}`} 
+                  type="button"
+                  onClick={(e) => {
+                    if (card.id === 'patient' && onNavigate) {
+                      e.stopPropagation();
+                      onNavigate('triage');
+                    }
+                  }}
+                >
                   <span>{card.btnLabel}</span>
                   <span className="material-symbols-outlined">arrow_forward</span>
                 </button>

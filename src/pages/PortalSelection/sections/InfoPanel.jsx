@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './InfoPanel.css';
 
-function PatientForm() {
+function PatientForm({ onNavigate }) {
   const [otpSent, setOtpSent] = useState(false);
 
   return (
@@ -88,19 +88,6 @@ function PatientForm() {
             <span>Verify &amp; Proceed to Consultation Queue / सत्यापित करें</span>
           </button>
         </form>
-      </div>
-
-      <hr className="path-divider" />
-
-      <div className="patient-path new-patient">
-        <div className="path-header">
-          <h4 className="path-title">New patient · first visit</h4>
-          <p className="path-desc">First time here? Register in a minute</p>
-        </div>
-        <button className="form-secondary-btn" type="button">
-          <span className="material-symbols-outlined">person_add</span>
-          <span>Register as a new patient</span>
-        </button>
       </div>
     </div>
   );
@@ -194,7 +181,7 @@ function AdminForm() {
   );
 }
 
-export default function InfoPanel({ activeRole, onRoleSwitch }) {
+export default function InfoPanel({ activeRole, onRoleSwitch, onNavigate }) {
   const localRole = activeRole || 'patient';
 
   return (
@@ -258,7 +245,7 @@ export default function InfoPanel({ activeRole, onRoleSwitch }) {
           ))}
         </div>
 
-        {localRole === 'patient' && <PatientForm />}
+        {localRole === 'patient' && <PatientForm onNavigate={onNavigate} />}
         {localRole === 'doctor' && <DoctorForm />}
         {localRole === 'admin' && <AdminForm />}
       </div>
