@@ -3,7 +3,11 @@ import './PatientIdentity.css';
 
 export default function PatientIdentity({ onNavigate }) {
   const [activeMethod, setActiveMethod] = useState('abha');
-  const [step, setStep] = useState('input');
+const [step, setStep] = useState('input');
+const [identifier, setIdentifier] = useState('');
+const [otp, setOtp] = useState('');
+const [loading, setLoading] = useState(false);
+const [message, setMessage] = useState('');
 
   const formCopy = {
     abha: {
@@ -28,6 +32,118 @@ export default function PatientIdentity({ onNavigate }) {
 
   const currentCopy = formCopy[activeMethod] || formCopy.abha;
 
+const handleVerify = async () => {
+  const value = identifier.trim();
+
+  if (!value) {
+    alert('Please enter your ABHA ID or mobile number');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    // STEP 1: Verify patient
+    const verifyResponse = await fetch(
+      'http://localhost:5000/api/patients/verify',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ value }),
+      }
+    );
+
+    const verifyData = await verifyResponse.json();
+
+    console.log('VERIFY RESPONSE:', verifyData);
+
+    if (!verifyResponse.ok) {
+      alert(verifyData.message);
+      return;
+    }
+
+    console.log('Verified Patient:', verifyData.patient);
+
+    // STEP 2: Generate OTP
+    const otpResponse = await fetch(
+      'http://localhost:5000/api/patients/send-otp',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ value }),
+      }
+    );
+
+    const otpData = await otpResponse.json();
+
+    console.log('OTP RESPONSE:', otpData);
+
+    if (!otpResponse.ok) {
+      alert(otpData.message || 'Unable to generate OTP');
+      return;
+    }
+
+    // STEP 3: Show OTP for demo/testing
+    // STEP 3: Twilio has sent the OTP to the patient's registered phone
+alert('OTP sent successfully to your registered mobile number.');
+
+// STEP 4: Move to OTP screen
+setStep('otp');
+
+  } catch (error) {
+    console.error('Backend error:', error);
+    alert('Unable to connect to AyuLekha backend');
+  } finally {
+    setLoading(false);
+  }
+};
+const handleVerifyOtp = async () => {
+  const otpInput = otp.trim();
+
+  if (!otpInput) {
+    alert('Please enter the OTP');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/patients/verify-otp',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          value: identifier,
+          otp: otpInput,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message);
+      return;
+    }
+
+    alert('OTP verified successfully!');
+
+   if (onNavigate) {
+  onNavigate('consent', {
+    patientId: data.patient.id
+  });
+}
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    alert('Unable to connect to AyuLekha backend');
+  }
+};
   return (
     <div className="identity-container">
       {/* Header */}
@@ -148,7 +264,13 @@ export default function PatientIdentity({ onNavigate }) {
               <div className="input-field-group">
                 <label className="input-label font-mono">{currentCopy.label}</label>
                 <div className="input-wrapper">
-                  <input type="text" placeholder={currentCopy.placeholder} className="identity-input" />
+                <input
+  className="identity-input"
+  type="text"
+  value={identifier}
+  onChange={(e) => setIdentifier(e.target.value)}
+  placeholder="Enter ABHA ID or mobile number"
+/>
                   <button className="scan-qr-btn">
                     <span className="material-symbols-outlined">qr_code_scanner</span>
                     SCAN QR
@@ -161,10 +283,10 @@ export default function PatientIdentity({ onNavigate }) {
               </div>
 
               <div className="form-actions">
-                <button className="confirm-btn" onClick={() => setStep('otp')}>
-                  Confirm &amp; Continue <span className="btn-hi">/ पुष्टि करें और आगे बढ़ें</span>
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </button>
+                <button className="confirm-btn" onClick={handleVerify}>
+  Confirm &amp; Continue <span className="btn-hi">/ पुष्टि करें और आगे बढ़ें</span>
+  <span className="material-symbols-outlined">arrow_forward</span>
+</button>
                 <button className="cancel-btn" onClick={() => onNavigate && onNavigate('portal')}>
                   Cancel
                 </button>
@@ -175,7 +297,16 @@ export default function PatientIdentity({ onNavigate }) {
               <div className="input-field-group">
                 <label className="input-label font-mono">6-DIGIT OTP / 6-अंकीय ओटीपी</label>
                 <div className="input-wrapper">
-                  <input type="text" placeholder="• • • • • •" className="identity-input font-mono" style={{letterSpacing: '0.2em', fontSize: '24px'}} />
+                 <input
+  type="text"
+  placeholder="• • • • • •"
+  className="identity-input font-mono"
+  maxLength={6}
+  inputMode="numeric"
+  value={otp}
+  onChange={(e) => setOtp(e.target.value)}
+  style={{ letterSpacing: '0.2em', fontSize: '24px' }}
+/>
                 </div>
                 <div className="input-footer">
                   <span className="help-text">Please enter the code sent to your device.</span>
@@ -184,10 +315,10 @@ export default function PatientIdentity({ onNavigate }) {
               </div>
 
               <div className="form-actions">
-                <button className="confirm-btn" onClick={() => onNavigate && onNavigate('consent')}>
-                  Verify &amp; Proceed <span className="btn-hi">/ सत्यापित करें</span>
-                  <span className="material-symbols-outlined">check_circle</span>
-                </button>
+                <button className="confirm-btn" onClick={handleVerifyOtp}>
+  Verify &amp; Proceed <span className="btn-hi">/ सत्यापित करें</span>
+  <span className="material-symbols-outlined">check_circle</span>
+</button>
                 <button className="cancel-btn" onClick={() => setStep('input')}>
                   Back
                 </button>

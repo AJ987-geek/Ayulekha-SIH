@@ -6,7 +6,7 @@ export default function InformedConsent({ onNavigate }) {
   const [consentVoice, setConsentVoice] = useState(false);
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+const [patientId, setPatientId] = useState('P001');
   // Audio states
   const [playingAudio1, setPlayingAudio1] = useState(false);
   const [playingAudio2, setPlayingAudio2] = useState(false);
@@ -29,20 +29,51 @@ export default function InformedConsent({ onNavigate }) {
     }
   };
 
-  const handleConsentSubmission = () => {
-    if (!consentEHR || !consentVoice) {
-      setShowValidationHint(true);
-      setTimeout(() => setShowValidationHint(false), 2500);
-      return;
+  const handleConsentSubmission = async () => {
+  if (!consentEHR || !consentVoice) {
+    setShowValidationHint(true);
+    setTimeout(() => setShowValidationHint(false), 2500);
+    return;
+  }
+
+  setShowValidationHint(false);
+  setIsSubmitting(true);
+
+  try {
+    const response = await fetch(
+      'http://localhost:5000/api/patients/consent',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          patientId: patientId,
+          consent: true,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Consent submission failed');
     }
 
-    setShowValidationHint(false);
-    setIsSubmitting(true);
+    console.log('Consent saved:', data);
 
-    setTimeout(() => {
-      if (onNavigate) onNavigate('story');
-    }, 900);
-  };
+    // Move to Your Story only after backend confirms consent
+    if (onNavigate) {
+      onNavigate('story');
+    }
+
+  } catch (error) {
+    console.error('Consent backend error:', error);
+    alert('Unable to save clinical consent. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handlePaperOptOut = () => {
     if (window.confirm('Do you wish to opt out of the digital locker intake and proceed with a physical paper stamp slip at the triage counter?')) {
