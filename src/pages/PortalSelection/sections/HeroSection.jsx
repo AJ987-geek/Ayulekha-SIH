@@ -1,6 +1,9 @@
+import { useLanguage } from '../../../contexts/LanguageContext';
 import './HeroSection.css';
 
 export default function HeroSection() {
+  const { t } = useLanguage();
+
   return (
     <div className="hero-section">
       <div className="hero-inner">
@@ -8,16 +11,16 @@ export default function HeroSection() {
         <div className="telemetry-bar">
           <div className="telemetry-left font-mono">
             <span className="telemetry-dot" />
-            <span className="telemetry-title">AIIMS NEW DELHI · CENTRAL OPD GATEWAY</span>
+            <span className="telemetry-title">{t('hero.telemetryTitle')}</span>
             <span className="telemetry-sep">/</span>
-            <span className="telemetry-sub">SESSION 2025–26</span>
+            <span className="telemetry-sub">{t('hero.session')}</span>
           </div>
           <div className="telemetry-right font-mono">
             <span className="telemetry-badge">ABDM M1·M2·M3</span>
             <span className="telemetry-sep">•</span>
-            <span>SYSTEM LOAD: 41%</span>
+            <span>{t('hero.systemLoad')}</span>
             <span className="telemetry-sep">•</span>
-            <span className="telemetry-ok">QUEUE ENGINE NORMAL</span>
+            <span className="telemetry-ok">{t('hero.queueNormal')}</span>
           </div>
         </div>
 
@@ -26,17 +29,15 @@ export default function HeroSection() {
           <div className="hero-content">
             <div className="auth-badge font-mono">
               <span className="material-symbols-outlined auth-badge-icon">verified_user</span>
-              <span>Clinical Auth Protocol v4.8 · नैदानिक प्रमाणीकरण</span>
+              <span>{t('hero.authBadge')}</span>
             </div>
 
             <h1 className="hero-title">
-              Select your portal to continue.
-              <span className="hero-title-hindi">जारी रखने के लिए अपना पोर्टल चुनें।</span>
+              {t('hero.title')}
             </h1>
 
             <p className="hero-desc">
-              Unified AIIMS outpatient check-in, clinical EHR consultation narrative, and counter terminal administration system.
-              <span className="hero-desc-hindi">एम्स ओपीडी चेक-इन, इलेक्ट्रॉनिक स्वास्थ्य परामर्श और काउंटर टर्मिनल प्रबंधन प्रणाली।</span>
+              {t('hero.desc')}
             </p>
           </div>
 
@@ -46,8 +47,8 @@ export default function HeroSection() {
                 <span className="material-symbols-outlined">domain</span>
               </div>
               <div>
-                <span className="campus-node-label font-mono">Active Campus Node</span>
-                <span className="campus-node-name">Ansari Nagar West</span>
+                <span className="campus-node-label font-mono">{t('hero.campusLabel')}</span>
+                <span className="campus-node-name">{t('hero.campusName')}</span>
               </div>
             </div>
           </div>

@@ -1,69 +1,66 @@
+import { useLanguage } from '../../../contexts/LanguageContext';
 import './PortalCards.css';
 
-const CARDS = [
-  {
-    id: 'patient',
-    icon: 'personal_injury',
-    tag: 'Self Check-in · स्वयं चेक-इन',
-    tagClass: 'tag-aubergine',
-    roleLabel: 'Role 01 · भूमिका ०१',
-    title: 'Patient / Citizen',
-    titleHindi: '(मरीज़ / नागरिक)',
-    desc: 'Check in with ABHA, UHID, or mobile number. Provide symptoms while waiting.',
-    descHindi: 'आभा (ABHA), यूएचआईडी या मोबाइल नंबर से चेक-इन करें।',
-    features: [
-      { en: 'ABHA ID / 14-digit OTP', hi: 'आभा संख्या / 14-अंकीय ओटीपी' },
-      { en: '10-Digit Mobile Token', hi: '10-अंकीय मोबाइल टोकन' },
-      { en: 'Scan QR on Printed OPD Slip', hi: 'मुद्रित पर्ची पर क्यूआर स्कैन करें' },
-    ],
-    featuresLabel: 'Fast Access Methods · त्वरित माध्यम',
-    featuresIconColor: 'icon-secondary',
-    btnLabel: 'Patient Register/ मरीज़ प्रवेश',
-    btnNote: 'No password required · Instant OTP / पासवर्ड मुक्त',
-  },
-  {
-    id: 'doctor',
-    icon: 'stethoscope',
-    tag: 'Clinical Consult & EHR',
-    tagClass: 'tag-brass',
-    roleLabel: 'Role 02 · Recommended',
-    title: 'Doctor / Clinician',
-    titleHindi: '(चिकित्सक / डॉक्टर)',
-    desc: 'Review pre-consult briefs, voice intake summaries, and sign clinical discharge.',
-    descHindi: 'परामर्श-पूर्व विवरण और वॉयस सारांश देखें।',
-    features: [
-      { en: 'NMC / State Council Digital ID', hi: null },
-      { en: 'AIIMS Intranet Kerberos SSO', hi: null },
-      { en: 'Smart Card / FIDO2 USB Token', hi: null },
-    ],
-    featuresLabel: 'Institutional Gateway · संस्थागत प्रवेश',
-    featuresIconColor: 'icon-tertiary',
-    btnLabel: 'Doctor Register / डॉक्टर प्रवेश',
-    btnNote: 'NMC registry verification active · एनएमसी सत्यापित',
-  },
-  {
-    id: 'admin',
-    icon: 'point_of_sale',
-    tag: 'Counter & Triage Dispatch',
-    tagClass: 'tag-aubergine',
-    roleLabel: 'Role 03 · भूमिका ०३',
-    title: 'OPD Admin & Desk',
-    titleHindi: '(ओपीडी व्यवस्थापक एवं डेस्क)',
-    desc: 'Operate token generation, thermal slip printing, and room day-board.',
-    descHindi: 'टोकन जनरेशन, थर्मल पर्ची प्रिंटिंग और डे-बोर्ड प्रबंधन।',
-    features: [
-      { en: 'Terminal Station Key & PIN', hi: null },
-      { en: 'Biometric Fingerprint Scanner', hi: null },
-      { en: 'Supervisor Handover Pass', hi: null },
-    ],
-    featuresLabel: 'Desk Hardware Auth · हार्डवेयर प्रमाणीकरण',
-    featuresIconColor: 'icon-secondary',
-    btnLabel: 'Admin Desk Sign In / एडमिन प्रवेश',
-    btnNote: 'Restricted to AIIMS LAN subnet · केवल एम्स लैन',
-  },
-];
-
 export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
+  const { t } = useLanguage();
+
+  const CARDS = [
+    {
+      id: 'patient',
+      icon: 'personal_injury',
+      tag: t('portalCards.patient.tag'),
+      tagClass: 'tag-aubergine',
+      roleLabel: t('portalCards.patient.roleLabel'),
+      title: t('portalCards.patient.title'),
+      desc: t('portalCards.patient.desc'),
+      features: [
+        { label: t('portalCards.patient.f1') },
+        { label: t('portalCards.patient.f2') },
+        { label: t('portalCards.patient.f3') },
+      ],
+      featuresLabel: t('portalCards.patient.featuresLabel'),
+      featuresIconColor: 'icon-secondary',
+      btnLabel: t('portalCards.patient.btnLabel'),
+      btnNote: t('portalCards.patient.btnNote'),
+    },
+    {
+      id: 'doctor',
+      icon: 'stethoscope',
+      tag: t('portalCards.doctor.tag'),
+      tagClass: 'tag-brass',
+      roleLabel: t('portalCards.doctor.roleLabel'),
+      title: t('portalCards.doctor.title'),
+      desc: t('portalCards.doctor.desc'),
+      features: [
+        { label: t('portalCards.doctor.f1') },
+        { label: t('portalCards.doctor.f2') },
+        { label: t('portalCards.doctor.f3') },
+      ],
+      featuresLabel: t('portalCards.doctor.featuresLabel'),
+      featuresIconColor: 'icon-tertiary',
+      btnLabel: t('portalCards.doctor.btnLabel'),
+      btnNote: t('portalCards.doctor.btnNote'),
+    },
+    {
+      id: 'admin',
+      icon: 'point_of_sale',
+      tag: t('portalCards.admin.tag'),
+      tagClass: 'tag-aubergine',
+      roleLabel: t('portalCards.admin.roleLabel'),
+      title: t('portalCards.admin.title'),
+      desc: t('portalCards.admin.desc'),
+      features: [
+        { label: t('portalCards.admin.f1') },
+        { label: t('portalCards.admin.f2') },
+        { label: t('portalCards.admin.f3') },
+      ],
+      featuresLabel: t('portalCards.admin.featuresLabel'),
+      featuresIconColor: 'icon-secondary',
+      btnLabel: t('portalCards.admin.btnLabel'),
+      btnNote: t('portalCards.admin.btnNote'),
+    },
+  ];
+
   return (
     <div className="portal-cards-section">
       <div className="portal-cards-grid">
@@ -76,7 +73,7 @@ export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
               onClick={() => onRoleSwitch(card.id)}
             >
               {isActive && (
-                <div className="card-active-badge font-mono">Active Selection · चयनित</div>
+                <div className="card-active-badge font-mono">{t('portalCards.activeSelection')}</div>
               )}
 
               <div className="card-body">
@@ -91,11 +88,9 @@ export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
                   <span className="card-role-label font-mono">{card.roleLabel}</span>
                   <h2 className="card-title">
                     {card.title}
-                    <span className="card-title-hindi">{card.titleHindi}</span>
                   </h2>
                   <p className="card-desc">
                     {card.desc}
-                    <span className="card-desc-hindi">{card.descHindi}</span>
                   </p>
                 </div>
 
@@ -106,8 +101,7 @@ export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
                       <li key={i} className="feature-item">
                         <span className={`material-symbols-outlined feature-icon ${card.featuresIconColor}`}>check_circle</span>
                         <div>
-                          <span>{f.en}</span>
-                          {f.hi && <span className="feature-hi">{f.hi}</span>}
+                          <span>{f.label}</span>
                         </div>
                       </li>
                     ))}

@@ -1,27 +1,29 @@
 import { useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import './PatientIdentity.css';
 
 export default function PatientIdentity({ onNavigate }) {
   const [activeMethod, setActiveMethod] = useState('abha');
   const [step, setStep] = useState('input');
+  const { t } = useLanguage();
 
   const formCopy = {
     abha: {
-      titleEn: 'Enter ABHA Address or 12-Digit Aadhaar',
-      titleHi: 'आभा पता या 12-अंकों का आधार नंबर दर्ज करें',
-      label: 'ABHA ID / AADHAAR NUMBER',
-      placeholder: 'e.g. 91-4582-7719-2041 or patient@abdm',
-      badge: 'SECURE ABDM GATEWAY',
-      footerText: 'OTP will be sent to the Aadhaar-linked mobile phone',
+      titleEn: t('patientIdentity.formAbhaTitle'),
+      titleHi: '',
+      label: t('patientIdentity.formAbhaLabel'),
+      placeholder: t('patientIdentity.formAbhaPlaceholder'),
+      badge: t('patientIdentity.formAbhaBadge'),
+      footerText: t('patientIdentity.formAbhaFooter'),
       showForgot: true
     },
     mobile: {
-      titleEn: 'Enter Registered Mobile Number',
-      titleHi: 'पंजीकृत मोबाइल नंबर दर्ज करें',
-      label: '10-DIGIT PHONE NUMBER',
-      placeholder: 'e.g. 98765 43210',
-      badge: 'SECURE SMS GATEWAY',
-      footerText: 'OTP will be sent to this mobile number',
+      titleEn: t('patientIdentity.formMobileTitle'),
+      titleHi: '',
+      label: t('patientIdentity.formMobileLabel'),
+      placeholder: t('patientIdentity.formMobilePlaceholder'),
+      badge: t('patientIdentity.formMobileBadge'),
+      footerText: t('patientIdentity.formMobileFooter'),
       showForgot: false
     }
   };
@@ -36,8 +38,8 @@ export default function PatientIdentity({ onNavigate }) {
           <div className="brand-logo">
             <span className="material-symbols-outlined">add</span>
             <div className="brand-text">
-              <span className="brand-title">AyuLeakha</span>
-              <span className="brand-sub font-mono">AIIMS OPD • BLOCK B • ROOM 104</span>
+              <span className="brand-title">{t('patientIdentity.brandTitle')}</span>
+              <span className="brand-sub font-mono">{t('patientIdentity.brandSub')}</span>
             </div>
           </div>
         </div>
@@ -47,10 +49,10 @@ export default function PatientIdentity({ onNavigate }) {
           </div>
           <button className="listen-assist-btn font-mono">
             <span className="material-symbols-outlined">volume_up</span>
-            Listen Assist / सुनें
+            {t('patientIdentity.listenAssist')}
           </button>
           <div className="triage-priority font-mono">
-            OPD TRIAGE PRIORITY-2
+            {t('patientIdentity.priority')}
           </div>
           <div className="user-icon">
             <span className="material-symbols-outlined">person</span>
@@ -62,27 +64,23 @@ export default function PatientIdentity({ onNavigate }) {
       <div className="identity-progress font-mono">
         <div className="prog-step active">
           <span className="step-dot"></span>
-          STAGE 01 OF 04 • INITIAL VERIFICATION
+          {t('patientIdentity.stage')}
         </div>
         <div className="prog-step-links">
-          <span className="active">YOU</span>
-          <span>CONSENT</span>
-          <span>YOUR STORY</span>
-          <span>DOCTOR</span>
-        </div>
-        <div className="prog-step-hi">
-          पहचान सत्यापन चरण
+          <span className="active">{t('patientIdentity.navYou')}</span>
+          <span>{t('patientIdentity.navConsent')}</span>
+          <span>{t('patientIdentity.navStory')}</span>
+          <span>{t('patientIdentity.navDoctor')}</span>
         </div>
       </div>
 
       <main className="identity-main">
         <div className="identity-intro">
           <h1 className="intro-title">
-            How would you like to identify yourself?<br/>
-            <span className="intro-hi">आप अपनी पहचान किस माध्यम से दर्ज करना चाहेंगे?</span>
+            {t('patientIdentity.introTitle')}
           </h1>
           <p className="intro-desc">
-            Select any method to link or create your OPD consultation docket. Your digital health records will be safely fetched from the Ayushman Bharat Digital Mission (ABDM).
+            {t('patientIdentity.introDesc')}
           </p>
         </div>
 
@@ -97,13 +95,13 @@ export default function PatientIdentity({ onNavigate }) {
             </div>
             <div className="method-content">
               <div className="method-title">
-                <strong>ABHA / Aadhaar</strong> आभा / आधार
+                <strong>{t('patientIdentity.methodAbhaTitle')}</strong>
               </div>
               <div className="method-desc">
-                Instant pull via linked 14-digit ABHA or 12-digit Aadhaar OTP.
+                {t('patientIdentity.methodAbhaDesc')}
               </div>
             </div>
-            <div className="method-badge font-mono">ABDM</div>
+            <div className="method-badge font-mono">{t('patientIdentity.methodAbhaBadge')}</div>
           </button>
 
           {/* Card 2: Mobile */}
@@ -116,20 +114,20 @@ export default function PatientIdentity({ onNavigate }) {
             </div>
             <div className="method-content">
               <div className="method-title">
-                <strong>Mobile Number</strong> मोबाइल नंबर
+                <strong>{t('patientIdentity.methodMobileTitle')}</strong>
               </div>
               <div className="method-desc">
-                Verify using 10-digit mobile number with quick SMS passcode.
+                {t('patientIdentity.methodMobileDesc')}
               </div>
             </div>
-            <div className="method-badge font-mono">SMS OTP</div>
+            <div className="method-badge font-mono">{t('patientIdentity.methodMobileBadge')}</div>
           </button>
         </div>
 
         <div className="assurance-banner">
           <span className="material-symbols-outlined assurance-icon">verified_user</span>
           <span className="assurance-text">
-            <strong>You will be seen either way.</strong> किसी भी स्थिति में आपको डॉक्टर द्वारा देखा जाएगा।
+            <strong>{t('patientIdentity.assurance')}</strong>
           </span>
         </div>
 
@@ -137,8 +135,7 @@ export default function PatientIdentity({ onNavigate }) {
         <div className="input-section">
           <div className="input-header">
             <div className="input-title">
-              <strong>{currentCopy.titleEn}</strong><br/>
-              <span className="input-hi">{currentCopy.titleHi}</span>
+              <strong>{currentCopy.titleEn}</strong>
             </div>
             <div className="gateway-badge font-mono">{currentCopy.badge}</div>
           </div>
@@ -151,45 +148,45 @@ export default function PatientIdentity({ onNavigate }) {
                   <input type="text" placeholder={currentCopy.placeholder} className="identity-input" />
                   <button className="scan-qr-btn">
                     <span className="material-symbols-outlined">qr_code_scanner</span>
-                    SCAN QR
+                    {t('patientIdentity.scanQr')}
                   </button>
                 </div>
                 <div className="input-footer">
                   <span className="help-text">{currentCopy.footerText}</span>
-                  {currentCopy.showForgot && <a href="#" className="forgot-link">Forgot ABHA?</a>}
+                  {currentCopy.showForgot && <a href="#" className="forgot-link">{t('patientIdentity.forgotAbha')}</a>}
                 </div>
               </div>
 
               <div className="form-actions">
                 <button className="confirm-btn" onClick={() => setStep('otp')}>
-                  Confirm &amp; Continue <span className="btn-hi">/ पुष्टि करें और आगे बढ़ें</span>
+                  {t('patientIdentity.confirmBtn')}
                   <span className="material-symbols-outlined">arrow_forward</span>
                 </button>
                 <button className="cancel-btn" onClick={() => onNavigate && onNavigate('portal')}>
-                  Cancel
+                  {t('patientIdentity.cancelBtn')}
                 </button>
               </div>
             </>
           ) : (
             <>
               <div className="input-field-group">
-                <label className="input-label font-mono">6-DIGIT OTP / 6-अंकीय ओटीपी</label>
+                <label className="input-label font-mono">{t('patientIdentity.otpLabel')}</label>
                 <div className="input-wrapper">
                   <input type="text" placeholder="• • • • • •" className="identity-input font-mono" style={{letterSpacing: '0.2em', fontSize: '24px'}} />
                 </div>
                 <div className="input-footer">
-                  <span className="help-text">Please enter the code sent to your device.</span>
-                  <a href="#" className="forgot-link">Resend Code</a>
+                  <span className="help-text">{t('patientIdentity.otpHelp')}</span>
+                  <a href="#" className="forgot-link">{t('patientIdentity.resendCode')}</a>
                 </div>
               </div>
 
               <div className="form-actions">
                 <button className="confirm-btn" onClick={() => onNavigate && onNavigate('consent')}>
-                  Verify &amp; Proceed <span className="btn-hi">/ सत्यापित करें</span>
+                  {t('patientIdentity.verifyBtn')}
                   <span className="material-symbols-outlined">check_circle</span>
                 </button>
                 <button className="cancel-btn" onClick={() => setStep('input')}>
-                  Back
+                  {t('patientIdentity.backBtn')}
                 </button>
               </div>
             </>
@@ -202,10 +199,10 @@ export default function PatientIdentity({ onNavigate }) {
         <div className="footer-top">
           <div className="compliance-badge font-mono">
             <span className="material-symbols-outlined">shield</span>
-            ABDM M1, M2 &amp; M3 COMPLIANT • END-TO-END 256-BIT ENCRYPTED
+            {t('patientIdentity.compliance')}
           </div>
           <div className="terminal-info font-mono">
-            DESK TERMINAL: <strong>ND-AIIMS-104</strong> <span style={{marginLeft: '16px'}}>SESSION: <strong>#OPD-8849</strong></span>
+            <strong>{t('patientIdentity.terminal')}</strong> <span style={{marginLeft: '16px'}}><strong>{t('patientIdentity.session')}</strong></span>
           </div>
         </div>
 
@@ -215,33 +212,32 @@ export default function PatientIdentity({ onNavigate }) {
               <span className="material-symbols-outlined">emergency</span>
             </div>
             <div>
-              <div className="em-title">Feeling severe pain, shortness of breath, or bleeding?</div>
-              <div className="em-sub">अत्यधिक दर्द, सांस लेने में कठिनाई या रक्तस्राव होने पर तत्काल सूचित करें</div>
+              <div className="em-title">{t('patientIdentity.emTitle')}</div>
             </div>
           </div>
           <button className="em-triage-btn" onClick={() => onNavigate && onNavigate('triage')}>
             <span className="material-symbols-outlined">call</span>
-            Emergency Triage (011-26588500)
+            {t('patientIdentity.emBtn')}
           </button>
         </div>
 
         <div className="footer-bottom">
           <div className="footer-brand">
-            <strong>AyuLeakha Clinical Handover System</strong>
-            <div className="brand-tagline">Your Health Story, Clearly Understood.</div>
+            <strong>{t('patientIdentity.brandTitle')}</strong>
+            <div className="brand-tagline">{t('patientIdentity.brandTagline')}</div>
             <div className="brand-compliance font-mono">
-              ABDM &amp; NDHM COMPLIANCE CERTIFIED • ARCHIVAL REF: AIIMS-OPD-B104-ARCHIVE
+              {t('patientIdentity.brandCompliance')}
             </div>
           </div>
           <div className="footer-contact text-right">
             <div className="helpline-text font-mono">
-              <strong>EMERGENCY TRIAGE HELPLINE: 011-26588500</strong>
+              <strong>{t('patientIdentity.helpline')}</strong>
             </div>
             <div className="address-text">
-              AIIMS New Delhi Central OPD Desk, Ansari Nagar, New Delhi 110029
+              {t('patientIdentity.address')}
             </div>
             <div className="copyright-text font-mono">
-              © 2024 AyuLeakha Health Services. Non-Commercial Public Health License.
+              {t('patientIdentity.copyright')}
             </div>
           </div>
         </div>

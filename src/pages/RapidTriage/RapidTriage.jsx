@@ -1,45 +1,43 @@
 import { useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import './RapidTriage.css';
 
-const symptoms = [
-  {
-    id: 'chest-pain',
-    icon: 'cardiology',
-    en: 'Chest pain',
-    hi: 'सीने में तेज़ दर्द या भारी दबाव',
-    desc: 'Acute heaviness, radiating arm/jaw pressure, or choking tightness',
-  },
-  {
-    id: 'breathing',
-    icon: 'pulmonology',
-    en: 'Difficulty breathing',
-    hi: 'सांस लेने में भारी तकलीफ़ या दम घुटना',
-    desc: 'Severe breathlessness, gasping, or inability to articulate full sentences',
-  },
-  {
-    id: 'bleeding',
-    icon: 'bloodtype',
-    en: 'Heavy bleeding',
-    hi: 'अत्यधिक रक्तस्राव या लगातार खून बहना',
-    desc: 'Uncontrolled active bleeding from trauma, recent surgical site, or coughing blood',
-  },
-  {
-    id: 'unconscious',
-    icon: 'neurology',
-    en: 'Unconsciousness',
-    hi: 'बेहोशी या अचेत अवस्था',
-    desc: 'Fainting, sudden collapse, acute disorientation, or unresponsiveness',
-  },
-  {
-    id: 'injury',
-    icon: 'personal_injury',
-    en: 'Severe injury',
-    hi: 'गंभीर चोट, हड्डी टूटना या गहरा घाव',
-    desc: 'Major roadside accident, acute limb fracture, direct head impact, or severe burns',
-  },
-];
-
 export default function RapidTriage({ onNavigate }) {
+  const { t } = useLanguage();
+
+  const symptoms = [
+    {
+      id: 'chest-pain',
+      icon: 'cardiology',
+      name: t('rapidTriage.symptoms.chestPainName'),
+      desc: t('rapidTriage.symptoms.chestPainDesc'),
+    },
+    {
+      id: 'breathing',
+      icon: 'pulmonology',
+      name: t('rapidTriage.symptoms.breathingName'),
+      desc: t('rapidTriage.symptoms.breathingDesc'),
+    },
+    {
+      id: 'bleeding',
+      icon: 'bloodtype',
+      name: t('rapidTriage.symptoms.bleedingName'),
+      desc: t('rapidTriage.symptoms.bleedingDesc'),
+    },
+    {
+      id: 'unconscious',
+      icon: 'neurology',
+      name: t('rapidTriage.symptoms.unconsciousName'),
+      desc: t('rapidTriage.symptoms.unconsciousDesc'),
+    },
+    {
+      id: 'injury',
+      icon: 'personal_injury',
+      name: t('rapidTriage.symptoms.injuryName'),
+      desc: t('rapidTriage.symptoms.injuryDesc'),
+    },
+  ];
+
   const [selectedSymptoms, setSelectedSymptoms] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -67,36 +65,34 @@ export default function RapidTriage({ onNavigate }) {
       {/* Top Header */}
       <header className="triage-header">
         <div className="triage-header-left font-mono">
-          <span className="dot">•</span> GATE ZERO · RAPID CLINICAL TRIAGE / त्वरित आपातकालीन जांच
+          <span className="dot">•</span> {t('rapidTriage.headerLeft')}
         </div>
         <div className="triage-header-right font-mono">
-          ESTIMATED TIME: 15 SECONDS
+          {t('rapidTriage.headerRight')}
         </div>
       </header>
 
       {/* Progress Bar */}
       <div className="triage-progress font-mono">
-        <div className="progress-step active">00 TRIAGE</div>
-        <div className="progress-step">01 YOU</div>
-        <div className="progress-step">02 CONSENT</div>
-        <div className="progress-step">03 DOCTOR</div>
+        <div className="progress-step active">{t('rapidTriage.progress00')}</div>
+        <div className="progress-step">{t('rapidTriage.progress01')}</div>
+        <div className="progress-step">{t('rapidTriage.progress02')}</div>
+        <div className="progress-step">{t('rapidTriage.progress03')}</div>
       </div>
 
       {/* Main Content */}
       <main className="triage-main">
         <div className="critical-badge font-mono">
           <span className="material-symbols-outlined">warning</span>
-          CRITICAL ASSESSMENT / आपातकालीन सुरक्षा जांच
+          {t('rapidTriage.criticalBadge')}
         </div>
 
         <h1 className="triage-title">
-          Do you have any of these right now?<br />
-          <span className="triage-title-hindi">क्या आपको अभी इनमें से कोई गंभीर समस्या या आपात स्थिति है?</span>
+          {t('rapidTriage.title')}
         </h1>
 
         <p className="triage-desc">
-          Just a quick safety check before we begin. Most people don't have any of these — if that's you, tap Continue.
-          <span className="triage-desc-hindi">शुरू करने से पहले बस एक त्वरित सुरक्षा जांच। अधिकांश लोगों में इनमें से कोई लक्षण नहीं होता — यदि आपके साथ भी ऐसा है, तो 'आगे बढ़ें' पर टैप करें।</span>
+          {t('rapidTriage.desc')}
         </p>
 
         <div className="symptoms-list">
@@ -119,7 +115,7 @@ export default function RapidTriage({ onNavigate }) {
                 </div>
                 <div className="symptom-content">
                   <div className={`symptom-name ${isSelected ? 'selected-text' : ''}`}>
-                    <strong>{item.en}</strong> / {item.hi}
+                    <strong>{item.name}</strong>
                   </div>
                   <div className="symptom-detail">{item.desc}</div>
                 </div>
@@ -131,7 +127,7 @@ export default function RapidTriage({ onNavigate }) {
         <div className="triage-bottom-buttons">
           <button className="emergency-btn" type="button" onClick={handleEmergencyClick}>
             <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>emergency</span>
-            Emergency — get help now / आपातकालीन सहायता प्राप्त करें
+            {t('rapidTriage.emergencyBtn')}
           </button>
 
           <button 
@@ -139,7 +135,7 @@ export default function RapidTriage({ onNavigate }) {
             type="button"
             onClick={proceedToIntake}
           >
-            <span>None of these — Continue / इनमें से कोई नहीं — आगे बढ़ें</span>
+            <span>{t('rapidTriage.continueBtn')}</span>
             <span className="continue-arrow">&rarr;</span>
           </button>
         </div>
@@ -149,19 +145,19 @@ export default function RapidTriage({ onNavigate }) {
       <footer className="triage-footer">
         <div className="footer-left">
           <div className="footer-directorate font-mono">
-            <span className="dot">•</span> CASUALTY &amp; TRAUMA DIRECTORATE · आपातकालीन विभाग
+            <span className="dot">•</span> {t('rapidTriage.footerDirectorate')}
           </div>
           <div className="footer-address">
-            AIIMS Casualty Gate 1 · Ground Floor · Direct Triage Counter 104-A
+            {t('rapidTriage.footerAddress')}
           </div>
           <div className="footer-note">
-            No pre-booked appointment or Aadhaar card is required for Level 1/2 acute emergency attention. Direct stretcher access at Porch 1.
+            {t('rapidTriage.footerNote')}
           </div>
         </div>
         <div className="footer-right font-mono">
-          <div className="redline-label">RAPID REDLINE DIRECT</div>
-          <div className="redline-number">Dial 102 / 011-26588500</div>
-          <div className="rev-info">REV: 2024.11-CLINICAL</div>
+          <div className="redline-label">{t('rapidTriage.redlineLabel')}</div>
+          <div className="redline-number">{t('rapidTriage.redlineNumber')}</div>
+          <div className="rev-info">{t('rapidTriage.revInfo')}</div>
         </div>
       </footer>
 
@@ -173,8 +169,8 @@ export default function RapidTriage({ onNavigate }) {
               <div className="modal-title-group">
                 <span className="material-symbols-outlined modal-alert-icon" style={{fontVariationSettings: "'FILL' 1"}}>crisis_alert</span>
                 <div>
-                  <span className="modal-supertitle font-mono">CRITICAL CLINICAL OVERRIDE</span>
-                  <h2 className="modal-title">Emergency Attention Initiated</h2>
+                  <span className="modal-supertitle font-mono">{t('rapidTriage.modalSupertitle')}</span>
+                  <h2 className="modal-title">{t('rapidTriage.modalTitle')}</h2>
                 </div>
               </div>
               <button className="modal-close-btn" onClick={() => setShowModal(false)} type="button">
@@ -186,20 +182,20 @@ export default function RapidTriage({ onNavigate }) {
             
             <div className="modal-body">
               <p className="modal-symptom-tag">
-                Flagged: {selectedSymptoms.length > 0 ? selectedSymptoms.join(', ') : 'Immediate clinical evaluation requested'}
+                {t('rapidTriage.modalFlagged')} {selectedSymptoms.length > 0 ? selectedSymptoms.join(', ') : ''}
               </p>
               <p>
-                Please move immediately to <strong>Casualty Gate 1 (आपातकालीन वार्ड 1)</strong> located on the Ground Floor directly behind this kiosk station.
+                {t('rapidTriage.modalDesc')}
               </p>
               
               <div className="modal-info-box">
                 <div className="modal-info-row">
-                  <span className="info-label">Triage Station Counter:</span>
-                  <span className="info-value font-mono">Desk 104-A (Direct Entry)</span>
+                  <span className="info-label">{t('rapidTriage.modalCounterLabel')}</span>
+                  <span className="info-value font-mono">{t('rapidTriage.modalCounterValue')}</span>
                 </div>
                 <div className="modal-info-row">
-                  <span className="info-label">Attending Resident on Duty:</span>
-                  <span className="info-value font-mono">Dr. V. Sharma (Trauma Lead)</span>
+                  <span className="info-label">{t('rapidTriage.modalDoctorLabel')}</span>
+                  <span className="info-value font-mono">{t('rapidTriage.modalDoctorValue')}</span>
                 </div>
               </div>
             </div>
@@ -214,10 +210,10 @@ export default function RapidTriage({ onNavigate }) {
                 }}
               >
                 <span className="material-symbols-outlined">notifications_active</span>
-                Notify Casualty Ward Staff
+                {t('rapidTriage.modalNotifyBtn')}
               </button>
               <button className="cancel-return-btn" onClick={() => setShowModal(false)} type="button">
-                Cancel &amp; Return
+                {t('rapidTriage.modalCancelBtn')}
               </button>
             </div>
           </div>

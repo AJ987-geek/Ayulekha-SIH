@@ -8,6 +8,8 @@ import EmergencyActive from './pages/EmergencyActive/EmergencyActive';
 import PatientIdentity from './pages/PatientIdentity/PatientIdentity';
 import InformedConsent from './pages/InformedConsent/InformedConsent';
 import YourStory from './pages/YourStory/YourStory';
+import Records from './pages/Records/Records';
+import Done from './pages/Done/Done';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('portal');
@@ -46,6 +48,22 @@ export default function App() {
     return (
       <div className="app-shell">
         <YourStory onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'records') {
+    return (
+      <div className="app-shell">
+        <Records onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'done') {
+    return (
+      <div className="app-shell">
+        <Done onNavigate={handleNavigate} />
       </div>
     );
   }

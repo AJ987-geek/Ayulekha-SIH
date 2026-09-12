@@ -1,17 +1,11 @@
+import { useLanguage } from '../../contexts/LanguageContext';
 import './Header.css';
 
-const TICKER = [
-  'AIIMS New Delhi · Central OPD Gateway / Session 2025-26',
-  'ABHA RE-ENROL',
-  'SYSTEM (OPD) 4/5 ACTIVE',
-  'DUTY CHARGE 01/16',
-  'AIIMS New Delhi · Central OPD Gateway / Session 2025-26',
-  'ABHA RE-ENROL',
-  'SYSTEM (OPD) 4/5 ACTIVE',
-  'DUTY CHARGE 01/16',
-];
-
 export default function Header() {
+  const { language, toggleLanguage, t } = useLanguage();
+
+  const TICKER = t('ticker');
+
   return (
     <header className="header">
       <div className="header-inner">
@@ -19,28 +13,38 @@ export default function Header() {
         <div className="header-logo">
           <div className="logo-icon font-mono">AYU</div>
           <div className="logo-text">
-            <span className="name">AYULEKHA</span>
-            <span className="sub font-mono">AIIMS OPD HEALTH PORTAL</span>
+            <span className="name">{t('header.title')}</span>
+            <span className="sub font-mono">{t('header.subtitle')}</span>
           </div>
         </div>
 
         {/* Nav */}
         <nav className="header-nav font-mono">
-          <a className="nav-link active" href="#">Patient Portal</a>
-          <a className="nav-link" href="#">OPD Schedule</a>
-          <a className="nav-link" href="#">Verify ABHA</a>
-          <a className="nav-link" href="#">Clinical Guidelines</a>
+          <a className="nav-link active" href="#">{t('header.nav.patientPortal')}</a>
+          <a className="nav-link" href="#">{t('header.nav.opdSchedule')}</a>
+          <a className="nav-link" href="#">{t('header.nav.verifyAbha')}</a>
+          <a className="nav-link" href="#">{t('header.nav.clinicalGuidelines')}</a>
         </nav>
 
         {/* Right */}
         <div className="header-right">
           <div className="emergency-badge font-mono">
-            <span className="em-label">Emergency</span>
-            <span className="em-num">011-26588500 / 102</span>
+            <span className="em-label">{t('header.emergency')}</span>
+            <span className="em-num">{t('header.emergencyNum')}</span>
           </div>
           <div className="lang-switch font-mono">
-            <button className="lang-btn active">EN</button>
-            <button className="lang-btn">हिंदी</button>
+            <button 
+              className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+              onClick={() => toggleLanguage('en')}
+            >
+              EN
+            </button>
+            <button 
+              className={`lang-btn ${language === 'hi' ? 'active' : ''}`}
+              onClick={() => toggleLanguage('hi')}
+            >
+              हिंदी
+            </button>
           </div>
           <div className="user-avatar">
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person</span>
@@ -50,9 +54,8 @@ export default function Header() {
 
       {/* Ticker */}
       <div className="ticker-bar font-mono">
-
         <div className="ticker-track">
-          {TICKER.map((item, i) => (
+          {Array.isArray(TICKER) && TICKER.map((item, i) => (
             <span key={i} className="ticker-item">
               <span className="ticker-dot" />
               {item}

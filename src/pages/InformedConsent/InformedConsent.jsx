@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import './InformedConsent.css';
 
 export default function InformedConsent({ onNavigate }) {
+  const { t } = useLanguage();
   const [consentEHR, setConsentEHR] = useState(false);
   const [consentVoice, setConsentVoice] = useState(false);
   const [showValidationHint, setShowValidationHint] = useState(false);
@@ -45,8 +47,8 @@ export default function InformedConsent({ onNavigate }) {
   };
 
   const handlePaperOptOut = () => {
-    if (window.confirm('Do you wish to opt out of the digital locker intake and proceed with a physical paper stamp slip at the triage counter?')) {
-      alert('Physical Slip Token issued: ROOM-104-SLIP-88. Please present this at Counter 03.');
+    if (window.confirm(t('informedConsent.optOutPrompt'))) {
+      alert(t('informedConsent.optOutAlert'));
     }
   };
 
@@ -57,14 +59,14 @@ export default function InformedConsent({ onNavigate }) {
           <div className="header-left">
             <span className="material-symbols-outlined brand-icon-small">add</span>
             <div className="header-brand-text">
-              <span className="brand-title">AyuLeakha</span>
-              <span className="brand-sub font-mono">AIIMS OPD • BLOCK B • ROOM 104</span>
+              <span className="brand-title">{t('informedConsent.brandTitle')}</span>
+              <span className="brand-sub font-mono">{t('informedConsent.brandSub')}</span>
             </div>
           </div>
           <div className="header-right">
             <button className="listen-assist-btn font-mono">
               <span className="material-symbols-outlined">volume_up</span>
-              Listen Assist / सुनें
+              {t('informedConsent.listenAssist')}
             </button>
             <div className="lang-toggle font-mono">
               <span className="active">EN</span> | <span>हिन्दी</span> | <span>বাংলা</span>
@@ -78,10 +80,10 @@ export default function InformedConsent({ onNavigate }) {
         <div className="header-divider">
           <div className="progress-nav-container">
             <nav className="progress-nav">
-              <a href="#" className="nav-item">01 YOU</a>
-              <a href="#" className="nav-item active">02 CONSENT</a>
-              <a href="#" className="nav-item">03 YOUR STORY</a>
-              <a href="#" className="nav-item">04 DOCTOR</a>
+              <a href="#" className="nav-item">{t('informedConsent.nav1')}</a>
+              <a href="#" className="nav-item active">{t('informedConsent.nav2')}</a>
+              <a href="#" className="nav-item">{t('informedConsent.nav3')}</a>
+              <a href="#" className="nav-item">{t('informedConsent.nav4')}</a>
             </nav>
           </div>
         </div>
@@ -93,10 +95,10 @@ export default function InformedConsent({ onNavigate }) {
           <div className="registry-top-bar">
             <div className="stage-info font-mono">
               <span className="dot"></span>
-              Stage 02 of 04 • Informed Authorization
+              {t('informedConsent.stageInfo')}
             </div>
             <div className="registry-ref font-mono">
-              Registry Ref: ABDM-2025-DL-AIIMS-0982
+              {t('informedConsent.registryRef')}
             </div>
           </div>
 
@@ -105,18 +107,17 @@ export default function InformedConsent({ onNavigate }) {
           {/* Intro Section */}
           <div className="intro-section">
             <div className="intro-title-group">
-              <h1 className="intro-title">Patient Data &amp; Clinical Consent</h1>
-              <span className="intro-subtitle">मरीज डिजिटल सहमति पत्र</span>
+              <h1 className="intro-title">{t('informedConsent.introTitle')}</h1>
             </div>
             <p className="intro-desc">
-              Under the Digital Personal Data Protection (DPDP) Act 2023 and Ayushman Bharat Digital Mission (ABDM), your consent is explicitly requested and can be revoked at any time.
+              {t('informedConsent.introDesc')}
             </p>
             <div className="admin-stamp font-mono">
               <span className="stamp-badge">
                 <span className="material-symbols-outlined">verified_user</span>
-                DPDP 2023 PROTOCOL S.6(1)
+                {t('informedConsent.stampBadge')}
               </span>
-              <span className="stamp-text">Session validity: Room 104 • AIIMS New Delhi</span>
+              <span className="stamp-text">{t('informedConsent.stampText')}</span>
             </div>
           </div>
 
@@ -142,19 +143,18 @@ export default function InformedConsent({ onNavigate }) {
               <div className="consent-item-content">
                 <div className="item-header">
                   <label htmlFor="consent-ehr" className="item-title-label">
-                    <span className="item-title-en">EHR &amp; Digital Health Locker Access</span>
-                    <span className="item-title-hi"> / पुरानी जांच पर्ची व स्वास्थ्य लॉकर</span>
+                    <span className="item-title-en">{t('informedConsent.ehrTitle')}</span>
                   </label>
                   <button className={`audio-btn font-mono ${playingAudio1 ? 'playing' : ''}`} onClick={toggleAudio1}>
                     {playingAudio1 ? (
                       <>
                         <span className="material-symbols-outlined spin-icon">sync</span>
-                        Playing audio guidance (18s) • रोकें
+                        {t('informedConsent.playingAudio1')}
                       </>
                     ) : (
                       <>
                         <span className="material-symbols-outlined">play_circle</span>
-                        Listen to this / इसे सुनें (18s)
+                        {t('informedConsent.listenAudio1')}
                       </>
                     )}
                   </button>
@@ -162,20 +162,20 @@ export default function InformedConsent({ onNavigate }) {
                 <ul className="item-desc-list">
                   <li>
                     <span className="list-num font-mono">01.</span>
-                    <span>Allows your consulting doctor in Room 104 to review previous AIIMS blood tests, X-rays, and prescription records.</span>
+                    <span>{t('informedConsent.ehrL1')}</span>
                   </li>
                   <li>
                     <span className="list-num font-mono">02.</span>
-                    <span>Data is time-fenced strictly to today's outpatient encounter and auto-locks once consultation completes.</span>
+                    <span>{t('informedConsent.ehrL2')}</span>
                   </li>
                   <li>
                     <span className="list-num font-mono">03.</span>
-                    <span>You maintain unconditional ownership and can revoke access anytime via the ABDM national portal.</span>
+                    <span>{t('informedConsent.ehrL3')}</span>
                   </li>
                 </ul>
                 <div className="item-footer font-mono">
                   <span className="material-symbols-outlined">lock</span>
-                  SCOPE: Read-only • Fast Healthcare Interoperability Resources (FHIR R4)
+                  {t('informedConsent.ehrScope')}
                 </div>
               </div>
             </div>
@@ -203,19 +203,18 @@ export default function InformedConsent({ onNavigate }) {
               <div className="consent-item-content">
                 <div className="item-header">
                   <label htmlFor="consent-voice" className="item-title-label">
-                    <span className="item-title-en">Voice Recording &amp; Clinical Symptom Transcription</span>
-                    <span className="item-title-hi"> / आवाज रिकॉर्डिंग व लक्षण सारांश</span>
+                    <span className="item-title-en">{t('informedConsent.voiceTitle')}</span>
                   </label>
                   <button className={`audio-btn font-mono ${playingAudio2 ? 'playing' : ''}`} onClick={toggleAudio2}>
                     {playingAudio2 ? (
                       <>
                         <span className="material-symbols-outlined spin-icon">sync</span>
-                        Playing audio guidance (14s) • रोकें
+                        {t('informedConsent.playingAudio2')}
                       </>
                     ) : (
                       <>
                         <span className="material-symbols-outlined">play_circle</span>
-                        Listen to this / इसे सुनें (14s)
+                        {t('informedConsent.listenAudio2')}
                       </>
                     )}
                   </button>
@@ -223,20 +222,20 @@ export default function InformedConsent({ onNavigate }) {
                 <ul className="item-desc-list">
                   <li>
                     <span className="list-num font-mono">01.</span>
-                    <span>Transcribes your spoken symptoms in Hindi, English, or vernacular dialect into a standardized clinical note.</span>
+                    <span>{t('informedConsent.voiceL1')}</span>
                   </li>
                   <li>
                     <span className="list-num font-mono">02.</span>
-                    <span>Raw audio is processed on secure AIIMS local infrastructure and permanently purged after clinical sign-off.</span>
+                    <span>{t('informedConsent.voiceL2')}</span>
                   </li>
                   <li>
                     <span className="list-num font-mono">03.</span>
-                    <span>Your voice recordings are never sold, shared with insurers, or used for commercial AI model training.</span>
+                    <span>{t('informedConsent.voiceL3')}</span>
                   </li>
                 </ul>
                 <div className="item-footer font-mono">
                   <span className="material-symbols-outlined">shield</span>
-                  PRIVACY: Edge computing transcription • Zero external model transmission
+                  {t('informedConsent.voicePrivacy')}
                 </div>
               </div>
             </div>
@@ -249,7 +248,7 @@ export default function InformedConsent({ onNavigate }) {
           <div className="action-area">
             {showValidationHint && (
               <div className="validation-hint font-mono">
-                Please review and tick both authorizations to proceed digitally.
+                {t('informedConsent.validationHint')}
               </div>
             )}
 
@@ -261,18 +260,18 @@ export default function InformedConsent({ onNavigate }) {
               {isSubmitting ? (
                 <>
                   <span className="material-symbols-outlined spin-icon">progress_activity</span>
-                  <span>Securing Token • रिकॉर्ड अधिकृत किया जा रहा है...</span>
+                  <span>{t('informedConsent.securingToken')}</span>
                 </>
               ) : (
                 <>
-                  <span>I agree — continue / सहमति दें — आगे बढ़ें</span>
+                  <span>{t('informedConsent.agreeContinue')}</span>
                   <span className="arrow-icon font-mono">&rarr;</span>
                 </>
               )}
             </button>
 
             <button className="paper-opt-out-btn" onClick={handlePaperOptOut}>
-              Opt out and use physical paper OPD slip instead (कागजी पर्ची पर जारी रखें)
+              {t('informedConsent.optOut')}
             </button>
           </div>
 
@@ -280,10 +279,10 @@ export default function InformedConsent({ onNavigate }) {
           <div className="telemetry-footer">
             <div className="telemetry-left font-mono">
               <span className="material-symbols-outlined">verified</span>
-              ABDM M1, M2 &amp; M3 Certified • 256-bit Hardware-Enclave Encryption
+              {t('informedConsent.telemetryLeft')}
             </div>
             <div className="telemetry-right font-mono">
-              Consent Auto-Purge: 24h Post-Encounter
+              {t('informedConsent.telemetryRight')}
             </div>
           </div>
 
@@ -294,14 +293,14 @@ export default function InformedConsent({ onNavigate }) {
         <div className="divider"></div>
         <div className="bottom-footer-content">
           <div className="footer-meta font-mono">
-            <span className="uppercase">Hospital Triage Registry</span>
+            <span className="uppercase">{t('informedConsent.footerMeta1')}</span>
             <span className="dot-sep">•</span>
-            <span>SWISS CLINICAL INTERFACE STANDARDS</span>
+            <span>{t('informedConsent.footerMeta2')}</span>
           </div>
           <a href="tel:01126588500" className="emergency-call-btn">
             <span className="material-symbols-outlined">emergency</span>
-            <span className="em-text">Emergency — get help now</span>
-            <span className="em-num font-mono">011-26588500</span>
+            <span className="em-text">{t('informedConsent.emText')}</span>
+            <span className="em-num font-mono">{t('informedConsent.emNum')}</span>
           </a>
         </div>
       </footer>
