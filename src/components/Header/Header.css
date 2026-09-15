@@ -10,8 +10,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
-  height: 64px;
+  padding: 0 16px;
+  height: 56px;
+}
+
+@media (min-width: 640px) {
+  .header-inner {
+    padding: 0 24px;
+    height: 60px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header-inner {
+    padding: 0 40px;
+    height: 64px;
+  }
 }
 
 .header-logo {
@@ -51,9 +65,22 @@
 }
 
 .header-nav {
-  display: flex;
+  display: none;
   align-items: center;
-  gap: 32px;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .header-nav {
+    display: flex;
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header-nav {
+    gap: 32px;
+  }
 }
 
 .nav-link {
@@ -73,12 +100,24 @@
 .header-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
+@media (min-width: 640px) {
+  .header-right {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header-right {
+    gap: 24px;
+  }
+}
+
 .emergency-badge {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 8px;
   background: #fdf2f0;
@@ -88,11 +127,24 @@
   padding: 6px 12px;
 }
 
+@media (min-width: 640px) {
+  .emergency-badge {
+    display: flex;
+  }
+}
+
 .emergency-badge .em-label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .emergency-badge .em-label {
+    display: inline;
+  }
 }
 
 .emergency-badge .em-num {
@@ -136,11 +188,17 @@
 
 .ticker-bar {
   background: var(--brand-aubergine-deep);
-  padding: 8px 40px;
+  padding: 6px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
   overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .ticker-bar {
+    padding: 8px 40px;
+  }
 }
 
 .ticker-live {

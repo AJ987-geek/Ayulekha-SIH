@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* === AUBERGINE & OYSTER COLOUR TOKENS === */
 
@@ -79,7 +83,13 @@
 }
 
 html {
-  font-size: 14px;
+  font-size: 13px;
+}
+
+@media (min-width: 480px) {
+  html {
+    font-size: 14px;
+  }
 }
 
 body {

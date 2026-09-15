@@ -159,12 +159,24 @@
 }
 
 .hero-title {
-  font-size: 48px;
+  font-size: 32px;
   line-height: 1.08;
   font-weight: 700;
   color: #211A24;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
+}
+
+@media (min-width: 480px) {
+  .hero-title {
+    font-size: 40px;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 48px;
+  }
 }
 
 .hero-subtitle {
@@ -175,9 +187,15 @@
 }
 
 .hero-desc-en {
-  font-size: 22px;
+  font-size: 18px;
   color: #211A24;
   margin-bottom: 4px;
+}
+
+@media (min-width: 768px) {
+  .hero-desc-en {
+    font-size: 22px;
+  }
 }
 
 .hero-desc-hi {

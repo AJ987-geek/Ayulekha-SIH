@@ -30,7 +30,7 @@ function PatientForm({ onNavigate }) {
           <h4 className="path-title">{t('infoPanel.patient.returningTitle')}</h4>
           <p className="path-desc">{t('infoPanel.patient.returningDesc')}</p>
         </div>
-        <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+        <form className="auth-form" onSubmit={(e) => { e.preventDefault(); onNavigate && onNavigate('dashboard'); }}>
           <div className="field-group">
             <label className="field-label font-mono" htmlFor="patient-id-input">
               {t('infoPanel.patient.abhaLabel')}

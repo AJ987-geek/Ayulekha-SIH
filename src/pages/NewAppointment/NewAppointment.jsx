@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePatient } from '../../contexts/PatientContext';
 import { saveStory } from '../../api';
-import './YourStory.css';
+import './NewAppointment.css';
 
-export default function YourStory({ onNavigate }) {
+export default function NewAppointment({ onNavigate }) {
   const { t } = useLanguage();
   const { patient } = usePatient();
   const [isTextMode, setIsTextMode] = useState(false);
@@ -32,7 +32,7 @@ export default function YourStory({ onNavigate }) {
       const story = symptomsText || t('yourStory.transcriptEn') || 'Voice narrative recorded';
       const symptoms = [];
       await saveStory(patientId, story, symptoms);
-      if (onNavigate) onNavigate('records');
+      if (onNavigate) onNavigate('dashboard');
     } catch (err) {
       setSaveError(err.message || 'Failed to save story. Please try again.');
       setIsSaving(false);
@@ -136,17 +136,17 @@ export default function YourStory({ onNavigate }) {
 
         <div className="story-hero">
           <div className="hero-meta">
-            <span>{t('yourStory.heroMeta1')}</span>
+            <span>NEW APPOINTMENT</span>
             <span className="meta-dot">•</span>
             <span className="meta-highlight">
               {isTextMode ? t('yourStory.textNarrativeMode') : t('yourStory.voiceNarrativeMode')}
             </span>
           </div>
           <h1 className="hero-title">
-            {t('yourStory.heroTitle')}
+            What brings you here today?
           </h1>
           <p className="hero-subtitle">
-            {isTextMode ? t('yourStory.heroSubtitleText') : t('yourStory.heroSubtitleVoice')}
+            {isTextMode ? 'Please type your symptoms below.' : 'Hold the microphone and describe your symptoms.'}
           </p>
         </div>
 
@@ -260,7 +260,7 @@ export default function YourStory({ onNavigate }) {
             onClick={handleContinue}
             disabled={isSaving}
           >
-            {isSaving ? 'Saving…' : t('yourStory.generateSummary')}
+            {isSaving ? 'Scheduling…' : 'Schedule Appointment'}
           </button>
         </div>
       </main>

@@ -142,13 +142,20 @@
 
 .nav-item {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: #45464f;
   text-decoration: none;
   padding: 4px 0;
   transition: color 0.2s;
+}
+
+@media (min-width: 640px) {
+  .nav-item {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
 }
 
 .nav-item:hover {
@@ -257,12 +264,24 @@
 }
 
 .intro-title {
-  font-size: 44px;
+  font-size: 28px;
   color: #142450;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.015em;
   margin: 0;
+}
+
+@media (min-width: 480px) {
+  .intro-title {
+    font-size: 36px;
+  }
+}
+
+@media (min-width: 768px) {
+  .intro-title {
+    font-size: 44px;
+  }
 }
 
 .intro-subtitle {

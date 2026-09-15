@@ -1,0 +1,9 @@
+/* 
+  PatientDashboard.css
+  Most styling is handled by Tailwind CSS classes in the component.
+  Add any custom or override styles here if necessary.
+*/
+
+.tracking-mono-label {
+  letter-spacing: 0.08em;
+}

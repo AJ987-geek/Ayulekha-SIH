@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { usePatient } from '../../contexts/PatientContext';
+import { saveConsent } from '../../api';
 import './InformedConsent.css';
 
 export default function InformedConsent({ onNavigate }) {
   const { t } = useLanguage();
+  const { patient } = usePatient();
   const [consentEHR, setConsentEHR] = useState(false);
   const [consentVoice, setConsentVoice] = useState(false);
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   // Audio states
   const [playingAudio1, setPlayingAudio1] = useState(false);
@@ -31,7 +35,7 @@ export default function InformedConsent({ onNavigate }) {
     }
   };
 
-  const handleConsentSubmission = () => {
+  const handleConsentSubmission = async () => {
     if (!consentEHR || !consentVoice) {
       setShowValidationHint(true);
       setTimeout(() => setShowValidationHint(false), 2500);
@@ -39,11 +43,17 @@ export default function InformedConsent({ onNavigate }) {
     }
 
     setShowValidationHint(false);
+    setApiError('');
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      const patientId = patient?.id || 'GUEST';
+      await saveConsent(patientId, true);
       if (onNavigate) onNavigate('story');
-    }, 900);
+    } catch (err) {
+      setApiError(err.message || 'Failed to record consent. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const handlePaperOptOut = () => {
@@ -185,17 +195,13 @@ export default function InformedConsent({ onNavigate }) {
             {/* Item 2 */}
             <div className="consent-item">
               <label className="custom-checkbox-wrapper" htmlFor="consent-voice">
-
-
                 <div className={`custom-checkbox ${consentVoice ? 'checked' : ''} ${showValidationHint && !consentVoice ? 'error-ring' : ''}`}>
                   <input
                     type="checkbox"
                     id="consent-voice"
                     className="sr-only"
                     checked={consentVoice}
-                    onChange={(e) => setConsentVoice(e.target.checked)
-
-                    }
+                    onChange={(e) => setConsentVoice(e.target.checked)}
                   />
                   <span className="material-symbols-outlined check-icon">check</span>
                 </div>
@@ -249,6 +255,12 @@ export default function InformedConsent({ onNavigate }) {
             {showValidationHint && (
               <div className="validation-hint font-mono">
                 {t('informedConsent.validationHint')}
+              </div>
+            )}
+
+            {apiError && (
+              <div className="font-mono" style={{ color: '#c0392b', marginBottom: '8px', fontSize: '13px' }}>
+                ⚠ {apiError}
               </div>
             )}
 

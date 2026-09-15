@@ -147,6 +147,16 @@ export default function Done({ onNavigate }) {
               <button 
                 className="btn-add-records focus-ring" 
                 type="button"
+                onClick={() => onNavigate && onNavigate('dashboard')}
+                style={{ backgroundColor: '#4a2c4e', color: 'white' }}
+              >
+                <span className="material-symbols-outlined">dashboard</span>
+                <span>Go to Dashboard</span>
+              </button>
+
+              <button 
+                className="btn-add-records focus-ring" 
+                type="button"
                 onClick={() => onNavigate && onNavigate('records')}
               >
                 <span className="material-symbols-outlined">add_a_photo</span>

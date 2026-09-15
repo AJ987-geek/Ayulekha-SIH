@@ -1,19 +1,40 @@
 .redflag-section {
   max-width: 1280px;
-  margin: 48px auto 0;
-  padding: 0 40px;
+  margin: 32px auto 0;
+  padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .redflag-section {
+    margin: 40px auto 0;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .redflag-section {
+    margin: 48px auto 0;
+    padding: 0 40px;
+  }
 }
 
 .redflag-card {
   background: #fdf2f0;
   border: 1px solid #f5cbc4;
   border-radius: 8px;
-  padding: 28px;
+  padding: 20px 16px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .redflag-card {
+    padding: 28px;
+    gap: 24px;
+  }
 }
 
 .redflag-left {
@@ -116,6 +137,15 @@
   white-space: nowrap;
   flex-shrink: 0;
   transition: opacity 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .redflag-cta {
+    width: auto;
+    justify-content: flex-start;
+  }
 }
 
 .redflag-cta:hover {

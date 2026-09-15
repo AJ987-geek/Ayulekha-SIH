@@ -87,11 +87,23 @@
 .records-header-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .records-header-right {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .records-header-right {
+    gap: 24px;
+  }
 }
 
 .listen-btn-records {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 4px;
   padding: 4px 16px;
@@ -101,6 +113,12 @@
   border: none;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+
+@media (min-width: 640px) {
+  .listen-btn-records {
+    display: flex;
+  }
 }
 
 .listen-btn-records:hover {
@@ -295,11 +313,25 @@
 }
 
 .records-hero-title {
-  font-size: 44px;
-  line-height: 52px;
+  font-size: 28px;
+  line-height: 36px;
   letter-spacing: -0.015em;
   font-weight: 600;
   color: #142450;
+}
+
+@media (min-width: 480px) {
+  .records-hero-title {
+    font-size: 36px;
+    line-height: 44px;
+  }
+}
+
+@media (min-width: 768px) {
+  .records-hero-title {
+    font-size: 44px;
+    line-height: 52px;
+  }
 }
 
 .records-hero-subtitle-hi {

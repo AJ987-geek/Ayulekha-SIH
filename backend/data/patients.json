@@ -1,0 +1,26 @@
+[
+  {
+    "id": "P001",
+    "name": "Rahul Sharma",
+    "mobile": "9876543210",
+    "abha": "91-4582-7719-2041",
+    "age": 32,
+    "gender": "Male"
+  },
+  {
+    "id": "P002",
+    "name": "Priya Singh",
+    "mobile": "9123456780",
+    "abha": "23-6741-8890-1122",
+    "age": 27,
+    "gender": "Female"
+  },
+  {
+    "id": "P003",
+    "name": "MD Javed",
+    "mobile": "6284823649",
+    "abha": "45-1234-5678-9012",
+    "age": 20,
+    "gender": "Male"
+  }
+]

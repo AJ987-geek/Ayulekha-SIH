@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './index.css';
+import { PatientProvider } from './contexts/PatientContext';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
 import PortalSelection from './pages/PortalSelection/PortalSelection';
@@ -10,8 +11,10 @@ import InformedConsent from './pages/InformedConsent/InformedConsent';
 import YourStory from './pages/YourStory/YourStory';
 import Records from './pages/Records/Records';
 import Done from './pages/Done/Done';
+import PatientDashboard from './pages/PatientDashboard/PatientDashboard';
+import NewAppointment from './pages/NewAppointment/NewAppointment';
 
-export default function App() {
+function AppRoutes() {
   const [currentPage, setCurrentPage] = useState('portal');
   const [pageProps, setPageProps] = useState({});
 
@@ -68,6 +71,22 @@ export default function App() {
     );
   }
 
+  if (currentPage === 'dashboard') {
+    return (
+      <div className="app-shell">
+        <PatientDashboard onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'new-appointment') {
+    return (
+      <div className="app-shell">
+        <NewAppointment onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
   if (currentPage === 'triage') {
     return (
       <div className="app-shell">
@@ -82,5 +101,13 @@ export default function App() {
       <PortalSelection onNavigate={handleNavigate} />
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <PatientProvider>
+      <AppRoutes />
+    </PatientProvider>
   );
 }
