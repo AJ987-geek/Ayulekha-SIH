@@ -1,26 +1,63 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './YourStory.css';
 
 export default function YourStory({ onNavigate }) {
   const [isRecording, setIsRecording] = useState(false);
-  const [showTranscript, setShowTranscript] = useState(false);
+  const [answer, setAnswer] = useState('');
+  const [conversationId, setConversationId] = useState(null);
+  const [turn, setTurn] = useState(null);
+  const [language, setLanguage] = useState('en');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const recognition = useRef(null);
+  const submitting = useRef(false);
+
+  const speakQuestion = (question, lang = language) => {
+    if (!('speechSynthesis' in window) || !question) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(question);
+    utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const request = async (path, body) => {
+    const response = await fetch(`/api/interview/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).detail || 'The interviewer is unavailable. Please try again.');
+    return response.json();
+  };
+
+  const startInterview = (selectedLanguage) => {
+    setLoading(true); setError(''); setAnswer(''); window.speechSynthesis?.cancel();
+    request('start', { language: selectedLanguage }).then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, selectedLanguage); }).catch((e) => setError(e.message)).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    request('start', { language: 'en' }).then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, 'en'); }).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    return () => recognition.current?.stop();
+  }, []);
 
   const handleMicMouseDown = () => {
-    setIsRecording(true);
+    if (isRecording) { recognition.current?.stop(); return; }
+    if (loading) return;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) { setError('Speech recognition is not supported by this browser. You can type your answer instead.'); return; }
+    const recognizer = new Recognition();
+    recognizer.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+    recognizer.interimResults = true;
+    recognizer.onstart = () => setIsRecording(true);
+    recognizer.onresult = (event) => setAnswer(Array.from(event.results).map((result) => result[0].transcript).join(''));
+    recognizer.onerror = (event) => setError(event.error === 'not-allowed' ? 'Microphone permission was denied. Please allow it or type your answer.' : 'Speech could not be recognized. Please try again or edit the text.');
+    recognizer.onend = () => setIsRecording(false);
+    recognition.current = recognizer;
+    recognizer.start();
   };
 
-  const handleMicMouseUp = () => {
-    setIsRecording(false);
-    setShowTranscript(true);
-  };
-
-  const handleContinue = (e) => {
-    e.preventDefault();
-    if (onNavigate) {
-      // In this app, triage comes next or symptom-characterization
-      // I'll just navigate to 'triage' since 'questions' is missing from the request now
-      onNavigate('triage');
-    }
+  const handleContinue = async (value = answer, inputType = 'text') => {
+    if (!value.trim() || loading || !conversationId || submitting.current) { if (!value.trim()) setError('Please answer before continuing.'); return; }
+    submitting.current = true; setLoading(true); setError('');
+    try { const data = await request('message', { conversationId, text: value, inputType, language }); setTurn(data); setAnswer(''); if (data.complete) onNavigate?.('doctor', { summary: data.summary }); else speakQuestion(data.question, data.language); }
+    catch (e) { setError(e.message); } finally { submitting.current = false; setLoading(false); }
   };
 
   return (
@@ -42,14 +79,13 @@ export default function YourStory({ onNavigate }) {
 
           <div className="story-header-right">
             <div className="story-lang-switcher">
-              <span className="lang-en">EN</span>
+              <button className={language === 'en' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => { setLanguage('en'); startInterview('en'); }}>EN</button>
               <span className="lang-sep">|</span>
-              <button className="lang-btn focus-ring">हिन्दी</button>
+              <button className={language === 'hi' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => { setLanguage('hi'); startInterview('hi'); }}>हिन्दी</button>
               <span className="lang-sep">|</span>
-              <button className="lang-btn focus-ring">বাংলা</button>
             </div>
 
-            <button className="listen-btn focus-ring">
+            <button className="listen-btn focus-ring" onClick={() => speakQuestion(turn?.question)}>
               <svg className="listen-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
               </svg>
@@ -144,10 +180,10 @@ export default function YourStory({ onNavigate }) {
             <span className="meta-highlight">VOICE NARRATIVE MODE</span>
           </div>
           <h1 className="hero-title">
-            Tell us in your own words what is bothering you today.
+            {loading ? 'Preparing your next question…' : turn?.question || 'Your interview could not be started.'}
           </h1>
           <p className="hero-subtitle">
-            आज आप क्या परेशानी या तकलीफ महसूस कर रहे हैं? अपनी भाषा में विस्तार से बताएं।
+            {language === 'hi' ? 'कृपया अपनी भाषा में आराम से उत्तर दें।' : 'Please answer in the language you are most comfortable using.'}
           </p>
         </div>
 
@@ -158,23 +194,19 @@ export default function YourStory({ onNavigate }) {
             <button 
               type="button" 
               className="mic-btn focus-ring" 
-              aria-label="Hold to speak your medical history"
-              onMouseDown={handleMicMouseDown}
-              onMouseUp={handleMicMouseUp}
-              onMouseLeave={handleMicMouseUp}
-              onTouchStart={handleMicMouseDown}
-              onTouchEnd={handleMicMouseUp}
+              aria-label={isRecording ? 'Stop recording your answer' : 'Start recording your answer'}
+              onClick={handleMicMouseDown}
             >
               <svg className="mic-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
               </svg>
-              <span className="mic-label">Press &amp; Hold</span>
+              <span className="mic-label">{isRecording ? 'Tap to stop' : 'Tap to speak'}</span>
             </button>
           </div>
 
           <div className="mic-instructions">
-            <span className="instructions-primary">Hold to speak / बोलने के लिए दबाकर रखें</span>
-            <span className="instructions-secondary">Release when finished speaking</span>
+            <span className="instructions-primary">Tap to speak / बोलने के लिए टैप करें</span>
+            <span className="instructions-secondary">Tap again when you finish speaking</span>
           </div>
 
           <div className="waveform" aria-hidden="true" style={{ opacity: isRecording ? 1 : 0.3 }}>
@@ -195,39 +227,27 @@ export default function YourStory({ onNavigate }) {
           </div>
         </div>
 
-        {(showTranscript || isRecording) && <div className="divider"></div>}
+        <div className="divider"></div>
 
-        {(showTranscript || isRecording) && (
-          <div className="story-transcript">
+        <div className="story-transcript">
             <div className="transcript-status">
               <span className="status-pulse-dot"></span>
-              <span>Listening... / आवाज रिकॉर्ड हो रही है</span>
+              <span>{isRecording ? 'Listening… release when finished' : 'Review or edit your answer before submitting'}</span>
               <span className="meta-dot">•</span>
               <span>DIALECT: HINDI / ENGLISH MIX</span>
             </div>
 
-            <div className="transcript-text-container">
-              <p className="transcript-text-hi">
-                “डॉक्टर साहब, मुझे पिछले चार-पांच दिनों से बहुत तेज सूखी खांसी आ रही है, खासकर रात को सोते समय सांस लेने में खिंचाव महसूस होता है। हल्का बुखार भी रहता है और सीने में भारीपन लगता है...”
-              </p>
-              <p className="transcript-text-en">
-                (Patient narrative: Reporting acute dry cough for 4–5 days, nocturnal chest heaviness, mild pyrexia, and exertional breathlessness.)
-              </p>
-            </div>
+            <textarea className="conversation-input" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Type your answer, or hold the microphone to speak…" disabled={loading} />
 
             <div className="transcript-tags">
-              <span className="tags-label">Identified entities:</span>
-              <span className="tag-item">#DryCough (5d)</span>
-              <span className="tag-item">#NocturnalDyspnea</span>
-              <span className="tag-item">#ChestTightness</span>
-              <span className="tag-item">#LowGradePyrexia</span>
+              {turn?.options?.map((option) => <button className="tag-item" type="button" key={option} onClick={() => { setAnswer(option); document.querySelector('.conversation-input')?.focus(); }}>{option}</button>)}
             </div>
-          </div>
-        )}
+        </div>
+        {error && <p className="conversation-error">{error}</p>}
 
         <div className="story-actions">
           <div className="action-links">
-            <button type="button" className="action-link focus-ring">Type instead (कीबोर्ड से लिखें)</button>
+            <button type="button" className="action-link focus-ring" onClick={() => document.querySelector('.conversation-input')?.focus()}>Type instead (कीबोर्ड से लिखें)</button>
             <span className="action-link-sep">•</span>
             <button type="button" className="action-link focus-ring">Tap to answer (विकल्प चुनकर उत्तर दें)</button>
           </div>
@@ -235,9 +255,10 @@ export default function YourStory({ onNavigate }) {
           <button 
             type="button" 
             className="action-continue-btn focus-ring"
-            onClick={handleContinue}
+            onClick={() => handleContinue()}
+            disabled={loading}
           >
-            Generate Summary for Doctor →
+            {loading ? 'AI is processing…' : 'Submit answer →'}
           </button>
         </div>
       </main>

@@ -283,7 +283,7 @@
   max-width: 896px; /* max-w-4xl */
   width: 100%;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -291,14 +291,14 @@
 
 @media (min-width: 768px) {
   .story-main {
-    padding-top: 64px;
-    padding-bottom: 64px;
+    padding-top: 32px;
+    padding-bottom: 40px;
   }
 }
 
 .story-queue-info {
   width: 100%;
-  margin-bottom: 40px;
+  margin-bottom: 22px;
   text-align: left;
 }
 
@@ -366,12 +366,12 @@
 .story-hero {
   width: 100%;
   text-align: left;
-  margin-bottom: 64px;
+  margin-bottom: 26px;
 }
 
 @media (min-width: 768px) {
   .story-hero {
-    margin-bottom: 80px;
+    margin-bottom: 34px;
   }
 }
 
@@ -423,7 +423,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 16px 0;
+  margin: 4px 0;
 }
 
 .mic-wrapper {
@@ -435,8 +435,8 @@
 
 .mic-pulse-ring {
   position: absolute;
-  width: 212px;
-  height: 212px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   background-color: #DEE3F0;
   pointer-events: none;
@@ -444,8 +444,8 @@
 
 .mic-btn {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
   background-color: #2B3A67;
   color: #ffffff;
@@ -469,8 +469,8 @@
 }
 
 .mic-icon {
-  width: 64px;
-  height: 64px;
+  width: 46px;
+  height: 46px;
   margin-bottom: 4px;
 }
 
@@ -484,7 +484,7 @@
 }
 
 .mic-instructions {
-  margin-top: 20px;
+  margin-top: 12px;
   text-align: center;
 }
 
@@ -511,7 +511,7 @@
 }
 
 .waveform {
-  margin-top: 32px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -528,7 +528,7 @@
 
 .divider {
   width: 100%;
-  margin: 48px 0;
+  margin: 20px 0;
   border-top: 1px solid #D8D3C8;
 }
 
@@ -609,11 +609,12 @@
   color: #2B3A67;
   border-radius: 4px;
 }
+.conversation-input{width:100%;min-height:72px;padding:12px;border:1px solid #d8d3c8;border-radius:4px;background:#fff;color:#1a1c24;font:18px var(--font-body);line-height:1.5;resize:vertical}.conversation-input:focus{outline:2px solid #2b3a67;outline-offset:2px}.conversation-error{color:#a8412f;margin-top:12px;font-weight:600}.tag-item{cursor:pointer}
 
 .story-actions {
   width: 100%;
-  margin-top: 64px;
-  padding-top: 32px;
+  margin-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid #D8D3C8;
   display: flex;
   flex-direction: column;

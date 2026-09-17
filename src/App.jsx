@@ -8,6 +8,7 @@ import EmergencyActive from './pages/EmergencyActive/EmergencyActive';
 import PatientIdentity from './pages/PatientIdentity/PatientIdentity';
 import InformedConsent from './pages/InformedConsent/InformedConsent';
 import YourStory from './pages/YourStory/YourStory';
+import DoctorSummary from './pages/DoctorSummary/DoctorSummary';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('portal');
@@ -56,6 +57,10 @@ export default function App() {
         <RapidTriage onNavigate={handleNavigate} />
       </div>
     );
+  }
+
+  if (currentPage === 'doctor') {
+    return <div className="app-shell"><DoctorSummary summary={pageProps.summary} onComplete={() => handleNavigate('story')} /></div>;
   }
 
   return (

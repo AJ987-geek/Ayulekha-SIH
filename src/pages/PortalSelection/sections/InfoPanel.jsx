@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './InfoPanel.css';
 
-function PatientForm({ onNavigate }) {
+function PatientForm() {
   const [otpSent, setOtpSent] = useState(false);
 
   return (
@@ -181,7 +181,7 @@ function AdminForm() {
   );
 }
 
-export default function InfoPanel({ activeRole, onRoleSwitch, onNavigate }) {
+export default function InfoPanel({ activeRole, onRoleSwitch }) {
   const localRole = activeRole || 'patient';
 
   return (
@@ -245,7 +245,7 @@ export default function InfoPanel({ activeRole, onRoleSwitch, onNavigate }) {
           ))}
         </div>
 
-        {localRole === 'patient' && <PatientForm onNavigate={onNavigate} />}
+        {localRole === 'patient' && <PatientForm />}
         {localRole === 'doctor' && <DoctorForm />}
         {localRole === 'admin' && <AdminForm />}
       </div>
