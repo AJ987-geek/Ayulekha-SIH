@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // Forward /api/* → Express backend on port 5000
+      // Forward all /api/* -> Python backend on port 8000
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },

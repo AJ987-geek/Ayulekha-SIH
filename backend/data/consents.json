@@ -18,5 +18,10 @@
     "patientId": "P003",
     "consent": true,
     "timestamp": "2026-09-15T22:41:40.431Z"
+  },
+  {
+    "patientId": "P003",
+    "consent": true,
+    "timestamp": "2026-09-18T10:52:54.064091Z"
   }
 ]

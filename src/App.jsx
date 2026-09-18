@@ -9,6 +9,7 @@ import EmergencyActive from './pages/EmergencyActive/EmergencyActive';
 import PatientIdentity from './pages/PatientIdentity/PatientIdentity';
 import InformedConsent from './pages/InformedConsent/InformedConsent';
 import YourStory from './pages/YourStory/YourStory';
+import DoctorSummary from './pages/DoctorSummary/DoctorSummary';
 import Records from './pages/Records/Records';
 import Done from './pages/Done/Done';
 import PatientDashboard from './pages/PatientDashboard/PatientDashboard';
@@ -54,6 +55,14 @@ function AppRoutes() {
     return (
       <div className="app-shell">
         <YourStory onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'doctor') {
+    return (
+      <div className="app-shell">
+        <DoctorSummary summary={pageProps.summary} onComplete={() => handleNavigate('records')} />
       </div>
     );
   }

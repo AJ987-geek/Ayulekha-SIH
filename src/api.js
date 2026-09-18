@@ -4,7 +4,8 @@
  * Vite proxy forwards /api/* → http://localhost:5000 in development.
  */
 
-const BASE = '/api/patients';
+const API_URL = import.meta.env.VITE_API_URL || '';
+const BASE = `${API_URL}/api/patients`;
 
 async function apiFetch(path, body) {
   const res = await fetch(`${BASE}${path}`, {
