@@ -6,6 +6,7 @@ from typing import Literal, TypedDict
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
@@ -189,6 +190,15 @@ graph_builder.add_edge("generate_next_turn", END)
 graph = graph_builder.compile()
 
 app = FastAPI(title="AyuLekha Interview API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 from patients import router as patients_router
 app.include_router(patients_router)
 
