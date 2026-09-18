@@ -114,9 +114,10 @@ export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
                   className={`card-btn ${isActive ? 'btn-active' : 'btn-inactive'}`} 
                   type="button"
                   onClick={(e) => {
-                    if (card.id === 'patient' && onNavigate) {
+                    if (onNavigate) {
                       e.stopPropagation();
-                      onNavigate('triage');
+                      if (card.id === 'patient') onNavigate('triage');
+                      else if (card.id === 'doctor') onNavigate('doctor-registration');
                     }
                   }}
                 >

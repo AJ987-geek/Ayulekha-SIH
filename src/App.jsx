@@ -13,6 +13,9 @@ import Records from './pages/Records/Records';
 import Done from './pages/Done/Done';
 import PatientDashboard from './pages/PatientDashboard/PatientDashboard';
 import NewAppointment from './pages/NewAppointment/NewAppointment';
+import DoctorRegistration from './pages/DoctorRegistration/DoctorRegistration';
+import DoctorOnboarding from './pages/DoctorOnboarding/DoctorOnboarding';
+import DoctorDashboard from './pages/DoctorDashboard/DoctorDashboard';
 
 function AppRoutes() {
   const [currentPage, setCurrentPage] = useState('portal');
@@ -83,6 +86,30 @@ function AppRoutes() {
     return (
       <div className="app-shell">
         <NewAppointment onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'doctor-registration') {
+    return (
+      <div className="app-shell">
+        <DoctorRegistration onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'doctor-onboarding') {
+    return (
+      <div className="app-shell">
+        <DoctorOnboarding onNavigate={handleNavigate} />
+      </div>
+    );
+  }
+
+  if (currentPage === 'doctor-dashboard') {
+    return (
+      <div className="app-shell">
+        <DoctorDashboard onNavigate={handleNavigate} />
       </div>
     );
   }
