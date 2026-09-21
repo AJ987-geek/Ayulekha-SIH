@@ -1,5 +1,287 @@
-import { useState } from 'react';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useEffect, useRef, useState } from 'react';
+import { usePatient } from '../../contexts/PatientContext';
+import './NewAppointment.css';
+
+export default function NewAppointment({ onNavigate }) {
+  const { patient } = usePatient();
+  const [isRecording, setIsRecording] = useState(false);
+  const [answer, setAnswer] = useState('');
+  const [conversationId, setConversationId] = useState(null);
+  const [turn, setTurn] = useState(null);
+  const [language, setLanguage] = useState('en');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const recognition = useRef(null);
+  const submitting = useRef(false);
+
+  const speakQuestion = (question, lang = language) => {
+    if (!('speechSynthesis' in window) || !question) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(question);
+    utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const request = async (path, body) => {
+    const API_URL = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${API_URL}/api/interview/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok)
+      throw new Error(
+        (await response.json().catch(() => ({}))).detail ||
+          'The AI interviewer is unavailable. Please try again.'
+      );
+    return response.json();
+  };
+
+  const startInterview = (selectedLanguage) => {
+    setLoading(true); setError(''); setAnswer(''); window.speechSynthesis?.cancel();
+    request('start', { language: selectedLanguage })
+      .then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, selectedLanguage); })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    request('start', { language: 'en' })
+      .then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, 'en'); })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+    return () => recognition.current?.stop();
+  }, []);
+
+  const handleMicClick = () => {
+    if (isRecording) { recognition.current?.stop(); return; }
+    if (loading) return;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) { setError('Speech recognition is not supported by this browser. You can type your answer instead.'); return; }
+    const recognizer = new Recognition();
+    recognizer.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+    recognizer.interimResults = true;
+    recognizer.onstart = () => setIsRecording(true);
+    recognizer.onresult = (event) => setAnswer(Array.from(event.results).map((r) => r[0].transcript).join(''));
+    recognizer.onerror = (event) => setError(event.error === 'not-allowed' ? 'Microphone permission was denied. Please allow it or type your answer.' : 'Speech could not be recognized. Please try again.');
+    recognizer.onend = () => setIsRecording(false);
+    recognition.current = recognizer;
+    recognizer.start();
+  };
+
+  const handleContinue = async (value = answer, inputType = 'text') => {
+    if (!value.trim() || loading || !conversationId || submitting.current) {
+      if (!value.trim()) setError('Please answer before continuing.');
+      return;
+    }
+    submitting.current = true; setLoading(true); setError('');
+    try {
+      const data = await request('message', { conversationId, text: value, inputType, language });
+      setTurn(data);
+      setAnswer('');
+      if (data.complete) {
+        // Interview done — navigate to doctor summary, then back to dashboard
+        onNavigate?.('appointment-summary', { summary: data.summary });
+      } else {
+        speakQuestion(data.question, data.language);
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      submitting.current = false;
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="story-container">
+      {/* Header */}
+      <header className="story-header">
+        <div className="story-header-inner">
+          <div className="story-header-left">
+            <img
+              src="https://lh3.googleusercontent.com/aida/AEtjO1WsmWm1b7dSIe0kmK-rc-_LIXyDScv_VWCU3xv3WQuNLdpL6-gjkhlrbb44rh9lvIozRSFtDSd_OCrjR6_C6RbXNWGIFLv2mqcZkO_eDqJhE4gnQh8AIKIKYuXOkncgudqzoPzHLtcEsAVcBq9xEz66WgMK58JBTyL3Y3wcOMDaCYR2ynibKHZD-8yROJZdYRR_2IXRuwPn1sZgeWt_sQvCLgw5CsyaS7fWfVeh6NfpTkAZ9pqEdJkIZQ"
+              alt="AyuLekha"
+              className="story-brand-logo"
+            />
+            <div className="story-header-divider"></div>
+            <div className="story-header-context">NEW APPOINTMENT · AI INTAKE</div>
+          </div>
+
+          <div className="story-header-right">
+            <div className="story-lang-switcher">
+              <button className={language === 'en' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => { setLanguage('en'); startInterview('en'); }}>EN</button>
+              <span className="lang-sep">|</span>
+              <button className={language === 'hi' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => { setLanguage('hi'); startInterview('hi'); }}>हिन्दी</button>
+            </div>
+
+            <button className="listen-btn focus-ring" onClick={() => speakQuestion(turn?.question)}>
+              <svg className="listen-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+              </svg>
+              <span>Listen Assist / सुनें</span>
+            </button>
+
+            <div className="user-badge">
+              <span className="status-dot"></span>
+              <span>TOKEN: <strong className="token-strong">{patient ? `#${patient.id}` : '#B-42'}</strong></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Nav Rail */}
+      <nav className="story-nav-rail" aria-label="Appointment Intake Progress">
+        <div className="nav-rail-inner">
+          <div className="nav-rail-meta">
+            <div>NEW APPOINTMENT · AI SYMPTOM INTAKE</div>
+            <div>POWERED BY AYULEKHA AI · SOCRATES FRAMEWORK</div>
+          </div>
+          <div className="nav-rail-track-container">
+            <div className="track-bg"></div>
+            <div className="track-fill"></div>
+            <div className="stage-completed">
+              <svg className="stage-completed-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+              <span>YOU</span>
+            </div>
+            <div className="stage-active">
+              <div className="stage-active-dot"></div>
+              <div className="stage-active-content">
+                <svg className="stage-active-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                </svg>
+                <span>YOUR STORY</span>
+              </div>
+            </div>
+            <div className="stage-upcoming">
+              <svg className="stage-upcoming-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span>DOCTOR</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="story-main">
+        <div className="story-hero">
+          <div className="hero-meta">
+            <span>CHIEF COMPLAINT &amp; SYMPTOM ONSET</span>
+            <span className="meta-dot">•</span>
+            <span className="meta-highlight">VOICE NARRATIVE MODE</span>
+          </div>
+          <h1 className="hero-title">
+            {loading ? 'Preparing your next question…' : turn?.question || 'Your interview could not be started.'}
+          </h1>
+          <p className="hero-subtitle">
+            {language === 'hi' ? 'कृपया अपनी भाषा में आराम से उत्तर दें।' : 'Please answer in the language you are most comfortable using.'}
+          </p>
+        </div>
+
+        <div className="story-mic-section">
+          <div className="mic-wrapper">
+            {isRecording && <div className="mic-pulse-ring pulse-ring"></div>}
+            <button
+              type="button"
+              className="mic-btn focus-ring"
+              aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+              onClick={handleMicClick}
+            >
+              <svg className="mic-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+              </svg>
+              <span className="mic-label">{isRecording ? 'Tap to stop' : 'Tap to speak'}</span>
+            </button>
+          </div>
+
+          <div className="mic-instructions">
+            <span className="instructions-primary">Tap to speak / बोलने के लिए टैप करें</span>
+            <span className="instructions-secondary">Tap again when you finish speaking</span>
+          </div>
+
+          <div className="waveform" aria-hidden="true" style={{ opacity: isRecording ? 1 : 0.3 }}>
+            {['0.1s','0.3s','0.15s','0.45s','0.2s','0.5s','0.25s','0.05s','0.4s','0.6s','0.35s','0.1s','0.55s','0.2s'].map((delay, i) => (
+              <span key={i} className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: delay, height: `${[12,20,32,16,36,24,40,28,36,20,32,16,24,12][i]}px` }}></span>
+            ))}
+          </div>
+        </div>
+
+        <div className="divider"></div>
+
+        <div className="story-transcript">
+          <div className="transcript-status">
+            <span className="status-pulse-dot"></span>
+            <span>{isRecording ? 'Listening… tap again when finished' : 'Review or edit your answer before submitting'}</span>
+            <span className="meta-dot">•</span>
+            <span>DIALECT: HINDI / ENGLISH MIX</span>
+          </div>
+
+          <textarea
+            className="conversation-input"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="Type your answer, or tap the microphone to speak…"
+            disabled={loading}
+          />
+
+          <div className="transcript-tags">
+            {turn?.options?.map((option) => (
+              <button
+                className="tag-item"
+                type="button"
+                key={option}
+                onClick={() => { setAnswer(option); document.querySelector('.conversation-input')?.focus(); }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {error && <p className="conversation-error">{error}</p>}
+
+        <div className="story-actions">
+          <div className="action-links">
+            <button type="button" className="action-link focus-ring" onClick={() => document.querySelector('.conversation-input')?.focus()}>
+              Type instead (कीबोर्ड से लिखें)
+            </button>
+          </div>
+          <button
+            type="button"
+            className="action-continue-btn focus-ring"
+            onClick={() => handleContinue()}
+            disabled={loading}
+          >
+            {loading ? 'AI is processing…' : 'Submit answer →'}
+          </button>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="story-footer">
+        <div className="footer-inner">
+          <div className="footer-compliance">
+            <svg className="compliance-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
+            </svg>
+            <span>DPDP ACT 2023 &amp; ABDM ENCRYPTED • ON-DEVICE WHISPER TRANSCRIPTION</span>
+          </div>
+          <a href="#" className="footer-emergency-btn focus-ring">
+            <svg className="emergency-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <span>Emergency — get help now (011-26588500)</span>
+          </a>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
 import { usePatient } from '../../contexts/PatientContext';
 import { saveStory } from '../../api';
 import './NewAppointment.css';
