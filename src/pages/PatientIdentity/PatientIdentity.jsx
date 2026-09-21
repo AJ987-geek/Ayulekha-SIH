@@ -8,7 +8,7 @@ export default function PatientIdentity({ onNavigate }) {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { t } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
 
   const handleVerify = async () => {
     const email = identifier.trim();
@@ -183,8 +183,8 @@ export default function PatientIdentity({ onNavigate }) {
         <div className="id-header-right">
 
           <div className="lang-toggle font-mono">
-            <span className="active">EN</span> |{' '}
-            <span>हिन्दी</span> | <span>বাংলা</span>
+            <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => toggleLanguage('en')}>EN</button> |{' '}
+            <button type="button" className={language === 'hi' ? 'active' : ''} onClick={() => toggleLanguage('hi')}>हिन्दी</button>
           </div>
 
           <button className="listen-assist-btn font-mono">

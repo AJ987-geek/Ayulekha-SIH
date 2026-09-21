@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import './DoctorOnboarding.css';
 
 export default function DoctorOnboarding({ onNavigate }) {
+  const { language, toggleLanguage } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: 'Dr. Arvind Menon',
     medicalCouncil: 'National Medical Commission (NMC)',
@@ -58,8 +60,8 @@ export default function DoctorOnboarding({ onNavigate }) {
             <span className="onb-mono-label tracking-widest">DOCTOR ONBOARDING</span>
           </div>
           <div className="onb-header-actions">
-            <button type="button" className="onb-lang-btn">
-              <span>EN</span> <span className="onb-separator">/</span> <span className="onb-hindi-text">हिन्दी</span>
+            <button type="button" className="onb-lang-btn" onClick={() => toggleLanguage(language === 'en' ? 'hi' : 'en')}>
+              <span>{language === 'en' ? 'EN' : 'हिन्दी'}</span>
             </button>
             <span className="onb-helpline onb-mono-label hidden-sm">
               Need help? <span className="onb-helpline-number">1800-11-4471</span>

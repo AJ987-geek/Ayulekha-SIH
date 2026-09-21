@@ -4,7 +4,7 @@ import './InfoPanel.css';
 
 function PatientForm({ onNavigate }) {
   const [otpSent, setOtpSent] = useState(false);
-  const { t } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
 
   return (
     <div className="patient-form-container">
@@ -15,12 +15,9 @@ function PatientForm({ onNavigate }) {
         </div>
         <div className="lang-selector font-mono">
           <span className="lang-label">LANG:</span>
-          <select className="lang-select">
-            <option>English / हिन्दी</option>
-            <option>हिन्दी (Hindi)</option>
-            <option>English</option>
-            <option>বাংলা (Bengali)</option>
-            <option>தமிழ் (Tamil)</option>
+          <select className="lang-select" value={language} onChange={(event) => toggleLanguage(event.target.value)}>
+            <option value="en">English</option>
+            <option value="hi">हिन्दी</option>
           </select>
         </div>
       </div>

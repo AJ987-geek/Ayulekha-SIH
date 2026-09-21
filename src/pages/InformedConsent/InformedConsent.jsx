@@ -3,7 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './InformedConsent.css';
 
 export default function InformedConsent({ onNavigate, email }) {
-  const { t } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
 
   const [consentEHR, setConsentEHR] = useState(false);
   const [consentVoice, setConsentVoice] = useState(false);
@@ -122,8 +122,7 @@ export default function InformedConsent({ onNavigate, email }) {
             </button>
 
             <div className="lang-toggle font-mono">
-              <span className="active">EN</span> | <span>हिन्दी</span> |{' '}
-              <span>বাংলা</span>
+              <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => toggleLanguage('en')}>EN</button> | <button type="button" className={language === 'hi' ? 'active' : ''} onClick={() => toggleLanguage('hi')}>हिन्दी</button>
             </div>
 
             <div className="user-icon">

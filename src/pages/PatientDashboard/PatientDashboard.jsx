@@ -3,7 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './PatientDashboard.css';
 
 export default function PatientDashboard({ onNavigate }) {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, toggleLanguage } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -135,8 +135,8 @@ export default function PatientDashboard({ onNavigate }) {
             </button>
           </div>
           <div className="flex items-center space-x-3">
-            <button aria-label="Language Toggle" className="text-xs font-mono text-on-surface-variant px-2.5 py-1.5 rounded hover:bg-surface-container transition-colors border border-transparent hover:border-outline-variant" type="button">
-              <span className="font-bold text-primary">EN</span> / हिन्दी / বাংলা
+            <button aria-label="Language Toggle" className="text-xs font-mono text-on-surface-variant px-2.5 py-1.5 rounded hover:bg-surface-container transition-colors border border-transparent hover:border-outline-variant" type="button" onClick={() => toggleLanguage(language === 'en' ? 'hi' : 'en')}>
+              <span className="font-bold text-primary">{language === 'en' ? 'EN' : 'हिन्दी'}</span>
             </button>
             <button aria-label="Listen in audio" className="flex items-center gap-1.5 text-xs font-mono bg-surface-container px-3 py-1.5 rounded-full text-primary hover:bg-surface-container-highest transition-colors border border-outline-variant" type="button">
               <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">

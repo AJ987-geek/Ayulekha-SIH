@@ -3,7 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './DoctorRegistration.css';
 
 export default function DoctorRegistration({ onNavigate }) {
-  const { t, language } = useLanguage();
+  const { language, toggleLanguage } = useLanguage();
 
   const [formData, setFormData] = useState({
     mobileNumber: '98110 44725',
@@ -39,7 +39,7 @@ export default function DoctorRegistration({ onNavigate }) {
           <p className="font-mono">DOCTOR REGISTRATION • चिकित्सक पंजीकरण</p>
         </div>
         <div className="doc-reg-header-actions">
-          <span className="lang-toggle font-mono">EN / हिन्दी</span>
+          <button type="button" className="lang-toggle font-mono" onClick={() => toggleLanguage(language === 'en' ? 'hi' : 'en')}>{language === 'en' ? 'EN' : 'हिन्दी'}</button>
           <span className="support-phone font-mono"><span className="material-symbols-outlined icon-small">headset_mic</span> 1800-11-4471</span>
         </div>
       </header>

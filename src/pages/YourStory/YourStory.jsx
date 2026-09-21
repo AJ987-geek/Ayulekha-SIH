@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import './YourStory.css';
 
 export default function YourStory({ onNavigate }) {
+  const { language, toggleLanguage } = useLanguage();
   const [isRecording, setIsRecording] = useState(false);
   const [answer, setAnswer] = useState('');
   const [conversationId, setConversationId] = useState(null);
   const [turn, setTurn] = useState(null);
-  const [language, setLanguage] = useState('en');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const recognition = useRef(null);
@@ -28,15 +29,10 @@ export default function YourStory({ onNavigate }) {
     return response.json();
   };
 
-  const startInterview = (selectedLanguage) => {
-    setLoading(true); setError(''); setAnswer(''); window.speechSynthesis?.cancel();
-    request('start', { language: selectedLanguage }).then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, selectedLanguage); }).catch((e) => setError(e.message)).finally(() => setLoading(false));
-  };
-
   useEffect(() => {
-    request('start', { language: 'en' }).then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, 'en'); }).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    request('start', { language }).then((data) => { setConversationId(data.conversationId); setTurn(data); speakQuestion(data.question, language); }).catch((e) => setError(e.message)).finally(() => setLoading(false));
     return () => recognition.current?.stop();
-  }, []);
+  }, [language]);
 
   const handleMicMouseDown = () => {
     if (isRecording) { recognition.current?.stop(); return; }
@@ -80,9 +76,9 @@ export default function YourStory({ onNavigate }) {
 
           <div className="story-header-right">
             <div className="story-lang-switcher">
-              <button className={language === 'en' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => { setLanguage('en'); startInterview('en'); }}>EN</button>
+              <button className={language === 'en' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => toggleLanguage('en')}>EN</button>
               <span className="lang-sep">|</span>
-              <button className={language === 'hi' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => { setLanguage('hi'); startInterview('hi'); }}>हिन्दी</button>
+              <button className={language === 'hi' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => toggleLanguage('hi')}>हिन्दी</button>
               <span className="lang-sep">|</span>
             </div>
 

@@ -3,7 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './Records.css';
 
 export default function Records({ onNavigate }) {
-  const { t } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
 
   const handleNext = (e) => {
     e.preventDefault();
@@ -36,11 +36,9 @@ export default function Records({ onNavigate }) {
             </button>
 
             <div className="records-lang-switcher">
-              <button className="lang-btn-records lang-active focus-ring" type="button">EN</button>
+              <button className={`lang-btn-records focus-ring ${language === 'en' ? 'lang-active' : ''}`} type="button" onClick={() => toggleLanguage('en')}>EN</button>
               <span className="lang-sep-records">|</span>
-              <button className="lang-btn-records focus-ring" type="button">हिन्दी</button>
-              <span className="lang-sep-records">|</span>
-              <button className="lang-btn-records focus-ring" type="button">বাংলা</button>
+              <button className={`lang-btn-records focus-ring ${language === 'hi' ? 'lang-active' : ''}`} type="button" onClick={() => toggleLanguage('hi')}>हिन्दी</button>
             </div>
 
             <div className="user-badge-records">

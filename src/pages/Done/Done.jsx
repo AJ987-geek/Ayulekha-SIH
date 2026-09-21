@@ -2,7 +2,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './Done.css';
 
 export default function Done({ onNavigate }) {
-  const { t } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
 
   return (
     <div className="done-container selection-rust">
@@ -24,11 +24,9 @@ export default function Done({ onNavigate }) {
           <div className="done-header-right">
             {/* Language selector */}
             <div className="done-lang-switcher">
-              <button type="button" className="lang-active">EN</button>
+              <button type="button" className={language === 'en' ? 'lang-active' : ''} onClick={() => toggleLanguage('en')}>EN</button>
               <span className="lang-sep">/</span>
-              <button type="button">हिन्दी</button>
-              <span className="lang-sep">/</span>
-              <button type="button">বাংলা</button>
+              <button type="button" className={language === 'hi' ? 'lang-active' : ''} onClick={() => toggleLanguage('hi')}>हिन्दी</button>
             </div>
 
             {/* Listen / Audio Assistant */}

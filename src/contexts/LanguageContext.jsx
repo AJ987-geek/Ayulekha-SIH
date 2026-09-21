@@ -17,6 +17,7 @@ export const LanguageProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('ayulekha_lang', language);
+    document.documentElement.lang = language === 'hi' ? 'hi' : 'en';
   }, [language]);
 
   const t = (key, returnArray = false) => {

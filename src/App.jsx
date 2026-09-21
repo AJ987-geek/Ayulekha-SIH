@@ -40,7 +40,7 @@ function AppRoutes() {
     <div className="app-shell">
       <InformedConsent
         onNavigate={handleNavigate}
-        patientId={pageProps.patientId}
+        email={pageProps.email}
       />
     </div>
   );
