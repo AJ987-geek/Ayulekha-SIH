@@ -35,13 +35,16 @@ function AppRoutes() {
     );
   }
 
-  if (currentPage === 'consent') {
-    return (
-      <div className="app-shell">
-        <InformedConsent onNavigate={handleNavigate} />
-      </div>
-    );
-  }
+ if (currentPage === 'consent') {
+  return (
+    <div className="app-shell">
+      <InformedConsent
+        onNavigate={handleNavigate}
+        patientId={pageProps.patientId}
+      />
+    </div>
+  );
+}
 
   if (currentPage === 'emergency') {
     return (
