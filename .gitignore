@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
 dist
 dist-ssr
@@ -23,5 +24,16 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python
+backend/.venv/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment & secret files
 backend/.env
-backend/__pycache__/
+.env
+
+# Tooling cache
+.kilo/

@@ -35,16 +35,16 @@ function AppRoutes() {
     );
   }
 
- if (currentPage === 'consent') {
-  return (
-    <div className="app-shell">
-      <InformedConsent
-        onNavigate={handleNavigate}
-        email={pageProps.email}
-      />
-    </div>
-  );
-}
+  if (currentPage === 'consent') {
+    return (
+      <div className="app-shell">
+        <InformedConsent
+          onNavigate={handleNavigate}
+          email={pageProps.email}
+        />
+      </div>
+    );
+  }
 
   if (currentPage === 'emergency') {
     return (
@@ -65,7 +65,10 @@ function AppRoutes() {
   if (currentPage === 'doctor') {
     return (
       <div className="app-shell">
-        <DoctorSummary summary={pageProps.summary} onComplete={() => handleNavigate('records')} />
+        <DoctorSummary
+          summary={pageProps.summary}
+          onComplete={() => handleNavigate('records')}
+        />
       </div>
     );
   }

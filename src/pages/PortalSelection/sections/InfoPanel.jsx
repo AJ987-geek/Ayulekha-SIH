@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import './InfoPanel.css';
 
-function PatientForm({ onNavigate }) {
+function PatientForm() {
   const [otpSent, setOtpSent] = useState(false);
   const { language, toggleLanguage, t } = useLanguage();
 
@@ -182,7 +182,7 @@ function AdminForm() {
   );
 }
 
-export default function InfoPanel({ activeRole, onRoleSwitch, onNavigate }) {
+export default function InfoPanel({ activeRole, onRoleSwitch }) {
   const localRole = activeRole || 'patient';
   const { t } = useLanguage();
 
@@ -247,7 +247,7 @@ export default function InfoPanel({ activeRole, onRoleSwitch, onNavigate }) {
           ))}
         </div>
 
-        {localRole === 'patient' && <PatientForm onNavigate={onNavigate} />}
+        {localRole === 'patient' && <PatientForm />}
         {localRole === 'doctor' && <DoctorForm />}
         {localRole === 'admin' && <AdminForm />}
       </div>

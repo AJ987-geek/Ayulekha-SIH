@@ -5,5 +5,4 @@ langchain-groq>=0.2
 langchain-anthropic>=0.2
 langgraph>=0.2
 pydantic-settings>=2.6
-
 twilio==8.1.0
