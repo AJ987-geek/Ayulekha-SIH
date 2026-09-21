@@ -1,8 +1,11 @@
 import { useState } from 'react';
+
 import './index.css';
 import { PatientProvider } from './contexts/PatientContext';
+
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
+
 import PortalSelection from './pages/PortalSelection/PortalSelection';
 import RapidTriage from './pages/RapidTriage/RapidTriage';
 import EmergencyActive from './pages/EmergencyActive/EmergencyActive';
@@ -27,6 +30,10 @@ function AppRoutes() {
     setPageProps(props);
   };
 
+  // -----------------------------------------
+  // PATIENT IDENTITY
+  // -----------------------------------------
+
   if (currentPage === 'identity') {
     return (
       <div className="app-shell">
@@ -35,16 +42,27 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // CONSENT
+  // -----------------------------------------
+
   if (currentPage === 'consent') {
     return (
       <div className="app-shell">
         <InformedConsent
           onNavigate={handleNavigate}
           email={pageProps.email}
+          patientId={pageProps.patientId}
+          patient={pageProps.patient}
+          medicalHistory={pageProps.medicalHistory}
         />
       </div>
     );
   }
+
+  // -----------------------------------------
+  // EMERGENCY
+  // -----------------------------------------
 
   if (currentPage === 'emergency') {
     return (
@@ -54,6 +72,10 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // YOUR STORY
+  // -----------------------------------------
+
   if (currentPage === 'story') {
     return (
       <div className="app-shell">
@@ -61,6 +83,10 @@ function AppRoutes() {
       </div>
     );
   }
+
+  // -----------------------------------------
+  // DOCTOR SUMMARY
+  // -----------------------------------------
 
   if (currentPage === 'doctor') {
     return (
@@ -73,6 +99,10 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // RECORDS
+  // -----------------------------------------
+
   if (currentPage === 'records') {
     return (
       <div className="app-shell">
@@ -80,6 +110,10 @@ function AppRoutes() {
       </div>
     );
   }
+
+  // -----------------------------------------
+  // DONE
+  // -----------------------------------------
 
   if (currentPage === 'done') {
     return (
@@ -89,6 +123,10 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // PATIENT DASHBOARD
+  // -----------------------------------------
+
   if (currentPage === 'dashboard') {
     return (
       <div className="app-shell">
@@ -96,6 +134,10 @@ function AppRoutes() {
       </div>
     );
   }
+
+  // -----------------------------------------
+  // NEW APPOINTMENT
+  // -----------------------------------------
 
   if (currentPage === 'new-appointment') {
     return (
@@ -105,6 +147,10 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // DOCTOR REGISTRATION
+  // -----------------------------------------
+
   if (currentPage === 'doctor-registration') {
     return (
       <div className="app-shell">
@@ -112,6 +158,10 @@ function AppRoutes() {
       </div>
     );
   }
+
+  // -----------------------------------------
+  // DOCTOR ONBOARDING
+  // -----------------------------------------
 
   if (currentPage === 'doctor-onboarding') {
     return (
@@ -121,6 +171,10 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // DOCTOR DASHBOARD
+  // -----------------------------------------
+
   if (currentPage === 'doctor-dashboard') {
     return (
       <div className="app-shell">
@@ -129,6 +183,10 @@ function AppRoutes() {
     );
   }
 
+  // -----------------------------------------
+  // RAPID TRIAGE
+  // -----------------------------------------
+
   if (currentPage === 'triage') {
     return (
       <div className="app-shell">
@@ -136,6 +194,10 @@ function AppRoutes() {
       </div>
     );
   }
+
+  // -----------------------------------------
+  // DEFAULT / PORTAL
+  // -----------------------------------------
 
   return (
     <div className="app-shell">
