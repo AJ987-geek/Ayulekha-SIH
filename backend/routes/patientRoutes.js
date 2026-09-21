@@ -2,14 +2,23 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const twilio = require('twilio');
+const nodemailer = require('nodemailer');
 
 const router = express.Router();
+const emailOtps = {};
+const emailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
+    }
+});
 const twilioClient = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
 );
 
-const TWILIO_VERIFY_SID = process.env.TWILIO_VERIFY_SID;
+
 
 const patientsFile = path.join(__dirname, '../data/patients.json');
 
@@ -41,40 +50,56 @@ function findPatient(value) {
 // 1. VERIFY PATIENT
 // ==========================================
 
-router.post('/verify', (req, res) => {
-    const { value } = req.body;
+// ==========================================
+// 3. VERIFY EMAIL OTP
+// ==========================================
 
-    if (!value) {
+router.post('/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
         return res.status(400).json({
             success: false,
-            message: 'ABHA or mobile number is required'
+            message: 'Email and OTP are required'
         });
     }
 
-    try {
-        const patient = findPatient(value);
+    const storedOtp = emailOtps[email];
 
-        if (!patient) {
-            return res.status(404).json({
-                success: false,
-                message: 'Patient not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Patient verified successfully',
-            patient
-        });
-
-    } catch (error) {
-        console.error('Patient verification error:', error);
-
-        res.status(500).json({
+    if (!storedOtp) {
+        return res.status(400).json({
             success: false,
-            message: 'Unable to verify patient'
+            message: 'No OTP found. Please request a new OTP.'
         });
     }
+
+    if (Date.now() > storedOtp.expiresAt) {
+        delete emailOtps[email];
+
+        return res.status(400).json({
+            success: false,
+            message: 'OTP expired. Please request a new OTP.'
+        });
+    }
+
+    if (storedOtp.otp !== otp.trim()) {
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid OTP'
+        });
+    }
+
+    // OTP is correct
+    delete emailOtps[email];
+
+    console.log(`[AUTH] Email verified successfully: ${email}`);
+
+    res.json({
+        success: true,
+        message: 'Email verified successfully',
+        verified: true,
+        email
+    });
 });
 
 
@@ -82,62 +107,55 @@ router.post('/verify', (req, res) => {
 // 2. SEND REAL OTP USING TWILIO
 // ==========================================
 
-router.post('/send-otp', async (req, res) => {
-    const { value } = req.body;
+// ==========================================
+// 2. SEND OTP TO EMAIL
+// ==========================================
 
-    if (!value) {
+router.post('/send-otp', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
         return res.status(400).json({
             success: false,
-            message: 'ABHA or mobile number is required'
+            message: 'Email address is required'
         });
     }
 
     try {
+        // Generate a 6-digit OTP
+        const otp = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
 
-        // Find patient first
-        const patient = findPatient(value);
+        // Store OTP for 5 minutes
+        emailOtps[email] = {
+            otp,
+            expiresAt: Date.now() + 5 * 60 * 1000
+        };
 
-        if (!patient) {
-            return res.status(404).json({
-                success: false,
-                message: 'Patient not found'
-            });
-        }
+        await emailTransporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'AyuLekha Email Verification OTP',
+            text: `Your AyuLekha verification OTP is ${otp}. This OTP is valid for 5 minutes.`
+        });
 
-        // Patient JSON contains Indian mobile number
-        // Convert it to E.164 format for Twilio
-        const phone = `+91${patient.mobile}`;
-
-        const verification = await twilioClient.verify.v2
-            .services(verifyServiceSid)
-            .verifications
-            .create({
-                to: phone,
-                channel: 'sms'
-            });
-
-        console.log(
-            `[OTP] Sent to ${phone} | Status: ${verification.status}`
-        );
+        console.log(`[OTP] Email sent to ${email}`);
 
         res.json({
             success: true,
-            message: 'OTP sent successfully to registered mobile number'
+            message: 'OTP sent successfully to your email'
         });
 
     } catch (error) {
+    console.error('[Email OTP Error]');
+    console.error(error);
 
-        console.error(
-            '[Twilio Send OTP Error]',
-            error.code,
-            error.message
-        );
-
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Failed to send OTP'
-        });
-    }
+    res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to send OTP email'
+    });
+}
 });
 
 
