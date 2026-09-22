@@ -49,7 +49,7 @@ export default function InformedConsent({ onNavigate, email }) {
       const patientIdentifier = email || 'GUEST';
 
       const response = await fetch(
-        'http://localhost:5000/api/patients/consent',
+        '/api/patients/consent',
         {
           method: 'POST',
           headers: {
@@ -72,7 +72,7 @@ export default function InformedConsent({ onNavigate, email }) {
 
       // Carry the verified email to the next page.
       if (onNavigate) {
-        onNavigate('story', {
+        onNavigate('records', {
           email: email,
           patientId: patientIdentifier,
         });

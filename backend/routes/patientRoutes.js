@@ -2,8 +2,27 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const multer = require('multer');
 
 const router = express.Router();
+
+// ==========================================
+// MULTER SETUP
+// ==========================================
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
 
 // ==========================================
 // FILE PATHS
@@ -230,13 +249,14 @@ router.post('/register', (req, res) => {
         name,
         email,
         age,
-        gender
+        gender,
+        allergies
     } = req.body;
 
-    if (!abha || !name || !email) {
+    if (!abha || !name) {
         return res.status(400).json({
             success: false,
-            message: 'ABHA ID, name and email are required'
+            message: 'ABHA ID and name are required'
         });
     }
 
@@ -250,9 +270,25 @@ router.post('/register', (req, res) => {
         );
 
         if (existingPatient) {
-            return res.status(409).json({
-                success: false,
-                message: 'Patient with this ABHA ID already exists'
+            existingPatient.name = name.trim();
+            if (email) existingPatient.email = email.trim();
+            if (age) existingPatient.age = age;
+            if (gender) existingPatient.gender = gender;
+            if (allergies) existingPatient.allergies = allergies;
+
+            fs.writeFileSync(
+                patientsFile,
+                JSON.stringify(patients, null, 2)
+            );
+
+            console.log(
+                `[PATIENT] Existing patient updated: ${existingPatient.id}`
+            );
+
+            return res.status(200).json({
+                success: true,
+                message: 'Patient updated successfully',
+                patient: existingPatient
             });
         }
 
@@ -268,6 +304,7 @@ router.post('/register', (req, res) => {
             email: email.trim(),
             age: age || null,
             gender: gender || null,
+            allergies: allergies || null,
             medicalHistory: []
         };
 
@@ -424,5 +461,60 @@ router.post('/story', (req, res) => {
 // ==========================================
 // EXPORT ROUTER
 // ==========================================
+
+// ==========================================
+// 8. UPLOAD PATIENT RECORDS
+// ==========================================
+router.post(
+    '/:id/records',
+    upload.array('records', 10),
+    (req, res) => {
+        const { id } = req.params;
+
+        try {
+            const data = fs.readFileSync(patientsFile, 'utf-8');
+            const patients = JSON.parse(data);
+
+            const idx = patients.findIndex(
+                (p) => p.id === id || p.rollNumber === id || p.abha === id
+            );
+
+            if (idx === -1) {
+                return res.status(404).json({ error: 'Patient not found' });
+            }
+
+            if (!patients[idx].records) {
+                patients[idx].records = [];
+            }
+
+            if (req.files && req.files.length > 0) {
+                const newRecords = req.files.map(file => ({
+                    originalName: file.originalname,
+                    filename: file.filename,
+                    path: `/uploads/${file.filename}`,
+                    mimetype: file.mimetype,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString()
+                }));
+
+                patients[idx].records.push(...newRecords);
+
+                fs.writeFileSync(
+                    patientsFile,
+                    JSON.stringify(patients, null, 2),
+                    'utf-8'
+                );
+            }
+
+            return res.json({
+                message: 'Records uploaded successfully',
+                records: patients[idx].records
+            });
+        } catch (error) {
+            console.error('Error uploading records:', error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+);
 
 module.exports = router;

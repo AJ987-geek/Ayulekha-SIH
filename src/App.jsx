@@ -79,7 +79,11 @@ function AppRoutes() {
   if (currentPage === 'story') {
     return (
       <div className="app-shell">
-        <YourStory onNavigate={handleNavigate} />
+        <YourStory
+          onNavigate={handleNavigate}
+          email={pageProps.email}
+          patientId={pageProps.patientId}
+        />
       </div>
     );
   }
@@ -93,7 +97,8 @@ function AppRoutes() {
       <div className="app-shell">
         <DoctorSummary
           summary={pageProps.summary}
-          onComplete={() => handleNavigate('records')}
+          patientId={pageProps.patientId}
+          onComplete={() => handleNavigate('identity')}
         />
       </div>
     );
@@ -106,7 +111,11 @@ function AppRoutes() {
   if (currentPage === 'records') {
     return (
       <div className="app-shell">
-        <Records onNavigate={handleNavigate} />
+        <Records
+          onNavigate={handleNavigate}
+          email={pageProps.email}
+          patientId={pageProps.patientId}
+        />
       </div>
     );
   }

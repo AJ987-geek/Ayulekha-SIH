@@ -1,14 +1,64 @@
 import { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import TimelineNav from '../../components/TimelineNav/TimelineNav';
 import './Records.css';
 
-export default function Records({ onNavigate }) {
+export default function Records({ onNavigate, email, patientId }) {
   const { language, toggleLanguage, t } = useLanguage();
+  const [files, setFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [documentType, setDocumentType] = useState('auto');
 
-  const handleNext = (e) => {
+  const handleFileChange = (e) => {
+    if (e.target.files) {
+      setFiles((prev) => [...prev, ...Array.from(e.target.files)]);
+    }
+  };
+
+  const removeFile = (indexToRemove) => {
+    setFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
+  };
+
+  const handleSkip = (e) => {
     e.preventDefault();
     if (onNavigate) {
-      onNavigate('done');
+      onNavigate('story', { email, patientId });
+    }
+  };
+
+  const handleNext = async (e) => {
+    e.preventDefault();
+    
+    if (files.length === 0) {
+      return handleSkip(e);
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('records', file);
+    });
+    formData.append('document_type', documentType);
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_URL}/api/patients/${patientId}/records`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      if (onNavigate) {
+        onNavigate('story', { email, patientId });
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload records. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -47,25 +97,7 @@ export default function Records({ onNavigate }) {
           </div>
         </div>
 
-        <div className="records-nav-wrapper">
-          <div className="records-nav-inner">
-            <nav className="records-nav-rail">
-              <a href="#" className="nav-item-records">{t('records.nav1')}</a>
-              <span className="nav-sep-records">•</span>
-              <a href="#" className="nav-item-records">{t('records.nav2')}</a>
-              <span className="nav-sep-records">•</span>
-              <a href="#" className="nav-item-records">{t('records.nav3')}</a>
-              <span className="nav-sep-records">•</span>
-              <a href="#" className="nav-item-records nav-active-records" aria-current="page">
-                <span className="nav-active-dot-records"></span>
-                {t('records.nav4')}
-              </a>
-              <span className="nav-sep-records">•</span>
-              <a href="#" className="nav-item-records">{t('records.nav5')}</a>
-            </nav>
-          </div>
-          <div className="records-nav-border"></div>
-        </div>
+        <TimelineNav currentStep="records" onNavigate={onNavigate} />
       </header>
 
       {/* Main Content */}
@@ -109,8 +141,27 @@ export default function Records({ onNavigate }) {
                   </div>
                 </div>
 
+                <div className="ocr-engine-selector" style={{ marginTop: '16px', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button type="button" onClick={() => setDocumentType('auto')} style={{ padding: '8px 12px', border: '1px solid #d8d3c8', borderRadius: '4px', background: documentType === 'auto' ? '#17613f' : '#fff', color: documentType === 'auto' ? '#fff' : '#2b3a67', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Auto (Mixed)
+                  </button>
+                  <button type="button" onClick={() => setDocumentType('lab_report')} style={{ padding: '8px 12px', border: '1px solid #d8d3c8', borderRadius: '4px', background: documentType === 'lab_report' ? '#17613f' : '#fff', color: documentType === 'lab_report' ? '#fff' : '#2b3a67', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Printed / PDF (PaddleOCR)
+                  </button>
+                  <button type="button" onClick={() => setDocumentType('prescription')} style={{ padding: '8px 12px', border: '1px solid #d8d3c8', borderRadius: '4px', background: documentType === 'prescription' ? '#17613f' : '#fff', color: documentType === 'prescription' ? '#fff' : '#2b3a67', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Handwritten (TrOCR)
+                  </button>
+                </div>
+
                 <div className="upload-action-box">
-                  <input type="file" id="camera-input" className="hidden-input" accept="image/*,application/pdf" capture="environment" />
+                  <input 
+                    type="file" 
+                    id="camera-input" 
+                    className="hidden-input" 
+                    accept="image/*,application/pdf" 
+                    multiple
+                    onChange={handleFileChange}
+                  />
                   <label htmlFor="camera-input" className="btn-take-photo focus-ring">
                     <span className="material-symbols-outlined btn-photo-icon">add_a_photo</span>
                     <span>{t('records.btnPhoto')}</span>
@@ -121,6 +172,24 @@ export default function Records({ onNavigate }) {
                   </button>
                 </div>
               </div>
+
+              {files.length > 0 && (
+                <div className="records-preview-container" style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {files.map((file, i) => (
+                    <div key={i} style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px', background: '#fff' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                        {file.type.includes('pdf') ? 'picture_as_pdf' : 'image'}
+                      </span>
+                      <span style={{ fontSize: '14px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {file.name}
+                      </span>
+                      <button type="button" onClick={() => removeFile(i)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'red' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="upload-assurance">
                 <div className="assurance-left">
@@ -144,12 +213,12 @@ export default function Records({ onNavigate }) {
 
             {/* Primary Bottom Step Flow Actions */}
             <section className="records-actions-bottom">
-              <button type="button" className="btn-skip-records focus-ring" onClick={handleNext}>
+              <button type="button" className="btn-skip-records focus-ring" onClick={handleSkip}>
                 <span className="skip-arrow">←</span>
                 <span>{t('records.btnSkip')}</span>
               </button>
-              <button type="button" className="btn-continue-records focus-ring" onClick={handleNext}>
-                <span>{t('records.btnContinue')}</span>
+              <button type="button" className="btn-continue-records focus-ring" onClick={handleNext} disabled={isUploading}>
+                <span>{isUploading ? 'Uploading...' : t('records.btnContinue')}</span>
               </button>
             </section>
 

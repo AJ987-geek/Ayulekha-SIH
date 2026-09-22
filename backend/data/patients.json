@@ -3,8 +3,9 @@
     "id": "P001",
     "name": "Rahul Sharma",
     "abha": "2510991147",
-    "age": 32,
-    "gender": "Male"
+    "age": "32",
+    "gender": "Male",
+    "allergies": "Peanuts"
   },
   {
     "id": "P002",
@@ -46,5 +47,24 @@
     "age": null,
     "gender": null,
     "medicalHistory": []
+  },
+  {
+    "id": "P007",
+    "name": "Aayush Jain",
+    "abha": "2510991327",
+    "email": "aayushkumar4808@gmail.com",
+    "age": "32",
+    "gender": "Male",
+    "medicalHistory": [],
+    "allergies": "Peanuts"
+  },
+  {
+    "id": "P4252",
+    "name": "New Student",
+    "mobile": "0000000000",
+    "abha": "2510991326",
+    "email": "aayushkumar4808@gmail.com",
+    "gender": "Unknown",
+    "age": 20
   }
 ]

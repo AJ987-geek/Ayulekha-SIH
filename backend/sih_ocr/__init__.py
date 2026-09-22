@@ -1,0 +1,1 @@
+"""Stateless medical document digitizer."""

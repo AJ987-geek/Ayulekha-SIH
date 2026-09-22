@@ -42,7 +42,7 @@ export default function PatientIdentity({ onNavigate }) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/patients/check-abha',
+        '/api/patients/check-abha',
         {
           method: 'POST',
           headers: {
@@ -129,7 +129,7 @@ export default function PatientIdentity({ onNavigate }) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/patients/send-otp',
+        '/api/patients/send-otp',
         {
           method: 'POST',
           headers: {
@@ -185,7 +185,7 @@ export default function PatientIdentity({ onNavigate }) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/patients/verify-email-otp',
+        '/api/patients/verify-email-otp',
         {
           method: 'POST',
           headers: {
@@ -262,7 +262,7 @@ export default function PatientIdentity({ onNavigate }) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/patients/register',
+        '/api/patients/register',
         {
           method: 'POST',
           headers: {
@@ -321,7 +321,7 @@ export default function PatientIdentity({ onNavigate }) {
 
     try {
       const response = await fetch(
-        'http://localhost:5000/api/patients/send-otp',
+        '/api/patients/send-otp',
         {
           method: 'POST',
           headers: {

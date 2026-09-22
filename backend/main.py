@@ -435,7 +435,19 @@ app.add_middleware(
 
 from patients import router as patients_router
 
+try:
+    from sih_ocr.routers.documents import router as documents_router
+    from sih_ocr.routers.health import router as health_router
+    OCR_ROUTERS_AVAILABLE = True
+except ImportError as e:
+    print("OCR routers not available:", e)
+    OCR_ROUTERS_AVAILABLE = False
+
 app.include_router(patients_router)
+
+if OCR_ROUTERS_AVAILABLE:
+    app.include_router(documents_router)
+    app.include_router(health_router)
 
 
 sessions: dict[str, InterviewState] = {}
