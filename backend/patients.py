@@ -145,21 +145,32 @@ def verify_email_otp(req: VerifyOtpReq):
 class RegisterPatientReq(BaseModel):
     abha: str
     email: str
+    name: Optional[str] = "New Patient"
+    age: Optional[int] = None
+    bloodGroup: Optional[str] = ""
+    allergies: Optional[str] = ""
+    gender: Optional[str] = "Unknown"
 
 @router.post("/api/patients/register")
 def register_patient(req: RegisterPatientReq):
     if not req.abha or not req.email:
         raise HTTPException(status_code=400, detail="ABHA and Email are required")
+        
+    existing_patient = find_patient(req.abha)
+    if existing_patient:
+        raise HTTPException(status_code=400, detail="User already exists")
     
     # Mock creating a new patient
     new_patient = {
         "id": f"P{datetime.utcnow().strftime('%M%S')}",
-        "name": "New Student",
+        "name": req.name,
         "mobile": "0000000000",
         "abha": req.abha,
         "email": req.email,
-        "gender": "Unknown",
-        "age": 20
+        "gender": req.gender,
+        "age": req.age,
+        "bloodGroup": req.bloodGroup,
+        "allergies": req.allergies
     }
     
     patients = []
@@ -235,6 +246,24 @@ class StoryReq(BaseModel):
 def save_story(req: StoryReq):
     if not req.patientId or not req.story:
         raise HTTPException(status_code=400, detail="Patient ID and story are required")
+        
+    patients = []
+    if os.path.exists(PATIENTS_FILE):
+        with open(PATIENTS_FILE, "r") as f:
+            patients = json.load(f)
+            
+    updated = False
+    for p in patients:
+        if p.get("id") == req.patientId:
+            p["story"] = req.story
+            p["symptoms"] = req.symptoms
+            updated = True
+            break
+            
+    if updated:
+        with open(PATIENTS_FILE, "w") as f:
+            json.dump(patients, f, indent=2)
+            
     return {"success": True, "message": "Clinical story recorded successfully", "story": {"patientId": req.patientId, "story": req.story, "symptoms": req.symptoms, "status": "recorded"}}
 
 @router.post("/api/patients/{patient_id}/records")
@@ -326,3 +355,33 @@ def download_patient_record(patient_id: str, filename: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path)
+
+@router.get("/api/patients/queue")
+def get_patient_queue():
+    patients = []
+    if os.path.exists(PATIENTS_FILE):
+        try:
+            with open(PATIENTS_FILE, "r") as f:
+                patients = json.load(f)
+        except Exception as e:
+            print("Error reading patients:", e)
+            
+    # Format patients for the queue
+    queue = []
+    for idx, p in enumerate(patients):
+        status = 'in-progress' if idx == 0 else 'waiting'
+        queue.append({
+            'token': f"B-{100+idx}",
+            'id': p.get('id', ''),
+            'name': p.get('name', 'Unknown'),
+            'age': f"{p.get('age') or '??'}y {(p.get('gender') or 'U')[0].upper()}",
+            'condition': 'Triage complete',
+            'status': status,
+            'redFlag': False,
+            'bloodGroup': p.get('bloodGroup', ''),
+            'allergies': p.get('allergies', ''),
+            'abha': p.get('abha', ''),
+            'story': p.get('story', ''),
+            'symptoms': p.get('symptoms', [])
+        })
+    return {"queue": queue}

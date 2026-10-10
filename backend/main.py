@@ -58,6 +58,31 @@ SOCRATES_ORDER = [
 ]
 
 
+SupportedLanguage = Literal["en", "hi", "pa", "mr", "bn", "ta", "ml", "te"]
+
+LANGUAGE_NAMES = {
+    "en": "English",
+    "hi": "Hindi",
+    "pa": "Punjabi (ਪੰਜਾਬੀ)",
+    "mr": "Marathi (मराठी)",
+    "bn": "Bengali (বাংলা)",
+    "ta": "Tamil (தமிழ்)",
+    "ml": "Malayalam (മലയാളം)",
+    "te": "Telugu (తెలుగు)",
+}
+
+COMPLETION_MESSAGES = {
+    "en": "Thank you. I have prepared your brief history for the doctor.",
+    "hi": "धन्यवाद। मैंने डॉक्टर के लिए आपका संक्षिप्त विवरण तैयार कर लिया है।",
+    "pa": "ਧੰਨਵਾਦ। ਮੈਂ ਡਾਕਟਰ ਲਈ ਤੁਹਾਡਾ ਸੰਖੇਪ ਇਤਿਹਾਸ ਤਿਆਰ ਕਰ ਲਿਆ ਹੈ।",
+    "mr": "धन्यवाद. मी डॉक्टरांसाठी तुमचा थोडक्यात इतिहास तयार केला आहे.",
+    "bn": "ধন্যবাদ। আমি ডাক্তারের জন্য আপনার সংক্ষিপ্ত ইতিহাস প্রস্তুত করেছি।",
+    "ta": "நன்றி. மருத்துவருக்கான உங்கள் சுருக்கமான வரலாற்றை தயாரித்துள்ளேன்.",
+    "ml": "നന്ദി. ഡോക്ടർക്കായി നിങ്ങളുടെ വിവരങ്ങൾ ഞാൻ തയ്യാറാക്കിയിട്ടുണ്ട്.",
+    "te": "ధన్యవాదాలు. డాక్టర్ కోసం మీ సంక్షిప్త వివరాలను సిద్ధం చేశాను.",
+}
+
+
 class Turn(BaseModel):
     question: str = Field(min_length=1, max_length=500)
     questionType: Literal[
@@ -66,7 +91,7 @@ class Turn(BaseModel):
         "open_ended",
     ] = "open_ended"
     options: list[str] = Field(default_factory=list, max_length=6)
-    language: Literal["en", "hi"] = "en"
+    language: SupportedLanguage = "en"
     section: str = ""
     complete: bool = False
 
@@ -207,6 +232,8 @@ def next_turn(state: InterviewState):
             "the patient's main reason for visiting today",
         )
 
+        target_lang = LANGUAGE_NAMES.get(language, "English")
+
         prompt = f"""
 You are AyuLekha, a kind, calm multilingual healthcare interviewer.
 Ask ONE brief, natural, compassionate question asking the patient for
@@ -216,8 +243,9 @@ Speak as if you are listening to a worried patient.
 Do not ask unrelated questions, combine questions, diagnose, use medical
 jargon, or sound robotic.
 
-Write in {'Hindi' if language == 'hi' else 'English'};
-a patient may answer in either language.
+CRITICAL MANDATE:
+You MUST write the question and option suggestions strictly in {target_lang.upper()}.
+Do not respond in English or Hindi if the target language is {target_lang}.
 
 Offer at most three optional suggestions only if useful.
 
@@ -333,9 +361,8 @@ Patient answers:
             return {
                 "summary": summary.model_dump(),
                 "turn": {
-                    "question": (
-                        "Thank you. I have prepared your brief "
-                        "history for the doctor."
+                    "question": COMPLETION_MESSAGES.get(
+                        language, COMPLETION_MESSAGES["en"]
                     ),
                     "questionType": "open_ended",
                     "options": [],
@@ -347,6 +374,8 @@ Patient answers:
             }
 
         section, focus = SOCRATES_FOCUS[next_domain]
+
+        target_lang = LANGUAGE_NAMES.get(language, "English")
 
         prompt = f"""
 You are AyuLekha, a kind, calm multilingual healthcare interviewer.
@@ -372,8 +401,8 @@ CRITICAL INSTRUCTIONS:
 3. Do not combine questions, diagnose, use medical jargon,
    or sound robotic.
 
-4. Write in {'Hindi' if language == 'hi' else 'English'};
-   a patient may answer in either language.
+4. CRITICAL MANDATE: You MUST write your question and suggestions strictly in {target_lang.upper()}.
+   Do not respond in English or Hindi if the target language is {target_lang}.
 
 5. Offer at most three optional short suggestions only if useful.
 
@@ -455,14 +484,14 @@ session_lock = Lock()
 
 
 class StartPayload(BaseModel):
-    language: Literal["en", "hi"] = "en"
+    language: SupportedLanguage = "en"
 
 
 class MessagePayload(BaseModel):
     conversationId: str
     text: str = Field(min_length=1, max_length=4000)
     inputType: Literal["text", "speech", "touch"]
-    language: Literal["en", "hi"]
+    language: SupportedLanguage
 
 
 class Response(Turn):

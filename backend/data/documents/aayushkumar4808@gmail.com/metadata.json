@@ -250,5 +250,572 @@
       }
     ],
     "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T05:43:08.526189Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-1 | 10 day |  |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day |  |\n| 3 | Ondem 4 | 1 tab | 1\u2011s.os | Not legible |  |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day |  |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day |  |\n\n### Prescription Summary\n- Five medications are prescribed, most for a 10\u2011day course.  \n- \u201cOndem\u202f4\u201d is ordered as needed (s.os) and its duration is not stated.  \n- All other dosing schedules and durations are clearly legible.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-1",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1\u2011s.os",
+            "Duration": "Not legible",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T05:49:15.679420Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day | Not legible |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day | Not legible |\n| 3 | Ondem 4 | 1 tab | 1-s.os | Not legible | Not legible |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day | Not legible |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day | Not legible |\n\n### Prescription Summary\n- Five medications are prescribed, each as a single tablet per dose.  \n- Four drugs have a 10\u2011day course; Ondem\u202f4 lacks a stated duration.  \n- Ondem\u202f4 is to be taken as needed (s.os); no specific administration instructions are provided for any medication.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-s.os",
+            "Duration": "Not legible",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T05:54:31.369068Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|---|---|---|---|---|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day | |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day | |\n| 3 | Ondem 4 | 1 tab | 1-s.os | Not legible | |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day | |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day | |\n\n### Prescription Summary\n- Four medications are prescribed for a 10\u2011day course; Ondem\u202f4 is taken as needed with no duration stated.  \n- All items are tablets; dosing frequency is once daily (1\u20110\u20110) except Ondem\u202f4 (as needed).  \n- No specific administration instructions (e.g., with food) are legible.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-s.os",
+            "Duration": "Not legible",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T06:17:02.140866Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day | |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day | |\n| 3 | Ondem 4 | 1 tab | 1-s.os | Not legible | |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day | |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day | |\n\n### Prescription Summary\n- Five tablet medications prescribed; four have a 10\u2011day duration.  \n- Ondem\u202f4 is indicated \u201cs.os\u201d (as needed) but its duration is not legible.  \n- No specific administration instructions (e.g., with food) are provided for any drug.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-s.os",
+            "Duration": "Not legible",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T06:19:35.691544Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day | Not legible |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day | Not legible |\n| 3 | Ondem 4 | 1 tab | 1\u2011s.os | Not legible | Not legible |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day | Not legible |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day | Not legible |\n\n### Prescription Summary\n- Five tablet medications prescribed; four have a 10\u2011day duration, Ondem\u202f4 lacks a stated duration.  \n- Ondem\u202f4 is to be taken as needed (s.os).  \n- No specific administration instructions (e.g., with food) are legible for any medication.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1\u2011s.os",
+            "Duration": "Not legible",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T06:26:21.269952Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day | Not legible |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day | Not legible |\n| 3 | Ondem 4 | 1 tab | 1-s.os | Not legible | Not legible |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day | Not legible |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day | Not legible |\n\n### Prescription Summary\n- Five tablets prescribed; four have a fixed 10\u2011day course, Ondem\u202f4 lacks a stated duration.  \n- Ondem\u202f4 is to be taken as needed (s.os); the other drugs are scheduled 1\u20110\u20110 (once daily).  \n- No specific administration instructions (e.g., with food) are legible for any medication.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-s.os",
+            "Duration": "Not legible",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": "Not legible"
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T06:35:42.519472Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-1 | 10 day |  |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day |  |\n| 3 | Ondem 4 | 1 tab | 1\u2011s.os | Not legible |  |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day |  |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day |  |\n\n### Prescription Summary\n- Five medications are prescribed; four have a fixed 10\u2011day course.  \n- \u201cOndem 4\u201d is ordered as needed (s.os) with no duration stated.  \n- All other dosing schedules (e.g., 1\u20110\u20111, 1\u20110\u20110) are clearly legible.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-1",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1\u2011s.os",
+            "Duration": "Not legible",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-09-22T06:39:00.012921Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day |  |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day |  |\n| 3 | Ondem 4 | 1 tab | 1\u2011s.os | Not legible |  |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day |  |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day |  |\n\n### Prescription Summary\n- Five tablet medications prescribed; all for a 10\u2011day course except Ondem\u202f4, which is PRN (as needed).  \n- The duration for Ondem\u202f4 is not legible.  \n- No specific administration instructions (e.g., with food) are readable for any item.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1\u2011s.os",
+            "Duration": "Not legible",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-10-10T07:31:24.321653Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|---|---|---|---|---|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day |  |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day |  |\n| 3 | Ondem 4 | 1 tab | 1-s.os |  |  |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day |  |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day |  |\n\n### Prescription Summary\n- Five medications prescribed; four for a 10\u2011day course, Ondem\u202f4 taken as needed (s.os).  \n- All doses are 1 tablet per administration.  \n- No specific administration instructions (e.g., with food) are provided.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-s.os",
+            "Duration": "",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
   }
 ]
