@@ -1,37 +1,38 @@
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* === ABDM (AYUSHMAN BHARAT) COLOUR TOKENS === */
-
-  /* Brand Colors */
-  --primary:        #1A5C38;
-  --primary-dark:   #0D3B25;
-  --primary-light:  #2D7A52;
-  --primary-hover:  #16502F;
-  --accent:         #E8631A;
-  --accent-hover:   #CC5516;
-  --accent-light:   #FFF0E8;
+  /* === AYUSHMAN BHARAT AYULEKHA DESIGN SYSTEM ALIASES === */
+  /* Primary & Brand */
+  --primary:        var(--brand-700);
+  --primary-dark:   var(--brand-900);
+  --primary-light:  var(--brand-500);
+  --primary-hover:  var(--brand-900);
+  --accent:         var(--brand-700);
+  --accent-hover:   var(--brand-900);
+  --accent-light:   var(--brand-50);
 
   /* Status Colors */
-  --success:        #2E7D32;
-  --success-light:  #E8F5E9;
-  --warning:        #F59E0B;
-  --warning-light:  #FFFBEB;
-  --error:          #D32F2F;
-  --error-light:    #FFEBEE;
-  --info:           #1565C0;
-  --info-light:     #E3F2FD;
+  --success:        var(--success);
+  --success-light:  var(--success-bg);
+  --warning:        var(--warning);
+  --warning-light:  var(--warning-bg);
+  --error:          var(--danger);
+  --error-light:    var(--danger-bg);
+  --info:           var(--info);
+  --info-light:     var(--info-bg);
 
   /* Neutrals */
-  --white:          #FFFFFF;
-  --bg-page:        #F0F7F3;
-  --bg-card:        #FFFFFF;
-  --bg-muted:       #F5F7F5;
-  --border:         #C8E0D4;
-  --border-light:   #E4EFE9;
-  --divider:        #E0EBE5;
+  --white:          var(--surface);
+  --bg-page:        var(--bg);
+  --bg-card:        var(--surface);
+  --bg-muted:       var(--brand-50);
+  --border:         var(--border);
+  --border-light:   var(--border);
+  --divider:        var(--border);
 
   /* Text */
   --text-primary:   #111827;
