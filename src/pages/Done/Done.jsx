@@ -2,7 +2,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './Done.css';
 
 export default function Done({ onNavigate }) {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, openLanguageModal, LANGUAGES, t } = useLanguage();
+  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
   return (
     <div className="done-container selection-rust">
@@ -23,14 +24,20 @@ export default function Done({ onNavigate }) {
           {/* Right: Controls & Token Chip & Avatar */}
           <div className="done-header-right">
             {/* Language selector */}
-            <div className="done-lang-switcher">
-              <button type="button" className={language === 'en' ? 'lang-active' : ''} onClick={() => toggleLanguage('en')}>EN</button>
-              <span className="lang-sep">/</span>
-              <button type="button" className={language === 'hi' ? 'lang-active' : ''} onClick={() => toggleLanguage('hi')}>हिन्दी</button>
-            </div>
+            <button 
+              type="button" 
+              className="done-lang-switcher"
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }}
+              onClick={openLanguageModal}
+              title="Select Language"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
+              <span>{currentLangObj.nativeName}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
+            </button>
 
             {/* Listen / Audio Assistant */}
-            <button className="listen-btn-done focus-ring" title="Listen / सुनें">
+            <button className="listen-btn-done focus-ring" title={t('listen') || 'Listen'}>
               <span className="material-symbols-outlined listen-icon-done">volume_up</span>
               <span className="listen-text-done">{t('done.listenAssist')}</span>
             </button>
@@ -113,7 +120,6 @@ export default function Done({ onNavigate }) {
           {/* Supporting Reassurance Paragraph */}
           <div className="done-desc-box">
             <p className="desc-en">{t('done.desc1')}</p>
-            <p className="desc-hi">{t('done.desc1Hi')}</p>
           </div>
 
           {/* CALM STATUS BLOCK */}
@@ -125,7 +131,6 @@ export default function Done({ onNavigate }) {
             
             <div className="status-wait-box">
               <p className="wait-en">{t('done.waitText1')}</p>
-              <p className="wait-hi">{t('done.waitText1Hi')}</p>
             </div>
 
             <div className="status-footer">
@@ -138,7 +143,6 @@ export default function Done({ onNavigate }) {
           <div className="done-optional-section">
             <div className="optional-text-box">
               <p className="opt-en">{t('done.optionalTitle')}</p>
-              <p className="opt-hi">{t('done.optionalTitleHi')}</p>
             </div>
 
             <div className="optional-actions">

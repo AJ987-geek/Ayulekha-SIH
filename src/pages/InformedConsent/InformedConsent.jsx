@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import './InformedConsent.css';
 
-export default function InformedConsent({ onNavigate, email }) {
-  const { language, toggleLanguage, t } = useLanguage();
+export default function InformedConsent({ onNavigate, email, patientId, patient, medicalHistory }) {
+  const { language, openLanguageModal, LANGUAGES, t } = useLanguage();
+  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
   const [consentEHR, setConsentEHR] = useState(false);
   const [consentVoice, setConsentVoice] = useState(false);
@@ -75,6 +76,8 @@ export default function InformedConsent({ onNavigate, email }) {
         onNavigate('records', {
           email: email,
           patientId: patientIdentifier,
+          patient: patient,
+          medicalHistory: medicalHistory,
         });
       }
     } catch (error) {
@@ -121,9 +124,17 @@ export default function InformedConsent({ onNavigate, email }) {
               {t('informedConsent.listenAssist')}
             </button>
 
-            <div className="lang-toggle font-mono">
-              <button type="button" className={language === 'en' ? 'active' : ''} onClick={() => toggleLanguage('en')}>EN</button> | <button type="button" className={language === 'hi' ? 'active' : ''} onClick={() => toggleLanguage('hi')}>हिन्दी</button>
-            </div>
+            <button 
+              type="button" 
+              className="lang-toggle font-mono"
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }}
+              onClick={openLanguageModal}
+              title="Select Language"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
+              <span>{currentLangObj.nativeName}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
+            </button>
 
             <div className="user-icon">
               <span className="material-symbols-outlined">

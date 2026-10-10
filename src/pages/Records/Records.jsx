@@ -3,8 +3,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import TimelineNav from '../../components/TimelineNav/TimelineNav';
 import './Records.css';
 
-export default function Records({ onNavigate, email, patientId }) {
-  const { language, toggleLanguage, t } = useLanguage();
+export default function Records({ onNavigate, email, patientId, patient, medicalHistory }) {
+  const { language, toggleLanguage, currentLangObj, openLanguageModal, t } = useLanguage();
   const [files, setFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [documentType, setDocumentType] = useState('auto');
@@ -22,7 +22,7 @@ export default function Records({ onNavigate, email, patientId }) {
   const handleSkip = (e) => {
     e.preventDefault();
     if (onNavigate) {
-      onNavigate('story', { email, patientId });
+      onNavigate('story', { email, patientId, patient, medicalHistory });
     }
   };
 
@@ -52,7 +52,7 @@ export default function Records({ onNavigate, email, patientId }) {
       }
       
       if (onNavigate) {
-        onNavigate('story', { email, patientId });
+        onNavigate('story', { email, patientId, patient, medicalHistory });
       }
     } catch (err) {
       console.error(err);
@@ -85,11 +85,17 @@ export default function Records({ onNavigate, email, patientId }) {
               <span className="listen-text-records">{t('records.listenAssist')}</span>
             </button>
 
-            <div className="records-lang-switcher">
-              <button className={`lang-btn-records focus-ring ${language === 'en' ? 'lang-active' : ''}`} type="button" onClick={() => toggleLanguage('en')}>EN</button>
-              <span className="lang-sep-records">|</span>
-              <button className={`lang-btn-records focus-ring ${language === 'hi' ? 'lang-active' : ''}`} type="button" onClick={() => toggleLanguage('hi')}>हिन्दी</button>
-            </div>
+            <button 
+              type="button"
+              className="lang-switch font-mono"
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }}
+              onClick={openLanguageModal}
+              title={t('selectLanguage') || 'Select Language'}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
+              <span>{currentLangObj?.nativeName || 'Language'}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
+            </button>
 
             <div className="user-badge-records">
               <span className="material-symbols-outlined user-icon-records">person</span>
@@ -117,7 +123,6 @@ export default function Records({ onNavigate, email, patientId }) {
             {/* Page Header Hierarchy */}
             <header className="records-page-header">
               <h1 className="records-hero-title">{t('records.heroTitle')}</h1>
-              <p className="records-hero-subtitle-hi">{t('records.heroSubtitleHi')}</p>
               <p className="records-hero-desc">{t('records.heroDesc')}</p>
             </header>
 
@@ -133,7 +138,6 @@ export default function Records({ onNavigate, email, patientId }) {
                   </div>
                   <div className="upload-text-box">
                     <h2 className="upload-title">{t('records.uploadTitle')}</h2>
-                    <p className="upload-subtitle-hi">{t('records.uploadSubtitleHi')}</p>
                     <div className="upload-note-box">
                       <span className="material-symbols-outlined note-shield-icon">verified_user</span>
                       <span>{t('records.uploadNote')}</span>

@@ -3,8 +3,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import TimelineNav from '../../components/TimelineNav/TimelineNav';
 import './YourStory.css';
 
-export default function YourStory({ onNavigate, email, patientId }) {
-  const { language, toggleLanguage } = useLanguage();
+export default function YourStory({ onNavigate, email, patientId, patient, medicalHistory }) {
+  const { language, openLanguageModal, LANGUAGES, getSpeechLang, t } = useLanguage();
 
   const [isRecording, setIsRecording] = useState(false);
   const [answer, setAnswer] = useState('');
@@ -16,13 +16,15 @@ export default function YourStory({ onNavigate, email, patientId }) {
   const recognition = useRef(null);
   const submitting = useRef(false);
 
+  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+
   const speakQuestion = (question, lang = language) => {
     if (!('speechSynthesis' in window) || !question) return;
 
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(question);
-    utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+    utterance.lang = getSpeechLang(lang);
     utterance.rate = 0.9;
 
     window.speechSynthesis.speak(utterance);
@@ -76,7 +78,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
       recognition.current?.stop();
       window.speechSynthesis?.cancel();
     };
-  }, []);
+  }, [language]);
 
   const handleMicMouseDown = () => {
     if (isRecording) {
@@ -99,8 +101,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
 
     const recognizer = new Recognition();
 
-    recognizer.lang =
-      language === 'hi' ? 'hi-IN' : 'en-IN';
+    recognizer.lang = getSpeechLang(language);
 
     recognizer.interimResults = true;
 
@@ -165,9 +166,26 @@ export default function YourStory({ onNavigate, email, patientId }) {
       setAnswer('');
 
       if (data.complete) {
+        // Save the story to the backend
+        try {
+          await fetch('/api/patients/story', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              patientId: patientId,
+              story: data.summary?.hpi || data.summary?.chiefComplaint || '',
+              symptoms: data.summary
+            })
+          });
+        } catch (e) {
+          console.error('Failed to save story to backend:', e);
+        }
+
         onNavigate?.('doctor', {
           summary: data.summary,
           patientId: patientId,
+          patient: patient,
+          medicalHistory: medicalHistory,
         });
       } else {
         speakQuestion(data.question, data.language);
@@ -208,33 +226,17 @@ export default function YourStory({ onNavigate, email, patientId }) {
 
           <div className="story-header-right">
 
-            <div className="story-lang-switcher">
-              <button
-                className={
-                  language === 'en'
-                    ? 'lang-en'
-                    : 'lang-btn focus-ring'
-                }
-                onClick={() => handleLanguageChange('en')}
-              >
-                EN
-              </button>
-
-              <span className="lang-sep">|</span>
-
-              <button
-                className={
-                  language === 'hi'
-                    ? 'lang-en'
-                    : 'lang-btn focus-ring'
-                }
-                onClick={() => handleLanguageChange('hi')}
-              >
-                हिन्दी
-              </button>
-
-              <span className="lang-sep">|</span>
-            </div>
+            <button
+              type="button"
+              className="lang-btn focus-ring"
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }}
+              onClick={openLanguageModal}
+              title={t('selectLanguage') || 'Select Language'}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
+              <span>{currentLangObj.nativeName}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
+            </button>
 
             <button
               className="listen-btn focus-ring"
@@ -254,7 +256,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
                 />
               </svg>
 
-              <span>Listen Assist / सुनें</span>
+              <span>{t('yourStory.listenAssist')}</span>
             </button>
 
             <div className="user-badge">
@@ -351,9 +353,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
           </h1>
 
           <p className="hero-subtitle">
-            {language === 'hi'
-              ? 'कृपया अपनी भाषा में आराम से उत्तर दें।'
-              : 'Please answer in the language you are most comfortable using.'}
+            {t('yourStory.heroSubtitleVoice')}
           </p>
 
         </div>
@@ -401,7 +401,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
 
           <div className="mic-instructions">
             <span className="instructions-primary">
-              Tap to speak / बोलने के लिए टैप करें
+              {t('yourStory.instructionsPrimary')}
             </span>
 
             <span className="instructions-secondary">
@@ -599,7 +599,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
                   ?.focus()
               }
             >
-              Type instead (कीबोर्ड से लिखें)
+              {t('yourStory.typeInstead')}
             </button>
 
             <span className="action-link-sep">•</span>
@@ -608,7 +608,7 @@ export default function YourStory({ onNavigate, email, patientId }) {
               type="button"
               className="action-link focus-ring"
             >
-              Tap to answer (विकल्प चुनकर उत्तर दें)
+              {t('yourStory.tapToAnswer')}
             </button>
 
           </div>

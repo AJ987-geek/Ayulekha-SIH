@@ -249,7 +249,21 @@ html[dir="rtl"] .info-panel {
   text-align: right;
 }
 
-/* Responsive mobile wrap protection */
+/* Responsive mobile-first foundation */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 button, input, select, textarea {
+  max-width: 100%;
+}
+
+img, svg, video, canvas, audio, iframe, embed, object {
   max-width: 100%;
 }

@@ -479,14 +479,88 @@
   text-decoration: underline;
 }
 
+/* ── Media Queries ── */
 @media (max-width: 900px) {
+  .hero-section-wrap {
+    padding: var(--space-lg) 0 var(--space-md);
+  }
   .hero-grid {
     grid-template-columns: 1fr;
+    padding: 0 16px;
+    gap: var(--space-xl);
+  }
+  .hero-img-wrap img, .hero-img-placeholder {
+    height: 240px;
+    max-width: 100%;
   }
   .login-card {
     position: static;
     max-width: 500px;
     margin: 0 auto;
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-left {
+    gap: var(--space-md);
+  }
+  .portal-alt-roles {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .hero-badge {
+    bottom: 10px;
+    left: 10px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .stat-card {
+    padding: var(--space-sm) var(--space-md);
+    min-width: 0;
+  }
+  .stat-card .val {
+    font-size: 18px;
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 440px) {
+  .hero-grid {
+    padding: 0 12px;
+  }
+  .hero-img-wrap img, .hero-img-placeholder {
+    height: 190px;
+    border-radius: 12px;
+  }
+  .stats-bar-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .stat-card {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stat-card:last-child {
+    border-bottom: none;
+  }
+  .login-card {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+  .otp-row {
+    gap: 6px;
+  }
+  .otp-box {
+    width: calc((100% - 30px) / 6);
+    max-width: 42px;
+    height: 44px;
+    font-size: 18px;
   }
 }

@@ -265,6 +265,13 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
     <div className="dash-body">
       <div className="app-layout">
         {/* ── SIDEBAR ── */}
+        {sidebarOpen && (
+          <div 
+            className="sidebar-backdrop"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
         <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sb-brand">
             <div className="sb-logo">

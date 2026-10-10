@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 
 export default function NewAppointment({ onNavigate }) {
   const { patient } = usePatient();
-  const { language, toggleLanguage } = useLanguage();
+  const { language, openLanguageModal, LANGUAGES, getSpeechLang, t } = useLanguage();
   const [answer, setAnswer] = useState('');
   const [conversationId, setConversationId] = useState(null);
   const [turn, setTurn] = useState(null);
@@ -18,11 +18,13 @@ export default function NewAppointment({ onNavigate }) {
   const recognition = useRef(null);
   const submitting = useRef(false);
 
+  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+
   const speakQuestion = (question, lang = language) => {
     if (!('speechSynthesis' in window) || !question) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(question);
-    utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+    utterance.lang = getSpeechLang(lang);
     utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
   };
@@ -82,7 +84,7 @@ export default function NewAppointment({ onNavigate }) {
     }
 
     const recognizer = new Recognition();
-    recognizer.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+    recognizer.lang = getSpeechLang(language);
     recognizer.interimResults = true;
     recognizer.onstart = () => setIsRecording(true);
     recognizer.onresult = (event) => {
@@ -152,12 +154,12 @@ export default function NewAppointment({ onNavigate }) {
             <div className="story-header-context">NEW APPOINTMENT · AI INTAKE</div>
           </div>
           <div className="story-header-right">
-            <div className="story-lang-switcher">
-              <button type="button" className={language === 'en' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => changeLanguage('en')}>EN</button>
-              <span className="lang-sep">|</span>
-              <button type="button" className={language === 'hi' ? 'lang-en' : 'lang-btn focus-ring'} onClick={() => changeLanguage('hi')}>हिन्दी</button>
-            </div>
-            <button type="button" className="listen-btn focus-ring" onClick={() => speakQuestion(turn?.question)} disabled={!turn}>Listen assist</button>
+            <button type="button" className="lang-btn focus-ring" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }} onClick={openLanguageModal} title="Select Language">
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
+              <span>{currentLangObj.nativeName}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
+            </button>
+            <button type="button" className="listen-btn focus-ring" onClick={() => speakQuestion(turn?.question)} disabled={!turn}>{t('yourStory.listenAssist')}</button>
             <div className="user-badge">
               <span className="status-dot"></span>
               <span>TOKEN: <strong className="token-strong">{patient ? `#${patient.id}` : '#GUEST'}</strong></span>
@@ -179,7 +181,7 @@ export default function NewAppointment({ onNavigate }) {
         <div className="story-hero">
           <div className="hero-meta"><span>YOUR STORY</span><span className="meta-dot">•</span><span className="meta-highlight">AI GUIDED</span></div>
           <h1 className="hero-title">{loading ? 'Preparing your next question…' : turn?.question || 'Your interview could not be started.'}</h1>
-          <p className="hero-subtitle">{language === 'hi' ? 'कृपया अपनी भाषा में आराम से उत्तर दें।' : 'Please answer in the language you are most comfortable using.'}</p>
+          <p className="hero-subtitle">{t('yourStory.heroSubtitleVoice')}</p>
         </div>
 
         <div className="story-mic-section">
@@ -189,7 +191,7 @@ export default function NewAppointment({ onNavigate }) {
               <span className="mic-label">{isRecording ? 'Tap to stop' : 'Tap to speak'}</span>
             </button>
           </div>
-          <div className="mic-instructions"><span className="instructions-primary">Tap to speak / बोलने के लिए टैप करें</span><span className="instructions-secondary">You can also type below.</span></div>
+          <div className="mic-instructions"><span className="instructions-primary">{t('yourStory.instructionsPrimary')}</span><span className="instructions-secondary">You can also type below.</span></div>
         </div>
 
         <div className="divider"></div>

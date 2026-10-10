@@ -792,3 +792,72 @@
   height: 16px;
   color: #ffffff;
 }
+
+/* ── Mobile Layout Overrides ── */
+@media (max-width: 640px) {
+  .story-header-inner {
+    padding: 0 14px;
+    height: 60px;
+  }
+  .story-header-context {
+    display: none;
+  }
+  .story-header-divider {
+    display: none;
+  }
+  .user-badge {
+    display: none;
+  }
+  .nav-rail-inner {
+    padding: 12px 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .story-main {
+    padding: 20px 14px;
+  }
+  .hero-title {
+    font-size: 22px;
+  }
+  .hero-subtitle {
+    font-size: 15px;
+  }
+  .mic-btn {
+    width: 104px;
+    height: 104px;
+  }
+  .mic-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .mic-pulse-ring {
+    width: 124px;
+    height: 124px;
+  }
+  .instructions-primary {
+    font-size: 16px;
+  }
+  .waveform {
+    width: 220px;
+  }
+  .transcript-text-hi {
+    font-size: 17px;
+  }
+  .transcript-text-en {
+    font-size: 15px;
+  }
+  .action-continue-btn {
+    width: 100%;
+    height: 50px;
+    font-size: 16px;
+  }
+  .action-links {
+    width: 100%;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .story-actions {
+    margin-top: 32px;
+    padding-top: 20px;
+  }
+}

@@ -403,7 +403,7 @@ export default function PatientIdentity({ onNavigate }) {
 
         {/* ── CHOICE METHOD CARDS (step === 'input') ── */}
         {step === 'input' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+          <div className="id-choice-grid">
             {/* Option 1: Roll Number Check */}
             <div
               className="card"
@@ -612,8 +612,8 @@ export default function PatientIdentity({ onNavigate }) {
 
         {/* ── STEP: ROLL NUMBER & REGISTRATION (step === 'rollNumber') ── */}
         {step === 'rollNumber' && (
-          <div className="card" style={{ padding: '32px', border: '1.5px solid var(--border)', borderRadius: '16px', background: '#fff' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          <div className="card reg-form-card" style={{ padding: '32px', border: '1.5px solid var(--border)', borderRadius: '16px', background: '#fff' }}>
+            <div className="id-registration-grid">
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                   UNIVERSITY ROLL NUMBER / विश्वविद्यालय रोल नंबर *

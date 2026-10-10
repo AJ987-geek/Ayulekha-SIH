@@ -489,3 +489,58 @@
     text-align: left;
   }
 }
+
+/* ── Mobile Layout Overrides ── */
+@media (max-width: 640px) {
+  .emergency-main {
+    padding: 20px 14px;
+  }
+  .emergency-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    gap: 12px;
+  }
+  .brand-name {
+    font-size: 19px;
+  }
+  .hero-banner {
+    margin-bottom: 24px;
+  }
+  .hero-title {
+    font-size: 24px;
+  }
+  .hero-subtitle {
+    font-size: 18px;
+  }
+  .hero-desc-en {
+    font-size: 15px;
+  }
+  .hero-desc-hi {
+    font-size: 14px;
+  }
+  .emergency-grid {
+    gap: 24px;
+  }
+  .symptom-en {
+    font-size: 16px;
+  }
+  .guidance-en {
+    font-size: 16px;
+  }
+  .location-card {
+    padding: 16px;
+  }
+  .location-val-en {
+    font-size: 17px;
+  }
+  .queue-pin {
+    font-size: 20px;
+  }
+  .call-trigger {
+    min-height: 52px;
+    padding: 12px 14px;
+  }
+  .call-en {
+    font-size: 15px;
+  }
+}
