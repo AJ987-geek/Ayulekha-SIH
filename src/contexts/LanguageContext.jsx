@@ -41,9 +41,7 @@ export const LanguageProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('ayulekha_lang', language);
-    document.documentElement.lang = language;
-    document.documentElement.setAttribute('translate', 'no');
-    document.documentElement.classList.add('notranslate');
+    applyGlobalTranslation(language);
   }, [language]);
 
   const t = (key, returnArray = false) => {
@@ -69,8 +67,42 @@ export const LanguageProvider = ({ children }) => {
     return value;
   };
 
+  const applyGlobalTranslation = (langCode) => {
+    document.documentElement.lang = langCode;
+
+    // Set or clear googtrans cookies
+    if (langCode === 'en') {
+      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+    } else {
+      document.cookie = `googtrans=/en/${langCode}; path=/;`;
+      document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname};`;
+    }
+
+    const triggerCombo = () => {
+      const combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        combo.value = langCode === 'en' ? '' : langCode;
+        combo.dispatchEvent(new Event('change'));
+        return true;
+      }
+      return false;
+    };
+
+    if (!triggerCombo()) {
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        if (triggerCombo() || count > 15) {
+          clearInterval(interval);
+        }
+      }, 200);
+    }
+  };
+
   const toggleLanguage = (lang) => {
     setLanguage(lang);
+    applyGlobalTranslation(lang);
     sessionStorage.setItem('ayulekha_lang_chosen', 'true');
   };
 
