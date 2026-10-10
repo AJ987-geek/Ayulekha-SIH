@@ -79,41 +79,15 @@ export const LanguageProvider = ({ children }) => {
 
     // Load active locale dictionary
     loadLanguageTranslations(language);
-
-    // Sync Google Translate layer if available
-    applyGlobalTranslation(language);
   }, [language, loadLanguageTranslations]);
 
-  // Google Translate cookie bridge for unindexed or external dynamic data
-  const applyGlobalTranslation = (langCode) => {
-    if (langCode === 'en') {
+  // Clean any legacy third-party translation cookies on startup
+  useEffect(() => {
+    try {
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-    } else {
-      document.cookie = `googtrans=/en/${langCode}; path=/;`;
-      document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname};`;
-    }
-
-    const triggerCombo = () => {
-      const combo = document.querySelector('.goog-te-combo');
-      if (combo) {
-        combo.value = langCode === 'en' ? '' : langCode;
-        combo.dispatchEvent(new Event('change'));
-        return true;
-      }
-      return false;
-    };
-
-    if (!triggerCombo()) {
-      let count = 0;
-      const interval = setInterval(() => {
-        count++;
-        if (triggerCombo() || count > 10) {
-          clearInterval(interval);
-        }
-      }, 200);
-    }
-  };
+    } catch {}
+  }, []);
 
   /**
    * Main Translation Function
