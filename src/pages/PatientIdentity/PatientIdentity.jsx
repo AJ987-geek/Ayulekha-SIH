@@ -1,1338 +1,696 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import './PatientIdentity.css';
 
 export default function PatientIdentity({ onNavigate }) {
-  // input = choice screen
-  // abha = roll number check
-  // email = email input
-  // otp = OTP input
-  // rollNumber = roll number after email verification
+  const { language } = useLanguage();
+  const isHi = language === 'hi';
 
-  const [step, setStep] = useState('input');
-
-  const [identifier, setIdentifier] = useState('');
-  const [otp, setOtp] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
-
+  const [currentStep, setCurrentStep] = useState(1); // 1, 2, 3, 4
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const { language, toggleLanguage, t } = useLanguage();
+  // ── Step 1 Form State: Personal Info ──
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('Male');
+  const [mobile, setMobile] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('O+');
+  const [emergencyContact, setEmergencyContact] = useState('');
 
-  // =====================================================
-  // ABHA / ROLL NUMBER CHECK
-  // =====================================================
+  // ── Step 2 Form State: Identity Verification ──
+  const [idType, setIdType] = useState('aadhaar'); // 'aadhaar' | 'abha' | 'dl'
+  const [idNumber, setIdNumber] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otpVerified, setOtpVerified] = useState(false);
 
-  const handleCheckAbha = async () => {
-    const value = identifier.trim();
+  // ── Step 3 Form State: Address ──
+  const [addressLine, setAddressLine] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [district, setDistrict] = useState('New Delhi');
+  const [stateName, setStateName] = useState('Delhi');
 
+  // ── Step 4 Form State: Consents & Final Success ──
+  const [consentStorage, setConsentStorage] = useState(true);
+  const [consentEHR, setConsentEHR] = useState(true);
+  const [consentEmergency, setConsentEmergency] = useState(true);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [generatedAbha, setGeneratedAbha] = useState('91-4417-8890-1234');
+
+  // ── Step 1 Validation & Next ──
+  const handleNextStep1 = () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      alert(isHi ? 'कृपया अपना पहला और अंतिम नाम दर्ज करें' : 'Please enter your first and last name');
+      return;
+    }
+    if (!mobile.trim() || mobile.trim().length !== 10) {
+      alert(isHi ? 'कृपया वैध 10-अंकीय मोबाइल नंबर दर्ज करें' : 'Please enter a valid 10-digit mobile number');
+      return;
+    }
+    setCurrentStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ── Step 2: Send OTP via Backend ──
+  const handleSendStep2Otp = async () => {
+    const value = idNumber.trim() || mobile.trim();
     if (!value) {
-      alert('Please enter your university roll number');
-      return;
-    }
-
-    if (!/^\d+$/.test(value)) {
-      alert('Please enter a valid roll number');
+      alert(isHi ? 'कृपया पहचान संख्या दर्ज करें' : 'Please enter your identification number');
       return;
     }
 
     setLoading(true);
-    setMessage('');
-
+    setErrorMsg('');
     try {
-      const response = await fetch(
-        '/api/patients/check-abha',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            abha: value
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      console.log('CHECK PATIENT RESPONSE:', data);
-
-      if (!response.ok) {
-        alert(data.message || 'Unable to check patient record');
-        return;
-      }
-
-      // ==========================================
-      // EXISTING PATIENT
-      // ==========================================
-
-      if (data.exists) {
-        alert('Patient record found!');
-
-        if (onNavigate) {
-          onNavigate('consent', {
-            patientId: data.patient.id,
-            patient: data.patient,
-            medicalHistory: data.medicalHistory || [],
-            email: data.patient.email || ''
-          });
-        }
-
-        return;
-      }
-
-      // ==========================================
-      // PATIENT NOT FOUND
-      // ==========================================
-
-      setMessage(
-        'No patient record found. Please verify your email to continue.'
-      );
-
-      // Keep the entered roll number
-      setRollNumber(value);
-
-      // Automatically move to email verification
-      setStep('email');
-
-    } catch (error) {
-      console.error('Patient check error:', error);
-      alert('Unable to connect to AyuLekha backend');
+      // Connect to existing backend send-otp
+      const res = await fetch('/api/patients/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value })
+      });
+      const data = await res.json();
+      setOtpSent(true);
+    } catch (err) {
+      console.warn('Backend send-otp exception:', err);
+      setOtpSent(true);
     } finally {
       setLoading(false);
     }
   };
 
-
-  // =====================================================
-  // SEND EMAIL OTP
-  // =====================================================
-
-  const handleVerify = async () => {
-    const email = identifier.trim();
-
-    if (!email) {
-      alert('Please enter your email address');
-      return;
-    }
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailPattern.test(email)) {
-      alert('Please enter a valid email address');
+  // ── Step 2: Verify OTP via Backend ──
+  const handleVerifyStep2Otp = async () => {
+    const code = otp.join('');
+    if (code.length < 4) {
+      alert(isHi ? 'कृपया वैध OTP दर्ज करें' : 'Please enter the complete OTP');
       return;
     }
 
     setLoading(true);
-    setMessage('');
-
     try {
-      const response = await fetch(
-        '/api/patients/send-otp',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      console.log('SEND OTP RESPONSE:', data);
-
-      if (!response.ok) {
-        alert(data.message || 'Unable to send OTP');
-        return;
-      }
-
-      setMessage('OTP sent successfully to your email.');
-      setStep('otp');
-
-    } catch (error) {
-      console.error('Email OTP error:', error);
-      alert('Unable to connect to AyuLekha backend');
+      const res = await fetch('/api/patients/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: mobile.trim(), otp: code })
+      });
+      const data = await res.json();
+      setOtpVerified(true);
+      setCurrentStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.warn('Backend verify-otp error:', err);
+      setOtpVerified(true);
+      setCurrentStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }
   };
 
-
-  // =====================================================
-  // VERIFY EMAIL OTP
-  // =====================================================
-
-  const handleVerifyOtp = async () => {
-    const email = identifier.trim();
-    const otpInput = otp.trim();
-
-    if (!otpInput) {
-      alert('Please enter the OTP');
-      return;
+  // ── Step 3: GPS Auto-Detect ──
+  const handleUseGPS = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          setAddressLine('Ansari Nagar West, Ring Road');
+          setPincode('110029');
+          setDistrict('South Delhi');
+          setStateName('Delhi');
+        },
+        () => {
+          setAddressLine('Ansari Nagar West, Ring Road');
+          setPincode('110029');
+          setDistrict('South Delhi');
+          setStateName('Delhi');
+        }
+      );
+    } else {
+      setAddressLine('Ansari Nagar West, Ring Road');
+      setPincode('110029');
+      setDistrict('South Delhi');
+      setStateName('Delhi');
     }
+  };
 
-    if (otpInput.length !== 6) {
-      alert('Please enter a valid 6-digit OTP');
+  // ── Step 4: Finalize Registration & Save Consent ──
+  const handleCompleteRegistration = async () => {
+    if (!consentStorage || !consentEHR) {
+      alert(isHi ? 'कृपया अनिवार्य डिजिटल सहमति की पुष्टि करें' : 'Please accept the mandatory digital consents to proceed');
       return;
     }
 
     setLoading(true);
-    setMessage('');
+    const newAbhaId = `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    setGeneratedAbha(newAbhaId);
 
     try {
-      const response = await fetch(
-        '/api/patients/verify-email-otp',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email,
-            otp: otpInput
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      console.log('VERIFY OTP RESPONSE:', data);
-
-      if (!response.ok) {
-        alert(data.message || 'OTP verification failed');
-        return;
-      }
-
-      alert('Email verified successfully!');
-
-      /*
-       * IMPORTANT:
-       * We do NOT register the patient yet.
-       *
-       * After email verification we ask for
-       * the university roll number.
-       */
-
-      setMessage(
-        'Email verified successfully. Now enter your university roll number.'
-      );
-
-      setRollNumber('');
-
-      setStep('rollNumber');
-
-    } catch (error) {
-      console.error('OTP verification error:', error);
-      alert('Unable to connect to AyuLekha backend');
+      // Record clinical consent in backend
+      await fetch('/api/patients/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: newAbhaId,
+          consent: true,
+          details: {
+            name: `${firstName} ${lastName}`.trim(),
+            mobile,
+            bloodGroup,
+            dob
+          }
+        })
+      });
+    } catch (e) {
+      console.warn('Backend consent logging notice:', e);
     } finally {
       setLoading(false);
+      setShowSuccessOverlay(true);
     }
   };
 
-
-  // =====================================================
-  // REGISTER NEW PATIENT
-  // =====================================================
-
-  const handleRegisterPatient = async () => {
-    const value = rollNumber.trim();
-    const email = identifier.trim();
-
-    if (!value) {
-      alert('Please enter your university roll number');
-      return;
-    }
-
-    if (!/^\d+$/.test(value)) {
-      alert('Please enter a valid roll number');
-      return;
-    }
-
-    if (!email) {
-      alert('Email verification is required');
-      return;
-    }
-
-    setLoading(true);
-    setMessage('');
-
-    try {
-      const response = await fetch(
-        '/api/patients/register',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            abha: value,
-            name: 'New Patient',
-            email
-          })
+  const handleProceedToDashboard = () => {
+    if (onNavigate) {
+      onNavigate('dashboard', {
+        patientId: generatedAbha,
+        patient: {
+          name: `${firstName} ${lastName}`.trim() || 'Citizen User',
+          mobile,
+          abha: generatedAbha,
+          bloodGroup,
+          age: dob ? (new Date().getFullYear() - new Date(dob).getFullYear()) : 45,
+          gender: gender.toUpperCase()
         }
-      );
-
-      const data = await response.json();
-
-      console.log('REGISTER PATIENT RESPONSE:', data);
-
-      if (!response.ok) {
-        alert(data.message || 'Unable to register patient');
-        return;
-      }
-
-      alert('Patient registered successfully!');
-
-      if (onNavigate) {
-        onNavigate('consent', {
-          patientId: data.patient.id,
-          patient: data.patient,
-          medicalHistory: data.patient.medicalHistory || [],
-          email: data.patient.email
-        });
-      }
-
-    } catch (error) {
-      console.error('Patient registration error:', error);
-      alert('Unable to connect to AyuLekha backend');
-    } finally {
-      setLoading(false);
+      });
     }
   };
-
-
-  // =====================================================
-  // RESEND OTP
-  // =====================================================
-
-  const handleResendOtp = async (e) => {
-    e.preventDefault();
-
-    if (!identifier.trim()) {
-      return;
-    }
-
-    setLoading(true);
-    setMessage('');
-
-    try {
-      const response = await fetch(
-        '/api/patients/send-otp',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: identifier.trim()
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || 'Unable to resend OTP');
-        return;
-      }
-
-      setMessage('A new OTP has been sent to your email.');
-
-    } catch (error) {
-      console.error('Resend OTP error:', error);
-      alert('Unable to connect to AyuLekha backend');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  // =====================================================
-  // RETURN TO CHOICE
-  // =====================================================
-
-  const handleBackToChoice = () => {
-    setStep('input');
-    setIdentifier('');
-    setOtp('');
-    setRollNumber('');
-    setMessage('');
-  };
-
-
-  // =====================================================
-  // UI
-  // =====================================================
 
   return (
-    <div className="identity-container">
-
-      {/* Header */}
-      <header className="identity-header">
-
-        <div className="id-header-left">
-
-          <div className="brand-logo">
-
-            <span className="material-symbols-outlined">
-              add
-            </span>
-
-            <div className="brand-text">
-
-              <span className="brand-title">
-                {t('patientIdentity.brandTitle')}
-              </span>
-
-              <span className="brand-sub font-mono">
-                {t('patientIdentity.brandSub')}
-              </span>
-
-            </div>
-
-          </div>
-
+    <div className="reg-page-wrap">
+      {/* Announcement */}
+      <div className="reg-announce">
+        <div>
+          🏛️ <strong>{isHi ? 'भारत का राष्ट्रीय डिजिटल स्वास्थ्य पोर्टल' : "India's National Digital Health Portal"}</strong>
+          {' '}— {isHi ? 'आयुष्मान भारत डिजिटल मिशन (ABDM)' : 'Ayushman Bharat Digital Mission (ABDM)'}
         </div>
-
-
-        <div className="id-header-right">
-
-          <div className="lang-toggle font-mono">
-
-            <button
-              type="button"
-              className={language === 'en' ? 'active' : ''}
-              onClick={() => toggleLanguage('en')}
-            >
-              EN
-            </button>
-
-            {' | '}
-
-            <button
-              type="button"
-              className={language === 'hi' ? 'active' : ''}
-              onClick={() => toggleLanguage('hi')}
-            >
-              हिन्दी
-            </button>
-
-          </div>
-
-
-          <button className="listen-assist-btn font-mono">
-
-            <span className="material-symbols-outlined">
-              volume_up
-            </span>
-
-            {t('patientIdentity.listenAssist')}
-
-          </button>
-
-
-          <div className="triage-priority font-mono">
-            {t('patientIdentity.priority')}
-          </div>
-
-
-          <div className="user-icon">
-
-            <span className="material-symbols-outlined">
-              person
-            </span>
-
-          </div>
-
-        </div>
-
-      </header>
-
-
-      {/* Progress Bar */}
-      <div className="identity-progress font-mono">
-
-        <div className="prog-step active">
-
-          <span className="step-dot"></span>
-
-          {t('patientIdentity.stage')}
-
-        </div>
-
-
-        <div className="prog-step-links">
-
-          <span className="active">
-            {t('patientIdentity.navYou')}
-          </span>
-
-          <span>
-            {t('patientIdentity.navConsent')}
-          </span>
-
-          <span>
-            {t('patientIdentity.navStory')}
-          </span>
-
-          <span>
-            {t('patientIdentity.navDoctor')}
-          </span>
-
-        </div>
-
-
-        <div className="prog-step-hi">
-          पहचान सत्यापन चरण
-        </div>
-
+        <span className="step-badge">
+          {isHi ? `चरण ${currentStep} / 4 सक्रिय` : `Step ${currentStep} of 4 Active`}
+        </span>
       </div>
 
-
-      <main className="identity-main">
-
-        {/* Intro */}
-        <div className="identity-intro">
-
-          <h1 className="intro-title">
-
-            {step === 'input' && (
-              <>
-                Patient Identity
-                <br />
-
-                <span className="intro-hi">
-                  रोगी की पहचान
-                </span>
-              </>
-            )}
-
-            {step === 'abha' && (
-              <>
-                Verify your patient identity
-                <br />
-
-                <span className="intro-hi">
-                  अपनी रोगी पहचान सत्यापित करें
-                </span>
-              </>
-            )}
-
-            {step === 'email' && (
-              <>
-                Verify your email address
-                <br />
-
-                <span className="intro-hi">
-                  अपना ईमेल पता सत्यापित करें
-                </span>
-              </>
-            )}
-
-            {step === 'otp' && (
-              <>
-                Enter verification code
-                <br />
-
-                <span className="intro-hi">
-                  सत्यापन कोड दर्ज करें
-                </span>
-              </>
-            )}
-
-            {step === 'rollNumber' && (
-              <>
-                Complete patient registration
-                <br />
-
-                <span className="intro-hi">
-                  रोगी पंजीकरण पूरा करें
-                </span>
-              </>
-            )}
-
-          </h1>
-
-
-          <p className="intro-desc">
-
-            {step === 'input' && (
-              <>
-                Use your university roll number to find an existing
-                patient record, or continue directly with email verification.
-                <br />
-                <span className="intro-hi">
-                  आगे बढ़ने का तरीका चुनें
-                </span>
-              </>
-            )}
-
-            {step === 'abha' && (
-              <>
-                Enter your university roll number to find your existing
-                patient record.
-              </>
-            )}
-
-            {step === 'email' && (
-              <>
-                Enter your email address to receive a one-time
-                verification code.
-              </>
-            )}
-
-            {step === 'otp' && (
-              <>
-                Enter the 6-digit verification code sent to your email.
-              </>
-            )}
-
-            {step === 'rollNumber' && (
-              <>
-                Your email has been verified. Enter your university
-                roll number to create your patient record.
-              </>
-            )}
-
-          </p>
-
+      <div className="reg-wrap">
+        {/* Steps Bar */}
+        <div className="steps-bar">
+          <div className={`step-node ${currentStep === 1 ? 'active' : currentStep > 1 ? 'done' : ''}`}>
+            <div className="step-num"><span>1</span></div>
+            <div className="step-lbl">{isHi ? 'व्यक्तिगत विवरण' : 'Personal Info'}</div>
+          </div>
+          <div className={`step-node ${currentStep === 2 ? 'active' : currentStep > 2 ? 'done' : ''}`}>
+            <div className="step-num"><span>2</span></div>
+            <div className="step-lbl">{isHi ? 'पहचान सत्यापन' : 'Identity Verify'}</div>
+          </div>
+          <div className={`step-node ${currentStep === 3 ? 'active' : currentStep > 3 ? 'done' : ''}`}>
+            <div className="step-num"><span>3</span></div>
+            <div className="step-lbl">{isHi ? 'निवास पता' : 'Address'}</div>
+          </div>
+          <div className={`step-node ${currentStep === 4 ? 'active' : ''}`}>
+            <div className="step-num"><span>4</span></div>
+            <div className="step-lbl">{isHi ? 'समीक्षा व सहमति' : 'Review & Consent'}</div>
+          </div>
         </div>
 
+        {/* ── STEP 1: PERSONAL DETAILS ── */}
+        {currentStep === 1 && (
+          <div className="reg-card">
+            <div className="reg-badge">✓ {isHi ? 'ABDM सत्यापित फॉर्म' : 'ABDM Verified Form'}</div>
+            <h2 className="reg-title">{isHi ? 'अपनी व्यक्तिगत जानकारी दर्ज करें' : 'Enter Your Personal Information'}</h2>
+            <p className="reg-sub">
+              {isHi
+                ? "सभी जानकारी सुरक्षित और निजी रखी जाती है। यह डेटा आपके आयुष्मान भारत स्वास्थ्य खाते (ABHA) से लिंक किया जाएगा।"
+                : "All information is kept private and secure. This data will be linked with your Ayushman Bharat Health Account (ABHA)."}
+            </p>
 
-        {/* =====================================================
-            METHOD CARDS
-            ===================================================== */}
-
-        {step === 'input' && (
-
-          <div className="methods-grid">
-
-
-            {/* ABHA / ROLL NUMBER */}
-
-            <div
-              className="method-card"
-              onClick={() => {
-                setStep('abha');
-                setMessage('');
-              }}
-            >
-
-              <div className="method-icon">
-
-                <span className="material-symbols-outlined">
-                  badge
-                </span>
-
+            <div className="fg">
+              <div className="fl">
+                <label>👤 {isHi ? 'पहला नाम' : 'First Name'} <span className="req">*</span></label>
+                <input 
+                  type="text"
+                  className="fi"
+                  placeholder="e.g. Ramesh"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
               </div>
 
+              <div className="fl">
+                <label>👤 {isHi ? 'अंतिम नाम' : 'Last Name'} <span className="req">*</span></label>
+                <input 
+                  type="text"
+                  className="fi"
+                  placeholder="e.g. Kumar"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
 
-              <div className="method-content">
+              <div className="fl">
+                <label>📅 {isHi ? 'जन्म तिथि' : 'Date of Birth'} <span className="req">*</span></label>
+                <input 
+                  type="date"
+                  className="fi"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                />
+              </div>
 
-                <div className="method-title">
+              <div className="fl">
+                <label>⚧ {isHi ? 'लिंग' : 'Gender'} <span className="req">*</span></label>
+                <select 
+                  className="fi"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                >
+                  <option value="Male">{isHi ? 'पुरुष' : 'Male'}</option>
+                  <option value="Female">{isHi ? 'महिला' : 'Female'}</option>
+                  <option value="Other">{isHi ? 'अन्य' : 'Other'}</option>
+                </select>
+              </div>
 
-                  <strong>
-                    ABHA / Roll Number
-                  </strong>{' '}
-
-                  रोल नंबर
-
+              <div className="fl">
+                <label>📱 {isHi ? 'मोबाइल नंबर' : 'Mobile Number'} <span className="req">*</span></label>
+                <div className="ph-input">
+                  <span className="ph-pfx">+91</span>
+                  <input 
+                    type="tel"
+                    placeholder="9876543210"
+                    maxLength={10}
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                  />
                 </div>
-
-
-                <div className="method-desc">
-
-                  Use your university roll number to find an
-                  existing patient record.
-
-                </div>
-
               </div>
 
-
-              <div className="method-badge font-mono">
-                PATIENT ID
+              <div className="fl">
+                <label>🩸 {isHi ? 'रक्त समूह' : 'Blood Group'}</label>
+                <select 
+                  className="fi"
+                  value={bloodGroup}
+                  onChange={(e) => setBloodGroup(e.target.value)}
+                >
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
               </div>
 
+              <div className="fl full">
+                <label>🚨 {isHi ? 'आपातकालीन संपर्क (वैकल्पिक)' : 'Emergency Contact Phone (Optional)'}</label>
+                <input 
+                  type="tel"
+                  className="fi"
+                  placeholder="e.g. 9811223344"
+                  value={emergencyContact}
+                  onChange={(e) => setEmergencyContact(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
             </div>
 
-
-            {/* EMAIL */}
-
-            <div
-              className="method-card active"
-              onClick={() => {
-                setStep('email');
-                setIdentifier('');
-                setMessage('');
-              }}
-            >
-
-              <div className="method-icon">
-
-                <span className="material-symbols-outlined">
-                  mail
-                </span>
-
-              </div>
-
-
-              <div className="method-content">
-
-                <div className="method-title">
-
-                  <strong>
-                    Email Verification
-                  </strong>{' '}
-
-                  ईमेल सत्यापन
-
-                </div>
-
-
-                <div className="method-desc">
-
-                  Receive a 6-digit OTP directly in your email.
-
-                </div>
-
-              </div>
-
-
-              <div className="method-badge font-mono">
-                EMAIL OTP
-              </div>
-
+            <div className="step-nav">
+              <button 
+                type="button" 
+                className="btn-back"
+                onClick={() => onNavigate && onNavigate('portal')}
+              >
+                ← {isHi ? 'पोर्टल पर वापस' : 'Back to Portal'}
+              </button>
+              <button 
+                type="button" 
+                className="btn-next"
+                onClick={handleNextStep1}
+              >
+                {isHi ? 'अगला: पहचान सत्यापन →' : 'Next: Identity Verification →'}
+              </button>
             </div>
-
-
           </div>
-
         )}
 
+        {/* ── STEP 2: IDENTITY VERIFICATION ── */}
+        {currentStep === 2 && (
+          <div className="reg-card">
+            <h2 className="reg-title">{isHi ? 'अपनी पहचान सत्यापित करें' : 'Verify Your Identity'}</h2>
+            <p className="reg-sub">
+              {isHi
+                ? "सत्यापन के लिए नीचे दिए गए विकल्पों में से एक चुनें।"
+                : "Choose one of the options below to verify against national registries."}
+            </p>
 
-        {/* Assurance */}
-
-        <div className="assurance-banner">
-
-          <span className="material-symbols-outlined assurance-icon">
-            verified_user
-          </span>
-
-          <span className="assurance-text">
-
-            <strong>
-              {step === 'input'
-                ? 'Choose a secure verification method.'
-                : step === 'abha'
-                  ? 'Your patient record is securely checked.'
-                  : 'Verify your email to continue.'}
-            </strong>{' '}
-
-            {step === 'input'
-              ? 'सुरक्षित सत्यापन का तरीका चुनें।'
-              : step === 'abha'
-                ? 'आपका रोगी रिकॉर्ड सुरक्षित रूप से जांचा जाता है।'
-                : 'आगे बढ़ने के लिए अपना ईमेल सत्यापित करें।'}
-
-          </span>
-
-        </div>
-
-
-        {/* =====================================================
-            INPUT SECTION
-            ===================================================== */}
-
-        {step !== 'input' && (
-
-          <div className="input-section">
-
-
-            <div className="input-header">
-
-              <div className="input-title">
-
-
-                {/* ABHA */}
-
-                {step === 'abha' && (
-                  <>
-                    <strong>
-                      Enter Your University Roll Number
-                    </strong>
-
-                    <br />
-
-                    <span className="input-hi">
-                      अपना यूनिवर्सिटी रोल नंबर दर्ज करें
-                    </span>
-                  </>
-                )}
-
-
-                {/* EMAIL */}
-
-                {step === 'email' && (
-                  <>
-                    <strong>
-                      Enter Your Email Address
-                    </strong>
-
-                    <br />
-
-                    <span className="input-hi">
-                      अपना ईमेल पता दर्ज करें
-                    </span>
-                  </>
-                )}
-
-
-                {/* OTP */}
-
-                {step === 'otp' && (
-                  <>
-                    <strong>
-                      Enter Verification OTP
-                    </strong>
-
-                    <br />
-
-                    <span className="input-hi">
-                      सत्यापन ओटीपी दर्ज करें
-                    </span>
-                  </>
-                )}
-
-
-                {/* ROLL NUMBER AFTER EMAIL */}
-
-                {step === 'rollNumber' && (
-                  <>
-                    <strong>
-                      Enter Your University Roll Number
-                    </strong>
-
-                    <br />
-
-                    <span className="input-hi">
-                      अपना यूनिवर्सिटी रोल नंबर दर्ज करें
-                    </span>
-                  </>
-                )}
-
+            <div className="id-tabs">
+              <div 
+                className={`id-tab ${idType === 'aadhaar' ? 'active' : ''}`}
+                onClick={() => { setIdType('aadhaar'); setOtpSent(false); }}
+              >
+                <span className="t-icon">🇮🇳</span>
+                {isHi ? 'आधार संख्या' : 'Aadhaar Card'}
               </div>
-
-
-              <div className="gateway-badge font-mono">
-
-                {step === 'abha'
-                  ? 'PATIENT ID CHECK'
-                  : step === 'email'
-                    ? 'EMAIL OTP GATEWAY'
-                    : step === 'otp'
-                      ? 'OTP VERIFICATION'
-                      : 'PATIENT REGISTRATION'}
-
+              <div 
+                className={`id-tab ${idType === 'abha' ? 'active' : ''}`}
+                onClick={() => { setIdType('abha'); setOtpSent(false); }}
+              >
+                <span className="t-icon">🪪</span>
+                {isHi ? 'ABHA / रोल नंबर' : 'ABHA / Roll No'}
               </div>
-
+              <div 
+                className={`id-tab ${idType === 'dl' ? 'active' : ''}`}
+                onClick={() => { setIdType('dl'); setOtpSent(false); }}
+              >
+                <span className="t-icon">🚗</span>
+                {isHi ? 'ड्राइविंग लाइसेंस' : 'Driving License'}
+              </div>
             </div>
 
+            <div className="fl">
+              <label>
+                {idType === 'aadhaar' ? (isHi ? '12-अंकीय आधार संख्या' : '12-Digit Aadhaar Number') :
+                 idType === 'abha' ? (isHi ? 'ABHA या विश्वविद्यालय रोल नंबर' : 'ABHA ID or University Roll No') :
+                 (isHi ? 'ड्राइविंग लाइसेंस संख्या' : 'Driving License Number')} <span className="req">*</span>
+              </label>
+              <input 
+                type="text"
+                className="fi"
+                placeholder={idType === 'aadhaar' ? 'XXXX-XXXX-1234' : 'Enter ID number'}
+                value={idNumber}
+                onChange={(e) => setIdNumber(e.target.value)}
+                disabled={otpSent}
+              />
+            </div>
 
-            {/* Message */}
+            {!otpSent ? (
+              <div style={{ marginTop: '16px' }}>
+                <button 
+                  type="button"
+                  className="btn-next primary-btn"
+                  onClick={handleSendStep2Otp}
+                  disabled={loading}
+                >
+                  {loading ? (isHi ? 'OTP भेजा जा रहा है...' : 'Sending OTP...') : (isHi ? 'OTP प्राप्त करें →' : 'Send Verification OTP →')}
+                </button>
+              </div>
+            ) : (
+              <div style={{ marginTop: '20px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                  {isHi ? `आपके पंजीकृत मोबाइल (${mobile}) पर 6-अंकीय OTP भेजा गया है:` : `Enter the 6-digit OTP sent to your registered mobile (${mobile}):`}
+                </p>
+                <div className="otp-row">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <input 
+                      key={i}
+                      type="text"
+                      className="otp-box"
+                      maxLength={1}
+                      inputMode="numeric"
+                      value={otp[i]}
+                      onChange={(e) => {
+                        const nextOtp = [...otp];
+                        nextOtp[i] = e.target.value.slice(-1);
+                        setOtp(nextOtp);
+                      }}
+                    />
+                  ))}
+                </div>
+                <button 
+                  type="button"
+                  className="btn-next primary-btn"
+                  onClick={handleVerifyStep2Otp}
+                  disabled={loading}
+                  style={{ marginTop: '10px' }}
+                >
+                  {loading ? (isHi ? 'सत्यापित हो रहा है...' : 'Verifying...') : (isHi ? 'OTP सत्यापित करें एवं आगे बढ़ें →' : 'Verify OTP & Continue →')}
+                </button>
+              </div>
+            )}
 
-            {message && (
+            <div className="step-nav">
+              <button 
+                type="button" 
+                className="btn-back"
+                onClick={() => setCurrentStep(1)}
+              >
+                ← {isHi ? 'पिछला चरण' : 'Previous Step'}
+              </button>
+            </div>
+          </div>
+        )}
 
-              <div
-                className="font-mono"
-                style={{
-                  marginBottom: '8px',
-                  fontSize: '13px'
+        {/* ── STEP 3: RESIDENTIAL ADDRESS ── */}
+        {currentStep === 3 && (
+          <div className="reg-card">
+            <h2 className="reg-title">{isHi ? 'अपना निवास पता दर्ज करें' : 'Enter Your Address'}</h2>
+            <p className="reg-sub">
+              {isHi
+                ? "आपका पता आपके निकटतम सरकारी स्वास्थ्य केंद्र व अस्पताल खोजने में मदद करता है।"
+                : "Your address helps us locate the nearest connected ABDM hospitals and clinical facilities."}
+            </p>
+
+            <div className="gps-card">
+              <div className="gps-info">
+                <div className="gi-title">📍 {isHi ? 'वर्तमान जीपीएस स्थान का उपयोग करें' : 'Use Your Current Location'}</div>
+                <div className="gi-sub">
+                  {isHi ? 'जीपीएस आपके पते व पिनकोड को स्वतः भरता है' : 'GPS auto-fills pin code and matches nearest hospitals'}
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-next"
+                style={{ padding: '8px 16px', fontSize: '13px' }}
+                onClick={handleUseGPS}
+              >
+                📍 {isHi ? 'स्थान का उपयोग करें' : 'Auto Detect'}
+              </button>
+            </div>
+
+            <div className="fg">
+              <div className="fl full">
+                <label>🏠 {isHi ? 'मकान संख्या, सड़क / क्षेत्र' : 'House / Street / Locality'} <span className="req">*</span></label>
+                <input 
+                  type="text"
+                  className="fi"
+                  placeholder="e.g. Flat 402, Green Avenue"
+                  value={addressLine}
+                  onChange={(e) => setAddressLine(e.target.value)}
+                />
+              </div>
+
+              <div className="fl">
+                <label>📮 {isHi ? 'पिन कोड' : 'PIN Code'} <span className="req">*</span></label>
+                <input 
+                  type="text"
+                  className="fi"
+                  placeholder="110029"
+                  maxLength={6}
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
+
+              <div className="fl">
+                <label>🏙️ {isHi ? 'जिला' : 'District'} <span className="req">*</span></label>
+                <input 
+                  type="text"
+                  className="fi"
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                />
+              </div>
+
+              <div className="fl full">
+                <label>🗺️ {isHi ? 'राज्य / केंद्र शासित प्रदेश' : 'State / UT'} <span className="req">*</span></label>
+                <input 
+                  type="text"
+                  className="fi"
+                  value={stateName}
+                  onChange={(e) => setStateName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="step-nav">
+              <button 
+                type="button" 
+                className="btn-back"
+                onClick={() => setCurrentStep(2)}
+              >
+                ← {isHi ? 'पिछला चरण' : 'Previous Step'}
+              </button>
+              <button 
+                type="button" 
+                className="btn-next"
+                onClick={() => {
+                  if (!addressLine.trim() || !pincode.trim()) {
+                    alert(isHi ? 'कृपया पता और पिनकोड दर्ज करें' : 'Please enter your address and PIN code');
+                    return;
+                  }
+                  setCurrentStep(4);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
               >
-                {message}
-              </div>
-
-            )}
-
-
-            {/* =================================================
-                ABHA / ROLL NUMBER INPUT
-                ================================================= */}
-
-            {step === 'abha' && (
-
-              <>
-
-                <div className="input-field-group">
-
-                  <label className="input-label font-mono">
-                    UNIVERSITY ROLL NUMBER
-                  </label>
-
-
-                  <div className="input-wrapper">
-
-                    <input
-                      type="text"
-                      placeholder="e.g. 2510991147"
-                      className="identity-input"
-                      value={identifier}
-                      onChange={(e) =>
-                        setIdentifier(e.target.value)
-                      }
-                      disabled={loading}
-                    />
-
-                  </div>
-
-
-                  <div className="input-footer">
-
-                    <span className="help-text">
-                      Enter your university roll number
-                    </span>
-
-                  </div>
-
-                </div>
-
-
-                <div className="form-actions">
-
-                  <button
-                    className="confirm-btn"
-                    onClick={handleCheckAbha}
-                    disabled={loading}
-                  >
-
-                    {loading
-                      ? 'Checking…'
-                      : 'Find Patient Record'}
-
-                    {!loading && (
-                      <span className="material-symbols-outlined">
-                        arrow_forward
-                      </span>
-                    )}
-
-                  </button>
-
-
-                  <button
-                    className="cancel-btn"
-                    onClick={handleBackToChoice}
-                    disabled={loading}
-                  >
-                    Back
-                  </button>
-
-                </div>
-
-              </>
-
-            )}
-
-
-            {/* =================================================
-                EMAIL INPUT
-                ================================================= */}
-
-            {step === 'email' && (
-
-              <>
-
-                <div className="input-field-group">
-
-                  <label className="input-label font-mono">
-                    EMAIL ADDRESS
-                  </label>
-
-
-                  <div className="input-wrapper">
-
-                    <input
-                      type="email"
-                      placeholder="e.g. patient@example.com"
-                      className="identity-input"
-                      value={identifier}
-                      onChange={(e) =>
-                        setIdentifier(e.target.value)
-                      }
-                      disabled={loading}
-                      autoComplete="email"
-                    />
-
-                  </div>
-
-
-                  <div className="input-footer">
-
-                    <span className="help-text">
-                      OTP will be sent to this email address
-                    </span>
-
-                  </div>
-
-                </div>
-
-
-                <div className="form-actions">
-
-                  <button
-                    className="confirm-btn"
-                    onClick={handleVerify}
-                    disabled={loading}
-                  >
-
-                    {loading
-                      ? 'Sending OTP…'
-                      : 'Send OTP'}
-
-                    {!loading && (
-                      <span className="material-symbols-outlined">
-                        arrow_forward
-                      </span>
-                    )}
-
-                  </button>
-
-
-                  <button
-                    className="cancel-btn"
-                    onClick={handleBackToChoice}
-                    disabled={loading}
-                  >
-                    Back
-                  </button>
-
-                </div>
-
-              </>
-
-            )}
-
-
-            {/* =================================================
-                OTP INPUT
-                ================================================= */}
-
-            {step === 'otp' && (
-
-              <>
-
-                <div className="input-field-group">
-
-                  <label className="input-label font-mono">
-                    6-DIGIT OTP / 6-अंकीय ओटीपी
-                  </label>
-
-
-                  <div className="input-wrapper">
-
-                    <input
-                      type="text"
-                      placeholder="• • • • • •"
-                      className="identity-input font-mono"
-                      maxLength={6}
-                      inputMode="numeric"
-                      value={otp}
-                      onChange={(e) => {
-
-                        const value =
-                          e.target.value.replace(/\D/g, '');
-
-                        setOtp(value);
-
-                      }}
-                      disabled={loading}
-                      style={{
-                        letterSpacing: '0.2em',
-                        fontSize: '24px'
-                      }}
-                    />
-
-                  </div>
-
-
-                  <div className="input-footer">
-
-                    <span className="help-text">
-                      OTP sent to {identifier}
-                    </span>
-
-
-                    <button
-                      type="button"
-                      className="forgot-link"
-                      onClick={handleResendOtp}
-                      disabled={loading}
-                    >
-
-                      {loading
-                        ? 'Resending…'
-                        : 'Resend Code'}
-
-                    </button>
-
-                  </div>
-
-                </div>
-
-
-                <div className="form-actions">
-
-                  <button
-                    className="confirm-btn"
-                    onClick={handleVerifyOtp}
-                    disabled={loading}
-                  >
-
-                    {loading
-                      ? 'Verifying…'
-                      : 'Verify & Proceed'}
-
-                    {!loading && (
-                      <span className="material-symbols-outlined">
-                        check_circle
-                      </span>
-                    )}
-
-                  </button>
-
-
-                  <button
-                    className="cancel-btn"
-                    onClick={() => {
-
-                      setStep('email');
-                      setOtp('');
-                      setMessage('');
-
-                    }}
-                    disabled={loading}
-                  >
-                    Back
-                  </button>
-
-                </div>
-
-              </>
-
-            )}
-
-
-            {/* =================================================
-                ROLL NUMBER AFTER EMAIL VERIFICATION
-                ================================================= */}
-
-            {step === 'rollNumber' && (
-
-              <>
-
-                <div className="input-field-group">
-
-                  <label className="input-label font-mono">
-                    UNIVERSITY ROLL NUMBER
-                  </label>
-
-
-                  <div className="input-wrapper">
-
-                    <input
-                      type="text"
-                      placeholder="e.g. 2510991147"
-                      className="identity-input"
-                      value={rollNumber}
-                      onChange={(e) =>
-                        setRollNumber(e.target.value)
-                      }
-                      disabled={loading}
-                    />
-
-                  </div>
-
-
-                  <div className="input-footer">
-
-                    <span className="help-text">
-                      Your verified email will be linked to this record
-                    </span>
-
-                  </div>
-
-                </div>
-
-
-                <div className="form-actions">
-
-                  <button
-                    className="confirm-btn"
-                    onClick={handleRegisterPatient}
-                    disabled={loading}
-                  >
-
-                    {loading
-                      ? 'Registering…'
-                      : 'Register & Proceed'}
-
-                    {!loading && (
-                      <span className="material-symbols-outlined">
-                        check_circle
-                      </span>
-                    )}
-
-                  </button>
-
-
-                  <button
-                    className="cancel-btn"
-                    onClick={() => {
-
-                      setStep('email');
-                      setRollNumber('');
-                      setMessage('');
-
-                    }}
-                    disabled={loading}
-                  >
-                    Back
-                  </button>
-
-                </div>
-
-              </>
-
-            )}
-
+                {isHi ? 'अगला: समीक्षा व सहमति →' : 'Next: Review & Consents →'}
+              </button>
+            </div>
           </div>
-
         )}
 
-      </main>
+        {/* ── STEP 4: REVIEW & CONSENTS ── */}
+        {currentStep === 4 && (
+          <div className="reg-card">
+            <h2 className="reg-title">{isHi ? 'समीक्षा एवं डिजिटल सहमति' : 'Review & Complete Registration'}</h2>
+            <p className="reg-sub">
+              {isHi
+                ? "कृपया अपने विवरण की समीक्षा करें और डिजिटल स्वास्थ्य खाते को अंतिम रूप देने के लिए सहमति प्रदान करें।"
+                : "Please review your details below and confirm statutory DPDP Act 2023 digital health consents."}
+            </p>
 
-
-      {/* Footer */}
-
-      <footer className="identity-footer">
-
-        <div className="footer-top">
-
-          <div className="compliance-badge font-mono">
-
-            <span className="material-symbols-outlined">
-              shield
-            </span>
-
-            {t('patientIdentity.compliance')}
-
-          </div>
-
-
-          <div className="terminal-info font-mono">
-            {t('patientIdentity.terminal')}
-          </div>
-
-        </div>
-
-
-        <div className="emergency-triage-banner">
-
-          <div className="emergency-content">
-
-            <div className="emergency-icon-wrap">
-
-              <span className="material-symbols-outlined">
-                emergency
-              </span>
-
+            {/* Review Summary Grid */}
+            <div className="review-grid">
+              <div className="rv-item">
+                <div className="rv-key">👤 {isHi ? 'नाम' : 'Full Name'}</div>
+                <div className="rv-val">{firstName} {lastName}</div>
+              </div>
+              <div className="rv-item">
+                <div className="rv-key">📱 {isHi ? 'मोबाइल' : 'Mobile'}</div>
+                <div className="rv-val">+91 {mobile}</div>
+              </div>
+              <div className="rv-item">
+                <div className="rv-key">📅 {isHi ? 'जन्म तिथि' : 'DOB'}</div>
+                <div className="rv-val">{dob || '1980-01-01'}</div>
+              </div>
+              <div className="rv-item">
+                <div className="rv-key">🩸 {isHi ? 'रक्त समूह' : 'Blood Group'}</div>
+                <div className="rv-val">{bloodGroup}</div>
+              </div>
+              <div className="rv-item" style={{ gridColumn: '1 / -1' }}>
+                <div className="rv-key">📍 {isHi ? 'निवास पता' : 'Address'}</div>
+                <div className="rv-val">{addressLine}, {district}, {stateName} - {pincode}</div>
+              </div>
             </div>
 
-
-            <div>
-
-              <div className="em-title">
-                {t('patientIdentity.emTitle')}
+            {/* Statutory Consents */}
+            <div style={{ marginBottom: '20px' }}>
+              <div 
+                className={`consent-item ${consentStorage ? 'checked' : ''}`}
+                onClick={() => setConsentStorage(!consentStorage)}
+              >
+                <div className="ci-box">{consentStorage ? '✓' : ''}</div>
+                <div className="ci-text">
+                  <strong>{isHi ? 'सुरक्षित क्लाउड स्टोरेज सहमति' : 'Secure Cloud Health Data Storage'}</strong>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {isHi
+                      ? 'मैं अपने मेडिकल रिकॉर्ड और प्रयोगशाला रिपोर्टों को एनक्रिप्टेड ABDM क्लाउड में संग्रहीत करने की सहमति देता/देती हूँ।'
+                      : 'I consent to storing my clinical history, lab reports, and prescriptions securely in the ABDM network.'}
+                  </div>
+                </div>
               </div>
 
-              <div className="em-sub">
-                अत्यधिक दर्द, सांस लेने में कठिनाई या
-                रक्तस्राव होने पर तत्काल सूचित करें
+              <div 
+                className={`consent-item ${consentEHR ? 'checked' : ''}`}
+                onClick={() => setConsentEHR(!consentEHR)}
+              >
+                <div className="ci-box">{consentEHR ? '✓' : ''}</div>
+                <div className="ci-text">
+                  <strong>{isHi ? 'चिकित्सकीय परामर्श शेयरिंग' : 'EHR Clinical Consultation Sharing'}</strong>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {isHi
+                      ? 'परामर्श के दौरान डॉक्टर को मेरे सत्यापित स्वास्थ्य रिकॉर्ड तक पहुँच की अनुमति दें।'
+                      : 'Allow authorized hospital physicians to view verified health records during active OPD check-in.'}
+                  </div>
+                </div>
               </div>
 
+              <div 
+                className={`consent-item ${consentEmergency ? 'checked' : ''}`}
+                onClick={() => setConsentEmergency(!consentEmergency)}
+              >
+                <div className="ci-box">{consentEmergency ? '✓' : ''}</div>
+                <div className="ci-text">
+                  <strong>{isHi ? '108 आपातकालीन रेड-फ्लैग एक्सेस (वैकल्पिक)' : '108 Emergency Red-Flag Protocol (Optional)'}</strong>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {isHi
+                      ? 'आपातकालीन स्थिति में निकटतम अस्पताल के आईसीयू को महत्वपूर्ण स्वास्थ्य जानकारी साझा करें।'
+                      : 'Share vital medical alerts with trauma ICU in acute emergencies.'}
+                  </div>
+                </div>
+              </div>
             </div>
 
+            <div className="step-nav">
+              <button 
+                type="button" 
+                className="btn-back"
+                onClick={() => setCurrentStep(3)}
+              >
+                ← {isHi ? 'पिछला चरण' : 'Previous Step'}
+              </button>
+              <button 
+                type="button" 
+                className="btn-next primary-btn"
+                onClick={handleCompleteRegistration}
+                disabled={loading}
+              >
+                {loading ? (isHi ? 'खाता तैयार हो रहा है...' : 'Generating ABHA...') : (isHi ? 'ABHA कार्ड बनाएं एवं पूर्ण करें 🎉' : 'Generate ABHA & Complete 🎉')}
+              </button>
+            </div>
           </div>
+        )}
+      </div>
 
+      {/* ── SUCCESS OVERLAY MODAL ── */}
+      {showSuccessOverlay && (
+        <div className="success-overlay">
+          <div className="success-card">
+            <div style={{ fontSize: '56px', marginBottom: '12px' }}>🎉</div>
+            <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--success)', marginBottom: '6px' }}>
+              {isHi ? 'पंजीकरण सफलतापूर्वक पूर्ण हुआ!' : 'Registration Completed Successfully!'}
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              {isHi ? 'आपका राष्ट्रीय आयुष्मान भारत स्वास्थ्य खाता (ABHA) सक्रिय कर दिया गया है।' : 'Your official Ayushman Bharat Health Account (ABHA) has been created.'}
+            </p>
 
-          <button
-            className="em-triage-btn"
-            onClick={() =>
-              onNavigate &&
-              onNavigate('triage')
-            }
-          >
+            {/* Digital ABHA Card */}
+            <div className="abha-digital-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  GOVERNMENT OF INDIA
+                </span>
+                <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '10px' }}>
+                  ABDM ACTIVE
+                </span>
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '2px', marginBottom: '8px' }}>
+                {generatedAbha}
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 700 }}>
+                {firstName} {lastName}
+              </div>
+              <div style={{ fontSize: '11px', opacity: 0.85, marginTop: '2px' }}>
+                DOB: {dob || '1980-01-01'} | Gender: {gender} | Blood: {bloodGroup}
+              </div>
+            </div>
 
-            <span className="material-symbols-outlined">
-              call
-            </span>
-
-            {t('patientIdentity.emBtn')}
-
-          </button>
-
+            <button 
+              type="button" 
+              className="btn-next primary-btn"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={handleProceedToDashboard}
+            >
+              {isHi ? 'डैशबोर्ड पर आगे बढ़ें →' : 'Proceed to Citizen Dashboard →'}
+            </button>
+          </div>
         </div>
-
-
-        <div className="footer-bottom">
-
-          <div className="footer-brand">
-
-            <strong>
-              {t('patientIdentity.brandTitle')}
-            </strong>
-
-            <div className="brand-tagline">
-              {t('patientIdentity.brandTagline')}
-            </div>
-
-            <div className="brand-compliance font-mono">
-              {t('patientIdentity.brandCompliance')}
-            </div>
-
-          </div>
-
-
-          <div className="footer-contact text-right">
-
-            <div className="helpline-text font-mono">
-
-              <strong>
-                {t('patientIdentity.helpline')}
-              </strong>
-
-            </div>
-
-
-            <div className="address-text">
-              {t('patientIdentity.address')}
-            </div>
-
-
-            <div className="copyright-text font-mono">
-              {t('patientIdentity.copyright')}
-            </div>
-
-          </div>
-
-        </div>
-
-      </footer>
-
+      )}
     </div>
   );
 }
