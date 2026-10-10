@@ -1361,7 +1361,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                               <button
                                 type="button"
                                 className="btn-outline"
-                                style={{ fontSize: '12px', padding: '6px 14px', color: '#D32F2F', borderColor: '#ffcdd2' }}
+                                style={{ fontSize: '12px', padding: '6px 14px', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
                                 onClick={() => handleCancelAppointment(apt.id)}
                               >
                                 ✕ {isHi ? 'रद्द करें' : 'Cancel'}

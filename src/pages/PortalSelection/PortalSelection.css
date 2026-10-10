@@ -370,20 +370,26 @@
 
 .send-otp-btn {
   width: 100%;
-  padding: 12px;
-  background: var(--primary);
+  height: 52px;
+  padding: 0 24px;
+  background: var(--brand-700);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  font-weight: 600;
+  border-radius: var(--radius-btn);
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 107, 87, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .send-otp-btn:hover {
-  background: var(--primary-hover);
+  background: var(--brand-900);
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(10, 42, 35, 0.35);
 }
 
 .send-otp-btn:disabled {
