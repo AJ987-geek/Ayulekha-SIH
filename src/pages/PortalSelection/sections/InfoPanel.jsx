@@ -2,9 +2,20 @@ import { useState } from 'react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import './InfoPanel.css';
 
-function PatientForm() {
+function PatientForm({ onNavigate }) {
   const [otpSent, setOtpSent] = useState(false);
-  const { language, toggleLanguage, t } = useLanguage();
+  const [abhaId, setAbhaId] = useState('');
+  
+  // Registration states
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
+  const [allergies, setAllergies] = useState('');
+  const [gender, setGender] = useState('');
+  const [email, setEmail] = useState(''); // Need email for registration
+
+  const { language, toggleLanguage, LANGUAGES, t } = useLanguage();
 
   return (
     <div className="patient-form-container">
@@ -16,8 +27,11 @@ function PatientForm() {
         <div className="lang-selector font-mono">
           <span className="lang-label">LANG:</span>
           <select className="lang-select" value={language} onChange={(event) => toggleLanguage(event.target.value)}>
-            <option value="en">English</option>
-            <option value="hi">हिन्दी</option>
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.nativeName}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -27,7 +41,56 @@ function PatientForm() {
           <h4 className="path-title">{t('infoPanel.patient.returningTitle')}</h4>
           <p className="path-desc">{t('infoPanel.patient.returningDesc')}</p>
         </div>
-        <form className="auth-form" onSubmit={(e) => { e.preventDefault(); onNavigate && onNavigate('dashboard'); }}>
+        <form className="auth-form" onSubmit={async (e) => { 
+          e.preventDefault(); 
+          if (!abhaId) return;
+          const API_URL = import.meta.env.VITE_API_URL || '';
+
+          if (isRegistering) {
+            try {
+              const registerRes = await fetch(`${API_URL}/api/patients/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  abha: abhaId,
+                  name: name || 'New Patient',
+                  email: email || `${abhaId}@example.com`,
+                  age: age ? parseInt(age, 10) : null,
+                  bloodGroup: bloodGroup,
+                  allergies: allergies,
+                  gender: gender
+                })
+              });
+              const regData = await registerRes.json();
+              if (regData.patient) {
+                onNavigate && onNavigate('dashboard', { patient: regData.patient, patientId: regData.patient.id });
+              } else {
+                alert(regData.detail || regData.message || 'Registration failed');
+              }
+            } catch (err) {
+              console.error(err);
+              alert('Error registering');
+            }
+            return;
+          }
+
+          try {
+            const response = await fetch(`${API_URL}/api/patients/find`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ abhaNumber: abhaId })
+            });
+            const data = await response.json();
+            if (data.exists && data.patient) {
+              onNavigate && onNavigate('dashboard', { patient: data.patient, patientId: data.patient.id });
+            } else {
+              setIsRegistering(true);
+            }
+          } catch (err) {
+            console.error(err);
+            alert('Error logging in.');
+          }
+        }}>
           <div className="field-group">
             <label className="field-label font-mono" htmlFor="patient-id-input">
               {t('infoPanel.patient.abhaLabel')}
@@ -39,6 +102,8 @@ function PatientForm() {
                 id="patient-id-input"
                 placeholder={t('infoPanel.patient.abhaPlaceholder')}
                 type="text"
+                value={abhaId}
+                onChange={(e) => setAbhaId(e.target.value)}
               />
               <button
                 className="field-action-btn font-mono"
@@ -75,6 +140,50 @@ function PatientForm() {
             </span>
           </div>
 
+          {isRegistering && (
+            <div className="registration-fields" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px', padding: '15px', background: 'var(--surface-container-low)', borderRadius: '8px', border: '1px solid var(--outline-variant)' }}>
+              <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '5px' }}>NEW PATIENT REGISTRATION</div>
+              
+              <div className="field-group">
+                <label className="field-label font-mono">NAME</label>
+                <input className="swiss-field" placeholder="Full Name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+              </div>
+              
+              <div className="field-group">
+                <label className="field-label font-mono">EMAIL</label>
+                <input className="swiss-field" placeholder="Email Address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="field-group" style={{ flex: 1 }}>
+                  <label className="field-label font-mono">AGE</label>
+                  <input className="swiss-field" placeholder="Age" type="number" value={age} onChange={(e) => setAge(e.target.value)} required />
+                </div>
+                <div className="field-group" style={{ flex: 1 }}>
+                  <label className="field-label font-mono">GENDER</label>
+                  <select className="swiss-field" value={gender} onChange={(e) => setGender(e.target.value)} required>
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="field-group" style={{ flex: 1 }}>
+                  <label className="field-label font-mono">BLOOD GROUP</label>
+                  <input className="swiss-field" placeholder="e.g. O+" type="text" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="field-group">
+                <label className="field-label font-mono">ALLERGIES (Optional)</label>
+                <input className="swiss-field" placeholder="Any allergies?" type="text" value={allergies} onChange={(e) => setAllergies(e.target.value)} />
+              </div>
+            </div>
+          )}
+
           <div className="consent-row">
             <input defaultChecked className="consent-check" id="consent-check" type="checkbox" />
             <label className="consent-label" htmlFor="consent-check">
@@ -83,8 +192,8 @@ function PatientForm() {
           </div>
 
           <button className="form-submit-btn" type="submit">
-            <span className="material-symbols-outlined">login</span>
-            <span>{t('infoPanel.patient.verifyBtn')}</span>
+            <span className="material-symbols-outlined">{isRegistering ? 'person_add' : 'login'}</span>
+            <span>{isRegistering ? 'Register & Login' : t('infoPanel.patient.verifyBtn')}</span>
           </button>
         </form>
       </div>
@@ -92,55 +201,34 @@ function PatientForm() {
   );
 }
 
-function DoctorForm() {
+function DoctorForm({ onNavigate }) {
   const { t } = useLanguage();
   return (
-    <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+    <div className="auth-form doctor-direct">
       <div className="form-header simple">
         <span className="form-supertitle font-mono">{t('infoPanel.doctor.gateway')}</span>
         <h3 className="form-title">{t('infoPanel.doctor.title')}</h3>
       </div>
 
-      <div className="field-row-2">
-        <div className="field-group">
-          <label className="field-label font-mono" htmlFor="doctor-id">{t('infoPanel.doctor.idLabel')}</label>
-          <input className="swiss-field" id="doctor-id" placeholder="AIIMS-DOC-8821" required type="text" />
-        </div>
-        <div className="field-group">
-          <label className="field-label font-mono" htmlFor="room-select">{t('infoPanel.doctor.roomLabel')}</label>
-          <select className="swiss-field" id="room-select">
-            <option>Room 101 - General Medicine</option>
-            <option>Room 102 - Cardiology OPD</option>
-            <option>Room 105 - Endocrinology &amp; Diabetes</option>
-            <option>Room 108 - Orthopaedics Trauma</option>
-            <option>Room 112 - Pulmonology &amp; Chest</option>
-            <option>Room 118 - Paediatric Care</option>
-          </select>
-        </div>
+      <div className="form-info-block" style={{ marginBottom: '2rem' }}>
+        <p style={{ color: 'var(--color-on-surface-variant)', lineHeight: 1.5 }}>
+          Bypass authentication is enabled for this terminal. You can directly access the Live Clinical Dashboard.
+        </p>
       </div>
 
-      <div className="field-group">
-        <label className="field-label font-mono" htmlFor="doctor-password">{t('infoPanel.doctor.passLabel')}</label>
-        <input className="swiss-field" id="doctor-password" placeholder="••••••••••••" required type="password" />
-      </div>
-
-      <div className="form-footer-row">
-        <label className="checkbox-label">
-          <input defaultChecked type="checkbox" />
-          <span>{t('infoPanel.doctor.keepActive')}</span>
-        </label>
-        <a className="field-link" href="#">{t('infoPanel.doctor.reset')}</a>
-      </div>
-
-      <button className="form-submit-btn" type="submit">
-        <span className="material-symbols-outlined">medical_services</span>
-        <span>{t('infoPanel.doctor.authBtn')}</span>
+      <button 
+        className="form-submit-btn" 
+        onClick={() => onNavigate && onNavigate('doctor-dashboard')}
+        type="button"
+      >
+        <span className="material-symbols-outlined">dashboard</span>
+        <span>Open Clinical Dashboard</span>
       </button>
-    </form>
+    </div>
   );
 }
 
-function AdminForm() {
+function AdminForm({ onNavigate }) {
   const { t } = useLanguage();
   return (
     <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
@@ -182,7 +270,7 @@ function AdminForm() {
   );
 }
 
-export default function InfoPanel({ activeRole, onRoleSwitch }) {
+export default function InfoPanel({ activeRole, onRoleSwitch, onNavigate }) {
   const localRole = activeRole || 'patient';
   const { t } = useLanguage();
 
@@ -247,9 +335,9 @@ export default function InfoPanel({ activeRole, onRoleSwitch }) {
           ))}
         </div>
 
-        {localRole === 'patient' && <PatientForm />}
-        {localRole === 'doctor' && <DoctorForm />}
-        {localRole === 'admin' && <AdminForm />}
+        {localRole === 'patient' && <PatientForm onNavigate={onNavigate} />}
+        {localRole === 'doctor' && <DoctorForm onNavigate={onNavigate} />}
+        {localRole === 'admin' && <AdminForm onNavigate={onNavigate} />}
       </div>
     </div>
   );

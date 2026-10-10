@@ -1,68 +1,120 @@
+import React from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import './Header.css';
 
-export default function Header() {
-  const { language, toggleLanguage, t } = useLanguage();
-
-  const TICKER = t('ticker');
+export default function Header({ onNavigate }) {
+  const { language, openLanguageModal, LANGUAGES, t } = useLanguage();
+  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
+  const isHi = language === 'hi';
 
   return (
-    <header className="header">
-      <div className="header-inner">
+    <>
+      <header className="site-header">
         {/* Logo */}
-        <div className="header-logo">
-          <div className="logo-icon font-mono">AYU</div>
-          <div className="logo-text">
-            <span className="name">{t('header.title')}</span>
-            <span className="sub font-mono">{t('header.subtitle')}</span>
+        <a 
+          href="#portal" 
+          className="logo-wrap"
+          onClick={(e) => {
+            e.preventDefault();
+            if (onNavigate) onNavigate('portal');
+          }}
+        >
+          <div className="logo-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="11" r="9" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" fill="none"/>
+              <circle cx="11" cy="11" r="5.5" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none"/>
+              <line x1="11" y1="1" x2="11" y2="5" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" strokeLinecap="round"/>
+              <line x1="11" y1="17" x2="11" y2="21" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" strokeLinecap="round"/>
+              <line x1="1" y1="11" x2="5" y2="11" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" strokeLinecap="round"/>
+              <line x1="17" y1="11" x2="21" y2="11" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" strokeLinecap="round"/>
+              <circle cx="11" cy="11" r="2" fill="#E8631A"/>
+            </svg>
           </div>
-        </div>
+          <div className="logo-text">
+            <span className="logo-name">AyuLekha</span>
+            <span className="logo-tagline">
+              {isHi ? 'राष्ट्रीय डिजिटल स्वास्थ्य मिशन | भारत सरकार' : 'National Digital Health Mission | Govt. of India'}
+            </span>
+          </div>
+        </a>
 
         {/* Nav */}
-        <nav className="header-nav font-mono">
-          <a className="nav-link active" href="#">{t('header.nav.patientPortal')}</a>
-          <a className="nav-link" href="#">{t('header.nav.opdSchedule')}</a>
-          <a className="nav-link" href="#">{t('header.nav.verifyAbha')}</a>
-          <a className="nav-link" href="#">{t('header.nav.clinicalGuidelines')}</a>
+        <nav className="site-nav">
+          <a 
+            href="#portal" 
+            className="active"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) onNavigate('portal');
+            }}
+          >
+            {isHi ? 'पोर्टल होम' : 'Portal Home'}
+          </a>
+          <a 
+            href="#records"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) onNavigate('records');
+            }}
+          >
+            {isHi ? 'स्वास्थ्य रिकॉर्ड्स' : 'Health Records'}
+          </a>
+          <a 
+            href="#appointments"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) onNavigate('new-appointment');
+            }}
+          >
+            {isHi ? 'अपॉइंटमेंट' : 'Appointments'}
+          </a>
+          <a 
+            href="#doctor"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onNavigate) onNavigate('doctor-dashboard');
+            }}
+          >
+            {isHi ? 'चिकित्सक पोर्टल' : 'Doctor Portal'}
+          </a>
         </nav>
 
-        {/* Right */}
-        <div className="header-right">
-          <div className="emergency-badge font-mono">
-            <span className="em-label">{t('header.emergency')}</span>
-            <span className="em-num">{t('header.emergencyNum')}</span>
-          </div>
-          <div className="lang-switch font-mono">
-            <button 
-              className={`lang-btn ${language === 'en' ? 'active' : ''}`}
-              onClick={() => toggleLanguage('en')}
-            >
-              EN
-            </button>
-            <button 
-              className={`lang-btn ${language === 'hi' ? 'active' : ''}`}
-              onClick={() => toggleLanguage('hi')}
-            >
-              हिंदी
-            </button>
-          </div>
-          <div className="user-avatar">
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>person</span>
-          </div>
-        </div>
-      </div>
+        {/* Actions */}
+        <div className="header-actions">
+          <a href="tel:1075" className="helpline-btn">
+            <span>📞</span>
+            <span>{isHi ? '24/7 हेल्पलाइन: 1075 (टोल-फ्री)' : '24/7 Helpline: 1075 (Toll-Free)'}</span>
+          </a>
 
-      {/* Ticker */}
-      <div className="ticker-bar font-mono">
-        <div className="ticker-track">
-          {Array.isArray(TICKER) && TICKER.map((item, i) => (
-            <span key={i} className="ticker-item">
-              <span className="ticker-dot" />
-              {item}
-            </span>
-          ))}
+          <button 
+            type="button"
+            className="lang-btn" 
+            onClick={openLanguageModal}
+            title={t('selectLanguage') || 'Select Language'}
+          >
+            🌐 <span>{currentLangObj?.nativeName || 'English'} ▾</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Announcement Bar */}
+      <div className="announcement-bar">
+        <div className="badge">
+          <span>🏛️</span>
+          <span>
+            {isHi 
+              ? 'राष्ट्रीय डिजिटल स्वास्थ्य मिशन (NDHM) • अधिकृत नागरिक स्वास्थ्य पोर्टल' 
+              : 'National Digital Health Mission (NDHM) • Authorized Citizen Health Portal'}
+          </span>
+        </div>
+        <div className="badge">
+          <span>🔒</span>
+          <span>
+            {isHi 
+              ? 'DPDP अधिनियम 2023 के तहत सुरक्षित' 
+              : 'DPDP Act 2023 Compliant • 256-Bit SSL'}
+          </span>
         </div>
       </div>
-    </header>
+    </>
   );
 }

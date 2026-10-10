@@ -17,9 +17,8 @@ import Records from './pages/Records/Records';
 import Done from './pages/Done/Done';
 import PatientDashboard from './pages/PatientDashboard/PatientDashboard';
 import NewAppointment from './pages/NewAppointment/NewAppointment';
-import DoctorRegistration from './pages/DoctorRegistration/DoctorRegistration';
-import DoctorOnboarding from './pages/DoctorOnboarding/DoctorOnboarding';
 import DoctorDashboard from './pages/DoctorDashboard/DoctorDashboard';
+import LanguageModal from './components/LanguageModal/LanguageModal';
 
 function AppRoutes() {
   const [currentPage, setCurrentPage] = useState('portal');
@@ -83,6 +82,8 @@ function AppRoutes() {
           onNavigate={handleNavigate}
           email={pageProps.email}
           patientId={pageProps.patientId}
+          patient={pageProps.patient}
+          medicalHistory={pageProps.medicalHistory}
         />
       </div>
     );
@@ -98,7 +99,8 @@ function AppRoutes() {
         <DoctorSummary
           summary={pageProps.summary}
           patientId={pageProps.patientId}
-          onComplete={() => handleNavigate('identity')}
+          patient={pageProps.patient}
+          onComplete={() => handleNavigate('dashboard', { patientId: pageProps.patientId, patient: pageProps.patient })}
         />
       </div>
     );
@@ -115,6 +117,8 @@ function AppRoutes() {
           onNavigate={handleNavigate}
           email={pageProps.email}
           patientId={pageProps.patientId}
+          patient={pageProps.patient}
+          medicalHistory={pageProps.medicalHistory}
         />
       </div>
     );
@@ -139,7 +143,12 @@ function AppRoutes() {
   if (currentPage === 'dashboard') {
     return (
       <div className="app-shell">
-        <PatientDashboard onNavigate={handleNavigate} />
+        <PatientDashboard 
+          onNavigate={handleNavigate} 
+          patient={pageProps.patient} 
+          patientId={pageProps.patientId} 
+          summary={pageProps.summary}
+        />
       </div>
     );
   }
@@ -152,30 +161,6 @@ function AppRoutes() {
     return (
       <div className="app-shell">
         <NewAppointment onNavigate={handleNavigate} />
-      </div>
-    );
-  }
-
-  // -----------------------------------------
-  // DOCTOR REGISTRATION
-  // -----------------------------------------
-
-  if (currentPage === 'doctor-registration') {
-    return (
-      <div className="app-shell">
-        <DoctorRegistration onNavigate={handleNavigate} />
-      </div>
-    );
-  }
-
-  // -----------------------------------------
-  // DOCTOR ONBOARDING
-  // -----------------------------------------
-
-  if (currentPage === 'doctor-onboarding') {
-    return (
-      <div className="app-shell">
-        <DoctorOnboarding onNavigate={handleNavigate} />
       </div>
     );
   }
@@ -210,9 +195,9 @@ function AppRoutes() {
 
   return (
     <div className="app-shell">
-      <Header />
+      <Header onNavigate={handleNavigate} />
       <PortalSelection onNavigate={handleNavigate} />
-      <Footer />
+      <Footer onNavigate={handleNavigate} />
     </div>
   );
 }
@@ -221,6 +206,7 @@ export default function App() {
   return (
     <PatientProvider>
       <AppRoutes />
+      <LanguageModal />
     </PatientProvider>
   );
 }

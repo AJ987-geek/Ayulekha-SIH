@@ -117,7 +117,7 @@ export default function PortalCards({ activeRole, onRoleSwitch, onNavigate }) {
                     if (onNavigate) {
                       e.stopPropagation();
                       if (card.id === 'patient') onNavigate('triage');
-                      else if (card.id === 'doctor') onNavigate('doctor-registration');
+                      else if (card.id === 'doctor') onNavigate('doctor-dashboard');
                     }
                   }}
                 >
