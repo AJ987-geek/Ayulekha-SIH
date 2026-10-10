@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import ChatbotPanel from '../../components/Chatbot/ChatbotPanel';
 import './PatientDashboard.css';
 
 export default function PatientDashboard({ onNavigate, patient, patientId, summary }) {
@@ -10,6 +11,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
   // 'home' | 'records' | 'appointments' | 'ai' | 'profile' | 'notifications' | 'settings'
   const [activeSection, setActiveSection] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   // ── Patient Info ──
   const citizenName = patient?.name || 'Ram Kumar Sharma';
@@ -671,7 +673,13 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               <span>{t('patientDashboard.navAppointments', 'Appointments')}</span>
             </a>
 
-
+            <a
+              href="#ai-assistant"
+              className={`sb-link ${isChatbotOpen ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); setIsChatbotOpen(true); setSidebarOpen(false); }}
+            >
+              <span>{t('patientDashboard.navAiAssistant', 'AI Assistant')}</span>
+            </a>
 
             <a
               href="#profile"
@@ -680,16 +688,6 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
             >
 
               <span>{t('patientDashboard.navProfile', 'Profile')}</span>
-            </a>
-
-            <a
-              href="#notifications"
-              className={`sb-link ${activeSection === 'notifications' ? 'active' : ''}`}
-              onClick={(e) => { e.preventDefault(); setActiveSection('notifications'); setSidebarOpen(false); }}
-            >
-
-              <span>{t('patientDashboard.navNotifications', 'Notifications')}</span>
-              <span className="sb-badge">2</span>
             </a>
 
             <a
@@ -1544,21 +1542,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               </section>
             )}
 
-            {/* ════ SECTION 6 & 7: NOTIFICATIONS & SETTINGS ════ */}
-            {activeSection === 'notifications' && (
-              <section className="ds-section">
-                <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px' }}>Notifications</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div className="card" style={{ padding: '14px', border: '1px solid var(--border)' }}>
-                    <strong>📅 OPD Appointment Confirmed</strong>: AIIMS New Delhi for Today, 09:30 AM (Token: {appointment.token}).
-                  </div>
-                  <div className="card" style={{ padding: '14px', border: '1px solid var(--border)' }}>
-                    <strong>📑 OCR Record Indexing</strong>: Digital health record synchronized with national gateway.
-                  </div>
-                </div>
-              </section>
-            )}
-
+            {/* ════ SETTINGS ════ */}
             {activeSection === 'settings' && (
               <section className="ds-section">
                 <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px' }}>Settings</h2>
@@ -1743,6 +1727,12 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
           </div>
         </div>
       )}
+
+      {/* Chatbot Slide-over */}
+      <ChatbotPanel 
+        isOpen={isChatbotOpen} 
+        onClose={() => setIsChatbotOpen(false)} 
+      />
     </div>
   );
 }

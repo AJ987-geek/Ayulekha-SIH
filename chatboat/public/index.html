@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AyuLekha - Intelligent Healthcare & Wellness Assistant</title>
+  
+  <!-- Google Fonts & Tailwind CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ayulekha: {
+              50: '#f0f6fc',
+              100: '#e1ecf8',
+              200: '#c8ddf2',
+              600: '#1d548f',
+              700: '#174271',
+              800: '#15365d',
+              900: '#122c4c',
+              accent: '#0e4177'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            serif: ['Cinzel', 'Georgia', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-ayulekha-700 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo & Brand -->
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-2.5 group">
+          <img src="/images/ayulekha_logo.png" alt="AyuLekha" class="h-9 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/160x45/174271/ffffff?text=AyuLekha';" />
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-ayulekha-700 border border-blue-200">Health AI</span>
+        </a>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- TinyFish Live Status Pill -->
+        <button id="tinyfishStatusBtn" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="tinyfishStatusText">TinyFish AI Active</span>
+        </button>
+
+        <!-- Emergency SOS Button -->
+        <button id="openSosBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition shadow-2xs">
+          <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+          <span>SOS / ER</span>
+        </button>
+
+        <!-- Settings Modal Trigger -->
+        <button id="openSettingsBtn" title="TinyFish Settings" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 flex items-center justify-center transition">
+          <i class="fa-solid fa-gear text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Emergency Banner (Hidden by default unless red flag) -->
+  <div id="criticalEmergencyBanner" class="hidden bg-red-600 text-white px-4 py-3 shadow-lg transition-all duration-300">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-circle-exclamation text-2xl animate-ping"></i>
+        <div>
+          <h4 class="font-bold text-sm tracking-wide uppercase">Critical Warning Detected</h4>
+          <p id="emergencyBannerText" class="text-xs text-red-100">Immediate emergency medical care required.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="tel:911" class="px-4 py-1.5 bg-white text-red-600 font-bold text-xs rounded-lg shadow hover:bg-red-50 transition">Call 911 / 112</a>
+        <button id="dismissBannerBtn" class="text-white hover:text-red-200 text-xs px-2 py-1">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- Left Chat Area (8 cols) -->
+    <section class="lg:col-span-8 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-[calc(100vh-6.5rem)]">
+      
+      <!-- Chat Sub-header -->
+      <div class="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs text-slate-600">
+          <i class="fa-solid fa-leaf text-ayulekha-600"></i>
+          <span><strong>AyuLekha:</strong> Direct Step-by-Step Solutions, Home Remedies & Care Plans</span>
+        </div>
+        <button id="resetChatBtn" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium hover:underline">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>New Query</span>
+        </button>
+      </div>
+
+      <!-- Quick Common Symptoms Selector -->
+      <div class="px-4 py-2 bg-white border-b border-slate-100 overflow-x-auto no-scrollbar flex items-center gap-2">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">Instant Help:</span>
+        <button class="quick-symptom-chip" data-symptom="I have high fever and body ache with sore throat">🤒 Fever & Sore Throat</button>
+        <button class="quick-symptom-chip" data-symptom="Severe throbbing headache on forehead and eyes">🤕 Migraine / Headache</button>
+        <button class="quick-symptom-chip" data-symptom="I have severe stomach pain, gas and nausea">🤢 Stomach Pain & Gas</button>
+        <button class="quick-symptom-chip" data-symptom="I developed itchy red skin rash and hives">🩹 Skin Rash / Allergy</button>
+        <button class="quick-symptom-chip" data-symptom="Lower back pain and stiff joints">🦴 Back & Body Pain</button>
+        <button class="quick-symptom-chip" data-symptom="I am feeling intense stress, anxiety and cannot sleep">🧠 Anxiety & Sleep Problem</button>
+      </div>
+
+      <!-- Messages Scroll Area -->
+      <div id="chatMessages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        
+        <!-- Welcome Message -->
+        <div class="flex gap-3 max-w-3xl">
+          <div class="w-9 h-9 rounded-full bg-ayulekha-700 text-white flex-shrink-0 flex items-center justify-center text-sm shadow">
+            <i class="fa-solid fa-user-doctor"></i>
+          </div>
+          <div class="flex-1 space-y-2">
+            <div class="bg-slate-100/90 text-slate-800 p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed border border-slate-200/70 shadow-2xs">
+              <p class="font-bold text-slate-900 text-base mb-1">Namaste! I am AyuLekha.</p>
+              <p class="text-slate-600">Whenever you or your loved ones feel ill, experience pain, or have any health issue, simply describe what is bothering you. I will **immediately give you a complete, step-by-step action plan of what to do right now**, including home remedies, safe OTC medicine dosages, dietary care, and recovery guidelines.</p>
+              
+              <div class="mt-3 p-3 bg-white rounded-xl border border-blue-100 text-xs text-slate-700 space-y-1">
+                <p class="font-bold text-ayulekha-700 flex items-center gap-1.5">
+                  <i class="fa-solid fa-sparkles text-ayulekha-600"></i>
+                  What AyuLekha provides instantly:
+                </p>
+                <p>• <strong>Instant Action Steps:</strong> Immediate relief protocol to follow today.</p>
+                <p>• <strong>Proven Home Remedies:</strong> Preparation instructions, ingredients & frequency.</p>
+                <p>• <strong>Safe OTC Medicines:</strong> Dosage guidelines and precautions.</p>
+                <p>• <strong>Diet & Lifestyle:</strong> What to eat, drink, and what to strictly avoid.</p>
+                <p>• <strong>Live Web References:</strong> Powered with TinyFish AI web agents.</p>
+              </div>
+            </div>
+            <span class="text-[10px] text-slate-400 font-medium pl-1">AyuLekha Health Assistant</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Live Typing Indicator -->
+      <div id="typingIndicator" class="hidden px-6 py-2 flex items-center gap-2 text-xs font-semibold text-ayulekha-700 animate-pulse">
+        <i class="fa-solid fa-spinner fa-spin text-ayulekha-600"></i>
+        <span id="typingText">AyuLekha is generating your step-by-step treatment plan...</span>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="p-3 sm:p-4 bg-slate-50 border-t border-slate-200">
+        <form id="chatForm" class="flex items-center gap-2">
+          <!-- Voice Input Button -->
+          <button type="button" id="voiceInputBtn" title="Speak your health problem" class="w-11 h-11 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-ayulekha-700 hover:border-ayulekha-600 flex items-center justify-center transition shadow-2xs">
+            <i class="fa-solid fa-microphone text-base"></i>
+          </button>
+
+          <!-- Text Input -->
+          <div class="flex-1 relative">
+            <input 
+              type="text" 
+              id="messageInput" 
+              placeholder="Describe what you are feeling (e.g. 'I have a sore throat and fever for 2 days')..." 
+              class="w-full bg-white text-slate-800 text-sm placeholder:text-slate-400 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ayulekha-600/40 focus:border-ayulekha-600 transition shadow-2xs" 
+              autocomplete="off"
+            />
+          </div>
+
+          <!-- Send Button -->
+          <button type="submit" id="sendBtn" class="px-5 h-11 rounded-xl bg-ayulekha-700 text-white font-semibold text-sm hover:bg-ayulekha-800 flex items-center gap-2 transition shadow-md shadow-ayulekha-700/20 active:scale-98">
+            <span>Get Solution</span>
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+
+        <div class="mt-2 flex items-center justify-between text-[11px] text-slate-400 px-1">
+          <span>Press Enter to get instant solution</span>
+          <span class="flex items-center gap-1">
+            <i class="fa-solid fa-shield-heart text-emerald-600 text-[11px]"></i> AyuLekha Health Protection
+          </span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right Sidebar (4 cols) -->
+    <aside class="lg:col-span-4 flex flex-col gap-4 overflow-y-auto">
+      
+      <!-- Quick Vitals & Patient Details -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-id-card-clip text-ayulekha-700"></i>
+            <h3 class="font-bold text-slate-800 text-sm">Patient Profile</h3>
+          </div>
+          <span id="triageBadge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Ready</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-slate-500 font-medium mb-1">Age</label>
+            <input type="number" id="patientAge" placeholder="e.g. 26" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 focus:outline-none focus:border-ayulekha-600" />
+          </div>
+          <div>
+            <label class="block text-slate-500 font-medium mb-1">Gender</label>
+            <select id="patientGender" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 focus:outline-none focus:border-ayulekha-600">
+              <option value="Not specified">Select...</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-500 font-medium mb-1 text-xs">Allergies / Existing Conditions</label>
+          <input type="text" id="patientPreexisting" placeholder="e.g. Asthma, Penicillin allergy" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-ayulekha-600" />
+        </div>
+
+        <!-- Pain Severity Slider -->
+        <div class="pt-2 border-t border-slate-100">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-slate-700">Current Discomfort Scale</span>
+            <span id="painScoreDisplay" class="text-xs font-bold text-ayulekha-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Level 0 (None)</span>
+          </div>
+          <input type="range" id="painRange" min="0" max="10" value="0" class="w-full accent-ayulekha-700 cursor-pointer" />
+        </div>
+
+        <!-- Export Consultation Report -->
+        <button id="exportReportBtn" class="w-full py-2.5 px-3 rounded-xl bg-ayulekha-800 hover:bg-ayulekha-900 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-xs">
+          <i class="fa-solid fa-file-medical"></i>
+          <span>Save / Print Treatment Summary</span>
+        </button>
+      </div>
+
+      <!-- TinyFish AI Web Intelligence Card -->
+      <div class="bg-gradient-to-br from-ayulekha-900 to-slate-900 text-white rounded-2xl p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-md bg-blue-500/20 text-blue-300 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-globe"></i>
+            </div>
+            <h4 class="font-bold text-xs tracking-wide uppercase text-blue-200">TinyFish Web Intelligence</h4>
+          </div>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Live Agent</span>
+        </div>
+        
+        <p class="text-xs text-slate-300 leading-relaxed">
+          AyuLekha utilizes TinyFish AI web agents to query verified medical guidelines, dosage safety, and clinical research.
+        </p>
+
+        <div class="pt-1 flex items-center justify-between text-xs">
+          <a href="https://agent.tinyfish.ai/home" target="_blank" class="text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1">
+            <span>TinyFish Portal</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </a>
+          <button id="sidebarConfigBtn" class="text-slate-400 hover:text-white text-[11px] underline">Change Key</button>
+        </div>
+      </div>
+
+      <!-- Emergency Hotlines Card -->
+      <div class="bg-red-50/80 border border-red-200 rounded-2xl p-4 text-xs space-y-2">
+        <div class="flex items-center gap-2 text-red-700 font-bold">
+          <i class="fa-solid fa-phone-volume"></i>
+          <span>Emergency Hotlines</span>
+        </div>
+        <p class="text-slate-600 text-[11px]">For severe chest pain, breathing collapse, or heavy bleeding, call immediately:</p>
+        <div class="grid grid-cols-2 gap-2 pt-1 font-bold">
+          <a href="tel:911" class="p-2 bg-white text-red-700 rounded-lg border border-red-200 text-center hover:bg-red-600 hover:text-white transition shadow-2xs">🇺🇸 911 (US/CAN)</a>
+          <a href="tel:112" class="p-2 bg-white text-red-700 rounded-lg border border-red-200 text-center hover:bg-red-600 hover:text-white transition shadow-2xs">🇮🇳/🇪🇺 112 (Universal)</a>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-ayulekha-700 text-lg"></i>
+          <h3 class="font-bold text-slate-800 text-base">TinyFish AI Configuration</h3>
+        </div>
+        <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-700 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">TinyFish API Key</label>
+          <input 
+            type="password" 
+            id="tinyfishApiKeyInput" 
+            placeholder="sk-tinyfish-..." 
+            value="sk-tinyfish-vPU_30jVDkbiI7tKppupuA2G6vkMTz6E"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-mono text-xs focus:outline-none focus:border-ayulekha-600" 
+          />
+          <p class="text-[11px] text-slate-500 mt-1">Manage keys at <a href="https://agent.tinyfish.ai/api-keys" target="_blank" class="text-sky-600 underline">agent.tinyfish.ai/api-keys</a>.</p>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">TinyFish API Base URL</label>
+          <input 
+            type="text" 
+            id="tinyfishBaseUrlInput" 
+            value="https://agent.tinyfish.ai/api" 
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-ayulekha-600" 
+          />
+        </div>
+
+        <div id="settingsFeedback" class="hidden p-2.5 rounded-lg text-xs font-medium"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button id="testConnectionBtn" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+          Test Connection
+        </button>
+        <button id="saveSettingsBtn" class="px-5 py-2 rounded-xl bg-ayulekha-700 hover:bg-ayulekha-800 text-white text-xs font-bold transition shadow-xs">
+          Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical Summary Printable Modal -->
+  <div id="summaryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+      <div class="p-4 bg-ayulekha-800 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-file-waveform text-teal-300 text-lg"></i>
+          <div>
+            <h3 class="font-bold text-sm">AyuLekha Health Consultation & Treatment Summary</h3>
+            <p class="text-[11px] text-slate-300">Structured patient guidance summary</p>
+          </div>
+        </div>
+        <button id="closeSummaryBtn" class="text-slate-300 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="printableReportArea" class="p-6 overflow-y-auto space-y-4 text-xs text-slate-800 font-sans leading-relaxed">
+        <div class="border-b border-slate-200 pb-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-base font-bold text-ayulekha-800">AYULEKHA HEALTH SUMMARY</h2>
+              <p class="text-[11px] text-slate-500">Date: <span id="summaryDate"></span></p>
+            </div>
+            <span class="px-2.5 py-1 bg-blue-50 text-ayulekha-700 rounded-full font-bold text-[10px] border border-blue-200">Informational Care Plan</span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div><span class="text-slate-400 font-semibold block text-[10px]">AGE</span> <span id="summaryAge" class="font-bold">--</span></div>
+          <div><span class="text-slate-400 font-semibold block text-[10px]">GENDER</span> <span id="summaryGender" class="font-bold">--</span></div>
+          <div><span class="text-slate-400 font-semibold block text-[10px]">ALLERGIES</span> <span id="summaryAllergies" class="font-bold">None</span></div>
+          <div><span class="text-slate-400 font-semibold block text-[10px]">PAIN SCORE</span> <span id="summaryPain" class="font-bold text-ayulekha-700">0/10</span></div>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-ayulekha-800 uppercase text-[11px] tracking-wide">1. Reported Symptoms & Chief Concern</h4>
+          <p id="summaryChiefComplaint" class="p-2.5 bg-slate-50 rounded-lg mt-1 text-slate-700">No symptoms recorded.</p>
+        </div>
+
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
+          <span class="font-bold text-ayulekha-900">Recommended Medical Specialist:</span>
+          <span id="summarySpecialist" class="font-bold text-ayulekha-700">General Physician / Family Doctor</span>
+        </div>
+
+        <p class="text-[10px] text-slate-400 italic pt-2 border-t border-slate-200">
+          Disclaimer: This summary is generated by AyuLekha for personal reference and doctor discussions. It does not replace a doctor's in-person diagnosis.
+        </p>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+        <button id="copySummaryBtn" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-regular fa-copy"></i>
+          <span>Copy Text</span>
+        </button>
+        <button id="printSummaryBtn" class="px-5 py-2 bg-ayulekha-700 hover:bg-ayulekha-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs">
+          <i class="fa-solid fa-print"></i>
+          <span>Print / Save PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emergency SOS Modal -->
+  <div id="sosModal" class="hidden fixed inset-0 bg-red-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-2 border-red-500 space-y-4 animate-scaleUp">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl mx-auto shadow-inner">
+          <i class="fa-solid fa-truck-medical animate-bounce"></i>
+        </div>
+        <h3 class="text-xl font-extrabold text-slate-900">EMERGENCY MEDICAL CARE</h3>
+        <p class="text-xs text-slate-600">If someone is experiencing chest pain, loss of consciousness, or severe breathing distress, call immediately.</p>
+      </div>
+
+      <div class="space-y-2">
+        <a href="tel:911" class="flex items-center justify-between p-4 rounded-2xl bg-red-600 text-white font-bold hover:bg-red-700 transition shadow-lg shadow-red-500/30">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-phone text-xl"></i>
+            <div>
+              <p class="text-sm">Call 911 (North America)</p>
+              <p class="text-[11px] font-normal text-red-100">Ambulance & Paramedics</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+
+        <a href="tel:112" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-phone text-xl text-teal-400"></i>
+            <div>
+              <p class="text-sm">Call 112 (India / European Union)</p>
+              <p class="text-[11px] font-normal text-slate-300">National Emergency Helpline</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+      </div>
+
+      <button id="closeSosBtn" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+        Close Emergency Window
+      </button>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

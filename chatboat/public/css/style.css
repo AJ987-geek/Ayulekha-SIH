@@ -1,0 +1,140 @@
+/* Custom CSS styling for CuraAI Healthcare Assistant */
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+/* Smooth custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Quick symptom chips */
+.quick-symptom-chip {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background-color: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.quick-symptom-chip:hover {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.15);
+}
+
+/* Message bubbles animation */
+.message-bubble-enter {
+  animation: fadeInSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Question Option Chip Button */
+.triage-option-btn {
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.triage-option-btn:hover {
+  background-color: #f0f9ff;
+  border-color: #0284c7;
+  color: #0369a1;
+  transform: translateX(2px);
+}
+.triage-option-btn.selected {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  font-weight: 600;
+}
+
+/* Pulse animation for active voice recognition */
+.mic-recording {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+  animation: pulseMic 1.2s infinite;
+}
+
+@keyframes pulseMic {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* Print styles for SOAP report */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #summaryModal,
+  #printableReportArea,
+  #printableReportArea * {
+    visibility: visible;
+  }
+  #summaryModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    background: #ffffff;
+    box-shadow: none;
+    border: none;
+    padding: 0;
+  }
+  #printableReportArea {
+    padding: 20px;
+  }
+}
