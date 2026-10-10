@@ -235,3 +235,33 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* Mobile Bottom Sheet Adaptation */
+@media (max-width: 600px) {
+  .lang-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .lang-modal-card {
+    border-radius: 24px 24px 0 0;
+    max-height: 88vh;
+    padding: 24px 16px;
+    animation: slideUpBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lang-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .lang-modal-title {
+    font-size: 1.4rem;
+  }
+}
+
+@keyframes slideUpBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

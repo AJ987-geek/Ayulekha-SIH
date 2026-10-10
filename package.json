@@ -8,6 +8,7 @@
     "dev:frontend": "vite",
     "dev:backend": "npm run dev --prefix backend",
     "build": "vite build",
+    "test:locales": "node scripts/verify-locales.cjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

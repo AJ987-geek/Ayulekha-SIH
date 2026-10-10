@@ -314,7 +314,7 @@ export default function PatientIdentity({ onNavigate }) {
                 AyuLekha
               </span>
               <span className="brand-sub font-mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                {isHi ? 'राष्ट्रीय डिजिटल स्वास्थ्य मिशन • रोगी पहचान' : 'ABDM Clinical Patient Identity'}
+                {t('patientIdentity.brandSub', 'ABDM Clinical Patient Identity')}
               </span>
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function PatientIdentity({ onNavigate }) {
             style={{ fontSize: '12px', padding: '5px 12px' }}
             onClick={() => onNavigate && onNavigate('portal')}
           >
-            ← {isHi ? 'पोर्टल' : 'Portal'}
+            ← {t('common.back', 'Portal')}
           </button>
 
           <button
@@ -347,11 +347,11 @@ export default function PatientIdentity({ onNavigate }) {
             onClick={handleListenAssist}
           >
             <span>🔊</span>
-            <span>{isHi ? 'ऑडियो सहायता' : 'Listen Assist'}</span>
+            <span>{t('patientIdentity.listenAssist', 'Listen Assist')}</span>
           </button>
 
           <div style={{ background: '#E8F5E9', color: 'var(--success)', border: '1px solid rgba(46,125,50,0.2)', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
-            {isHi ? 'प्राथमिकता: OPD कतार' : 'PRIORITY: OPD QUEUE'}
+            {t('patientIdentity.priority', 'PRIORITY: OPD QUEUE')}
           </div>
         </div>
       </header>
@@ -376,7 +376,7 @@ export default function PatientIdentity({ onNavigate }) {
         </div>
 
         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          {isHi ? 'पहचान सत्यापन चरण' : 'Identity Verification Stage'}
+          {t('patientIdentity.stage', 'Identity Verification Stage')}
         </div>
       </div>
 
@@ -385,23 +385,19 @@ export default function PatientIdentity({ onNavigate }) {
         {/* Intro */}
         <div className="identity-intro" style={{ marginBottom: '24px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-            {step === 'input' && (isHi ? 'रोगी की पहचान' : 'Patient Identity')}
-            {step === 'abha' && (isHi ? 'अपनी रोगी पहचान सत्यापित करें' : 'Verify Your Patient Identity')}
-            {step === 'email' && (isHi ? 'अपना ईमेल पता सत्यापित करें' : 'Verify Your Email Address')}
-            {step === 'otp' && (isHi ? 'सत्यापन कोड दर्ज करें' : 'Enter 6-Digit Verification Code')}
-            {step === 'rollNumber' && (isHi ? 'रोगी पंजीकरण पूरा करें' : 'Complete Patient Registration')}
+            {step === 'input' && t('patientIdentity.introTitle', 'Patient Identity')}
+            {step === 'abha' && t('patientIdentity.formAbhaTitle', 'Verify Your Patient Identity')}
+            {step === 'email' && t('patientIdentity.formMobileTitle', 'Verify Your Email Address')}
+            {step === 'otp' && t('patientIdentity.otpLabel', 'Enter 6-Digit Verification Code')}
+            {step === 'rollNumber' && t('patientIdentity.introTitle', 'Complete Patient Registration')}
           </h1>
 
           <p style={{ fontSize: '14px', color: 'var(--text-muted)', maxWidth: '580px', margin: '0 auto', lineHeight: 1.6 }}>
-            {step === 'input' && (
-              isHi 
-                ? 'मौजूदा रोगी रिकॉर्ड खोजने के लिए अपने विश्वविद्यालय रोल नंबर का उपयोग करें, या ईमेल सत्यापन के साथ सीधे आगे बढ़ें।' 
-                : 'Use your university roll number to find an existing patient record, or continue directly with verified email OTP authentication.'
-            )}
-            {step === 'abha' && (isHi ? 'अपना मौजूदा रोगी रिकॉर्ड खोजने के लिए अपना विश्वविद्यालय रोल नंबर दर्ज करें।' : 'Enter your university roll number to search verified clinical records in the database.')}
-            {step === 'email' && (isHi ? 'एक बार का सत्यापन कोड (OTP) प्राप्त करने के लिए अपना ईमेल पता दर्ज करें।' : 'Enter your email address to receive an official verification code.')}
-            {step === 'otp' && (isHi ? `आपके ईमेल (${identifier}) पर भेजा गया 6-अंकीय सत्यापन कोड दर्ज करें। (डेमो बाईपास: 123456)` : `Enter the 6-digit verification code sent to ${identifier} (Test bypass: 123456).`)}
-            {step === 'rollNumber' && (isHi ? 'आपका ईमेल सत्यापित हो गया है। अपना स्थायी रोगी रिकॉर्ड बनाने के लिए अपना विश्वविद्यालय रोल नंबर दर्ज करें।' : 'Your email has been verified. Enter your university roll number to link and create your clinical patient record.')}
+            {step === 'input' && t('patientIdentity.introDesc', 'Use your university roll number to find an existing patient record, or continue directly with verified email OTP authentication.')}
+            {step === 'abha' && t('patientIdentity.methodAbhaDesc', 'Enter your university roll number to search verified clinical records in the database.')}
+            {step === 'email' && t('patientIdentity.methodMobileDesc', 'Enter your email address to receive an official verification code.')}
+            {step === 'otp' && t('patientIdentity.otpHelp', `Enter the 6-digit verification code sent to your device (Test bypass: 123456).`)}
+            {step === 'rollNumber' && t('patientIdentity.introDesc', 'Your email has been verified. Enter your university roll number to link and create your clinical patient record.')}
           </p>
         </div>
 
@@ -426,7 +422,7 @@ export default function PatientIdentity({ onNavigate }) {
                 ABHA / Roll Number
               </h3>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
-                {isHi ? 'मौजूदा रिकॉर्ड खोजने के लिए अपने विश्वविद्यालय रोल नंबर का उपयोग करें।' : 'Use your university roll number to lookup an existing patient chart.'}
+                {t('patientIdentity.methodAbhaDesc', 'Use your university roll number to lookup an existing patient chart.')}
               </p>
             </div>
 

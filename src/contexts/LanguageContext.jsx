@@ -1,76 +1,91 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import en from '../locales/en';
-import hi from '../locales/hi';
-import pa from '../locales/pa';
-import mr from '../locales/mr';
-import bn from '../locales/bn';
-import ta from '../locales/ta';
-import ml from '../locales/ml';
-import te from '../locales/te';
-
-const translations = { en, hi, pa, mr, bn, ta, ml, te };
-
-export const LANGUAGES = [
-  { code: 'en', name: 'English', nativeName: 'English', speechLang: 'en-IN', flag: '🇬🇧', subtitle: 'Select English' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', speechLang: 'hi-IN', flag: '🇮🇳', subtitle: 'हिंदी चुनें' },
-  { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', speechLang: 'pa-IN', flag: '🇮🇳', subtitle: 'ਪੰਜਾਬੀ ਚੁਣੋ' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी', speechLang: 'mr-IN', flag: '🇮🇳', subtitle: 'मराठी निवडा' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', speechLang: 'bn-IN', flag: '🇮🇳', subtitle: 'বাংলা বাছুন' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', speechLang: 'ta-IN', flag: '🇮🇳', subtitle: 'தமிழ் தேர்வு' },
-  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', speechLang: 'ml-IN', flag: '🇮🇳', subtitle: 'മലയാളം തിരെഞ്ഞെടുക്കുക' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', speechLang: 'te-IN', flag: '🇮🇳', subtitle: 'తెలుగును ఎంచుకోండి' },
-];
-
-export const getSpeechLang = (code) => {
-  const found = LANGUAGES.find((l) => l.code === code);
-  return found ? found.speechLang : 'en-IN';
-};
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { LANGUAGES, DEFAULT_LANGUAGE, getLanguageConfig, getSpeechLang } from '../config/languages';
+import enFallback from '../locales/en.json';
 
 const LanguageContext = createContext();
 
-export const useLanguage = () => useContext(LanguageContext);
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+// Initial browser language detection with fallback to English
+const detectInitialLanguage = () => {
+  try {
+    const saved = localStorage.getItem('ayulekha_lang');
+    if (saved && LANGUAGES.some((l) => l.code === saved)) {
+      return saved;
+    }
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      const browserLang = navigator.language.toLowerCase();
+      const match = LANGUAGES.find(
+        (l) => browserLang === l.code || browserLang.startsWith(`${l.code}-`)
+      );
+      if (match) return match.code;
+    }
+  } catch (e) {
+    console.warn('Locale detection notice:', e);
+  }
+  return DEFAULT_LANGUAGE;
+};
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem('ayulekha_lang');
-    return saved || 'en';
-  });
-
-  // Language popup opens first when loading the website
+  const [language, setLanguage] = useState(detectInitialLanguage);
+  const [currentTranslations, setCurrentTranslations] = useState(enFallback);
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isLoadingTranslations, setIsLoadingTranslations] = useState(false);
 
+  // In-memory cache for loaded translation JSONs
+  const localesCache = useRef({ en: enFallback });
+
+  // Dynamically load active language JSON
+  const loadLanguageTranslations = useCallback(async (langCode) => {
+    if (localesCache.current[langCode]) {
+      setCurrentTranslations(localesCache.current[langCode]);
+      return;
+    }
+
+    setIsLoadingTranslations(true);
+    try {
+      // Dynamic import loads only the requested locale file on demand
+      const mod = await import(`../locales/${langCode}.json`);
+      const dict = mod.default || mod;
+      localesCache.current[langCode] = dict;
+      setCurrentTranslations(dict);
+    } catch (err) {
+      console.warn(`Failed to dynamically load ${langCode}.json, falling back to English:`, err);
+      setCurrentTranslations(enFallback);
+    } finally {
+      setIsLoadingTranslations(false);
+    }
+  }, []);
+
+  // Sync HTML attributes, document title, and storage when language changes
   useEffect(() => {
-    localStorage.setItem('ayulekha_lang', language);
+    try {
+      localStorage.setItem('ayulekha_lang', language);
+    } catch (e) {
+      console.warn('Storage notice:', e);
+    }
+
+    const config = getLanguageConfig(language);
+
+    // Set <html lang="..." dir="...">
+    document.documentElement.lang = language;
+    document.documentElement.dir = config.dir || 'ltr';
+
+    // Load active locale dictionary
+    loadLanguageTranslations(language);
+
+    // Sync Google Translate layer if available
     applyGlobalTranslation(language);
-  }, [language]);
+  }, [language, loadLanguageTranslations]);
 
-  const t = (key, returnArray = false) => {
-    const keys = key.split('.');
-    let targetDict = translations[language] || translations['en'];
-    let value = targetDict;
-
-    for (const k of keys) {
-      if (value === undefined || value === null) break;
-      value = value[k];
-    }
-
-    if (value === undefined || value === null) {
-      // Fallback to English if string missing in target locale
-      value = translations['en'];
-      for (const k of keys) {
-        if (value === undefined || value === null) break;
-        value = value[k];
-      }
-    }
-    
-    if (value === undefined || value === null) return key;
-    return value;
-  };
-
+  // Google Translate cookie bridge for unindexed or external dynamic data
   const applyGlobalTranslation = (langCode) => {
-    document.documentElement.lang = langCode;
-
-    // Set or clear googtrans cookies
     if (langCode === 'en') {
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
@@ -93,17 +108,103 @@ export const LanguageProvider = ({ children }) => {
       let count = 0;
       const interval = setInterval(() => {
         count++;
-        if (triggerCombo() || count > 15) {
+        if (triggerCombo() || count > 10) {
           clearInterval(interval);
         }
       }, 200);
     }
   };
 
+  /**
+   * Main Translation Function
+   * @param {string} key - Dot notation key path, e.g., 'header.title'
+   * @param {string|object} [fallbackOrParams] - Optional fallback string or params object
+   * @param {object} [params] - Optional interpolation params, e.g., { name: 'Ram' }
+   */
+  const t = useCallback((key, fallbackOrParams, params) => {
+    if (!key) return '';
+
+    let fallback = '';
+    let interpolation = {};
+
+    if (typeof fallbackOrParams === 'object' && fallbackOrParams !== null) {
+      interpolation = fallbackOrParams;
+    } else if (typeof fallbackOrParams === 'string') {
+      fallback = fallbackOrParams;
+      if (typeof params === 'object' && params !== null) {
+        interpolation = params;
+      }
+    }
+
+    const keys = key.split('.');
+
+    // Lookup in active translations
+    let value = currentTranslations;
+    for (const k of keys) {
+      if (value === undefined || value === null) break;
+      value = value[k];
+    }
+
+    // Fallback to English baseline if missing or undefined
+    if (value === undefined || value === null) {
+      value = enFallback;
+      for (const k of keys) {
+        if (value === undefined || value === null) break;
+        value = value[k];
+      }
+    }
+
+    if (value === undefined || value === null) {
+      return fallback || key;
+    }
+
+    // Handle string interpolation {param}
+    if (typeof value === 'string' && Object.keys(interpolation).length > 0) {
+      return value.replace(/\{(\w+)\}/g, (_, match) => {
+        return interpolation[match] !== undefined ? interpolation[match] : `{${match}}`;
+      });
+    }
+
+    return value;
+  }, [currentTranslations]);
+
+  // Intl Formatting Helpers
+  const formatDate = useCallback((date, options = { dateStyle: 'medium' }) => {
+    try {
+      const d = date instanceof Date ? date : new Date(date);
+      return new Intl.DateTimeFormat(language, options).format(d);
+    } catch {
+      return String(date);
+    }
+  }, [language]);
+
+  const formatNumber = useCallback((number, options) => {
+    try {
+      return new Intl.NumberFormat(language, options).format(number);
+    } catch {
+      return String(number);
+    }
+  }, [language]);
+
+  const formatCurrency = useCallback((amount, currency = 'INR') => {
+    try {
+      return new Intl.NumberFormat(language, {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 0
+      }).format(amount);
+    } catch {
+      return `₹${amount}`;
+    }
+  }, [language]);
+
+  const currentLangObj = getLanguageConfig(language);
+
   const toggleLanguage = (lang) => {
-    setLanguage(lang);
-    applyGlobalTranslation(lang);
-    sessionStorage.setItem('ayulekha_lang_chosen', 'true');
+    if (LANGUAGES.some((l) => l.code === lang)) {
+      setLanguage(lang);
+      sessionStorage.setItem('ayulekha_lang_chosen', 'true');
+    }
   };
 
   const openLanguageModal = () => setIsModalOpen(true);
@@ -118,18 +219,28 @@ export const LanguageProvider = ({ children }) => {
   };
 
   return (
-    <LanguageContext.Provider value={{
-      language,
-      toggleLanguage,
-      t,
-      LANGUAGES,
-      getSpeechLang,
-      isModalOpen,
-      openLanguageModal,
-      closeLanguageModal,
-      selectLanguage
-    }}>
+    <LanguageContext.Provider
+      value={{
+        language,
+        currentLangObj,
+        LANGUAGES,
+        DEFAULT_LANGUAGE,
+        toggleLanguage,
+        selectLanguage,
+        isModalOpen,
+        openLanguageModal,
+        closeLanguageModal,
+        t,
+        formatDate,
+        formatNumber,
+        formatCurrency,
+        getSpeechLang: () => getSpeechLang(language),
+        isLoadingTranslations
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );
 };
+
+export { LANGUAGES, getSpeechLang };

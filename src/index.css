@@ -166,3 +166,90 @@ input, select, textarea {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* ============================================================
+   Script-Specific Typography & Anti-Clipping Line-Heights
+   ============================================================ */
+html[lang="hi"], html[lang="mr"] {
+  font-family: 'Noto Sans Devanagari', 'Mukta', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="pa"] {
+  font-family: 'Noto Sans Gurmukhi', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="ta"] {
+  font-family: 'Noto Sans Tamil', var(--font-body);
+  line-height: 1.75;
+}
+html[lang="te"] {
+  font-family: 'Noto Sans Telugu', var(--font-body);
+  line-height: 1.7;
+}
+html[lang="kn"] {
+  font-family: 'Noto Sans Kannada', var(--font-body);
+  line-height: 1.7;
+}
+html[lang="ml"] {
+  font-family: 'Noto Sans Malayalam', var(--font-body);
+  line-height: 1.75;
+}
+html[lang="bn"] {
+  font-family: 'Noto Sans Bengali', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="gu"] {
+  font-family: 'Noto Sans Gujarati', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="or"] {
+  font-family: 'Noto Sans Oriya', var(--font-body);
+  line-height: 1.65;
+}
+html[lang="ur"] {
+  font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', Tahoma, var(--font-body);
+  line-height: 2.0;
+}
+
+/* ============================================================
+   RTL Layout Mode (Urdu)
+   ============================================================ */
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .dh-left,
+html[dir="rtl"] .sb-brand,
+html[dir="rtl"] .header-actions {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .sb-nav .sb-link {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+html[dir="rtl"] .sb-badge {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+html[dir="rtl"] .card-grid,
+html[dir="rtl"] .lang-grid {
+  direction: rtl;
+}
+
+html[dir="rtl"] .hero-title,
+html[dir="rtl"] .hero-subtitle,
+html[dir="rtl"] .lang-modal-title,
+html[dir="rtl"] .lang-modal-subtitle,
+html[dir="rtl"] .step-card,
+html[dir="rtl"] .info-panel {
+  text-align: right;
+}
+
+/* Responsive mobile wrap protection */
+button, input, select, textarea {
+  max-width: 100%;
+}

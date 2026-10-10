@@ -275,7 +275,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
             </div>
             <div>
               <div className="sb-name">AyuLekha</div>
-              <div className="sb-tagline">{isHi ? 'नागरिक स्वास्थ्य पोर्टल' : 'CITIZEN HEALTH PORTAL'}</div>
+              <div className="sb-tagline">{t('patientDashboard.tagline', 'CITIZEN HEALTH PORTAL')}</div>
             </div>
           </div>
 
@@ -290,7 +290,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('home'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">🏠</span>
-              <span>{isHi ? 'होम डैशबोर्ड' : 'Home'}</span>
+              <span>{t('patientDashboard.navHome', 'Home')}</span>
             </a>
 
             <a
@@ -299,7 +299,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('records'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">📁</span>
-              <span>{isHi ? 'स्वास्थ्य रिकॉर्ड्स' : 'My Records'}</span>
+              <span>{t('patientDashboard.navRecords', 'My Records')}</span>
               <span className="sb-badge">{ocrRecords.length || 3}</span>
             </a>
 
@@ -309,7 +309,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('appointments'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">📅</span>
-              <span>{isHi ? 'अपॉइंटमेंट बुकिंग' : 'Appointments'}</span>
+              <span>{t('patientDashboard.navAppointments', 'Appointments')}</span>
             </a>
 
             <a
@@ -318,7 +318,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('ai'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">🤖</span>
-              <span>{isHi ? 'AI पूर्व-परामर्श' : 'AI Assistant'}</span>
+              <span>{t('patientDashboard.navAi', 'AI Assistant')}</span>
               <span className="sb-badge" style={{ background: '#E8631A', color: '#fff' }}>LIVE</span>
             </a>
 
@@ -328,7 +328,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('profile'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">👤</span>
-              <span>{isHi ? 'ABHA प्रोफ़ाइल' : 'Profile'}</span>
+              <span>{t('patientDashboard.navProfile', 'Profile')}</span>
             </a>
 
             <a
@@ -337,7 +337,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('notifications'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">🔔</span>
-              <span>{isHi ? 'सूचनाएं' : 'Notifications'}</span>
+              <span>{t('patientDashboard.navNotifications', 'Notifications')}</span>
               <span className="sb-badge">2</span>
             </a>
 
@@ -347,7 +347,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               onClick={(e) => { e.preventDefault(); setActiveSection('settings'); setSidebarOpen(false); }}
             >
               <span className="sb-icon">⚙️</span>
-              <span>{isHi ? 'सेटिंग्स' : 'Settings'}</span>
+              <span>{t('patientDashboard.navSettings', 'Settings')}</span>
             </a>
           </nav>
 
@@ -357,13 +357,13 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               className="sb-link"
               style={{ width: '100%', color: '#ffb4ab' }}
               onClick={() => {
-                if (window.confirm(isHi ? 'क्या आप लॉग आउट करना चाहते हैं?' : 'Are you sure you want to log out?')) {
+                if (window.confirm(t('common.logoutConfirm', 'Are you sure you want to log out?'))) {
                   if (onNavigate) onNavigate('portal');
                 }
               }}
             >
               <span className="sb-icon">🚪</span>
-              <span>{isHi ? 'लॉग आउट' : 'Log Out'}</span>
+              <span>{t('patientDashboard.navLogout', 'Log Out')}</span>
             </button>
             <div style={{ padding: '8px 14px', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
               24/7 Helpline: 1075 / 108
@@ -385,7 +385,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 ☰
               </button>
               <div className="dh-breadcrumb">
-                {isHi ? 'होम > नागरिक स्वास्थ्य पोर्टल' : 'Home > ABDM Citizen Dashboard'}
+                {t('patientDashboard.breadcrumb', 'Home > ABDM Citizen Dashboard')}
               </div>
 
               {/* Hospital Switcher Button */}
@@ -410,7 +410,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '6px 10px' }}
               >
                 <span>🔊</span>
-                <span>{isHi ? 'सुनें' : 'Listen'}</span>
+                <span>{t('patientDashboard.listen', 'Listen')}</span>
               </button>
 
               {/* Language Switch */}

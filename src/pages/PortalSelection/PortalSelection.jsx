@@ -3,8 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import './PortalSelection.css';
 
 export default function PortalSelection({ onNavigate }) {
-  const { language } = useLanguage();
-  const isHi = language === 'hi';
+  const { t } = useLanguage();
 
   const [activePanel, setActivePanel] = useState('mobile'); // 'gmail' | 'mobile' | 'abha'
   const [mobileNumber, setMobileNumber] = useState('');
@@ -18,7 +17,7 @@ export default function PortalSelection({ onNavigate }) {
   const handleSendMobileOtp = async () => {
     const cleanMobile = mobileNumber.trim();
     if (cleanMobile.length !== 10 || !/^\d+$/.test(cleanMobile)) {
-      alert(isHi ? 'कृपया वैध 10-अंकीय मोबाइल नंबर दर्ज करें' : 'Please enter a valid 10-digit mobile number');
+      alert(t('portal.invalidMobile', 'Please enter a valid 10-digit mobile number'));
       return;
     }
 
@@ -32,16 +31,14 @@ export default function PortalSelection({ onNavigate }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        // Even in test mode, display message
         alert(data.message || 'OTP request failed');
       }
       setOtpSent(true);
-      setFeedbackMsg(isHi ? 'OTP आपके मोबाइल पर भेज दिया गया है' : 'OTP has been dispatched to your mobile number');
+      setFeedbackMsg(t('portal.otpSentMsg', 'OTP has been dispatched to your mobile number'));
     } catch (err) {
       console.warn('Backend send-otp warning:', err);
-      // Fallback allowing testing
       setOtpSent(true);
-      setFeedbackMsg(isHi ? 'OTP भेजा गया (डेमो मोड: 123456)' : 'OTP sent (Demo mode: 123456)');
+      setFeedbackMsg(t('portal.otpSentDemo', 'OTP sent (Demo mode: 123456)'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +48,7 @@ export default function PortalSelection({ onNavigate }) {
   const handleVerifyOtp = async () => {
     const enteredOtp = otp.join('');
     if (enteredOtp.length < 4) {
-      alert(isHi ? 'कृपया पूरा OTP दर्ज करें' : 'Please enter the complete OTP');
+      alert(t('portal.enterCompleteOtp', 'Please enter the complete OTP'));
       return;
     }
 
@@ -72,11 +69,10 @@ export default function PortalSelection({ onNavigate }) {
           });
         }
       } else {
-        alert(data.message || (isHi ? 'अमान्य OTP' : 'Invalid OTP code'));
+        alert(data.message || t('common.error', 'Invalid OTP code'));
       }
     } catch (err) {
       console.warn('Backend verify-otp error:', err);
-      // Seamless demo fallback
       if (onNavigate) {
         onNavigate('dashboard', {
           patientId: 'P-DEMO',
@@ -92,7 +88,7 @@ export default function PortalSelection({ onNavigate }) {
   const handleCheckAbha = async () => {
     const cleanAbha = abhaNumber.trim();
     if (!cleanAbha) {
-      alert(isHi ? 'कृपया अपना ABHA या रोल नंबर दर्ज करें' : 'Please enter your ABHA ID or University Roll Number');
+      alert(t('portal.enterAbhaPrompt', 'Please enter your ABHA ID or University Roll Number'));
       return;
     }
 
@@ -115,7 +111,7 @@ export default function PortalSelection({ onNavigate }) {
           });
         }
       } else {
-        alert(isHi ? 'कोई रिकॉर्ड नहीं मिला। कृपया पंजीकरण पूरा करें।' : 'No record found. Please complete citizen registration.');
+        alert(t('portal.noRecordFound', 'No record found. Please complete citizen registration.'));
         if (onNavigate) onNavigate('identity');
       }
     } catch (err) {
@@ -156,7 +152,7 @@ export default function PortalSelection({ onNavigate }) {
             <div className="hero-badge">
               <div className="hero-badge-dot"></div>
               <span>
-                {isHi ? '🛡️ 100% सुरक्षित नागरिक स्वास्थ्य रिकॉर्ड' : '🛡️ 100% Secure Citizen Health Records'}
+                {t('portal.secureRecords', '🛡️ 100% Secure Citizen Health Records')}
               </span>
             </div>
           </div>
@@ -164,31 +160,29 @@ export default function PortalSelection({ onNavigate }) {
           <div className="hero-content">
             <div className="stats-divider"></div>
             <h1 className="hero-title">
-              <span>{isHi ? 'भारत का अपना' : "India's Own"}</span>
+              <span>{t('portal.indiaOwn', "India's Own")}</span>
               <br />
               <span style={{ color: 'var(--primary)' }}>
-                {isHi ? 'डिजिटल स्वास्थ्य रिकॉर्ड पोर्टल' : 'Health Record Portal'}
+                {t('portal.healthPortal', 'Health Record Portal')}
               </span>
             </h1>
             <p className="hero-subtitle">
-              {isHi
-                ? "आयुष्मान भारत डिजिटल मिशन के तहत आपके और आपके परिवार के मेडिकल रिकॉर्ड्स, लैब रिपोर्ट्स, नुस्खे और टीकाकरण का सुरक्षित, आजीवन डिजिटल संग्रह।"
-                : "Secure, lifelong storage for you and your family's medical records, diagnostic lab reports, prescriptions, and immunizations under the Ayushman Bharat Digital Mission."}
+              {t('portal.heroDesc', "Secure, lifelong storage for you and your family's medical records, diagnostic lab reports, prescriptions, and immunizations under the Ayushman Bharat Digital Mission.")}
             </p>
 
             {/* Feature Pills */}
             <div className="feature-pills">
               <div className="feature-pill pill-green">
                 <span>📁</span>
-                <span>{isHi ? 'सभी रिकॉर्ड सुरक्षित — आजीवन क्लाउड एक्सेस' : 'Keep All Records Safe — Lifetime cloud access'}</span>
+                <span>{t('portal.pill1', 'Keep All Records Safe — Lifetime cloud access')}</span>
               </div>
               <div className="feature-pill pill-dark">
                 <span>🏥</span>
-                <span>{isHi ? 'अस्पतालों से जुड़ाव — सरकारी व निजी केंद्र' : 'Connect Hospitals — Govt & private facilities'}</span>
+                <span>{t('portal.pill2', 'Connect Hospitals — Govt & private facilities')}</span>
               </div>
               <div className="feature-pill pill-green">
                 <span>🤖</span>
-                <span>{isHi ? 'AI पूर्व-परामर्श — बहुभाषी व वॉइस सहायता' : 'AI Pre-Consultation — Voice & multi-lingual assist'}</span>
+                <span>{t('portal.pill3', 'AI Pre-Consultation — Voice & multi-lingual assist')}</span>
               </div>
             </div>
 
@@ -196,15 +190,15 @@ export default function PortalSelection({ onNavigate }) {
             <div className="stats-bar-row">
               <div className="stat-card">
                 <div className="val">50+ Cr</div>
-                <div className="lbl">{isHi ? 'सत्यापित ABHA खाते' : 'Verified ABHA IDs'}</div>
+                <div className="lbl">{t('portal.stat1Lbl', 'Verified ABHA IDs')}</div>
               </div>
               <div className="stat-card">
                 <div className="val">2.4 Lakh</div>
-                <div className="lbl">{isHi ? 'संबद्ध स्वास्थ्य केंद्र' : 'Connected Facilities'}</div>
+                <div className="lbl">{t('portal.stat2Lbl', 'Connected Facilities')}</div>
               </div>
               <div className="stat-card">
                 <div className="val">24×7</div>
-                <div className="lbl">{isHi ? 'अखंड डिजिटल सेवा' : 'Service Availability'}</div>
+                <div className="lbl">{t('portal.stat3Lbl', 'Service Availability')}</div>
               </div>
             </div>
 
@@ -217,8 +211,8 @@ export default function PortalSelection({ onNavigate }) {
               >
                 <div className="alt-role-icon">🩺</div>
                 <div>
-                  <div className="alt-role-title">{isHi ? 'चिकित्सक पोर्टल' : 'Doctor OPD Portal'}</div>
-                  <div className="alt-role-desc">{isHi ? 'ओपीडी कतार एवं OCR रिकॉर्ड समीक्षा' : 'Review clinical queues & OCR records'}</div>
+                  <div className="alt-role-title">{t('portal.doctorCardTitle', 'Doctor OPD Portal')}</div>
+                  <div className="alt-role-desc">{t('portal.doctorCardDesc', 'Review clinical queues & OCR records')}</div>
                 </div>
               </div>
 
@@ -229,8 +223,8 @@ export default function PortalSelection({ onNavigate }) {
               >
                 <div className="alt-role-icon">🚨</div>
                 <div>
-                  <div className="alt-role-title">{isHi ? 'त्वरित ट्रायज / आपातकाल' : 'Rapid Triage / Emergency'}</div>
-                  <div className="alt-role-desc">{isHi ? 'रेड-फ्लैग त्वरित लक्षण मूल्यांकन' : 'Instant red-flag symptom screening'}</div>
+                  <div className="alt-role-title">{t('portal.triageCardTitle', 'Rapid Triage / Emergency')}</div>
+                  <div className="alt-role-desc">{t('portal.triageCardDesc', 'Instant red-flag symptom screening')}</div>
                 </div>
               </div>
             </div>
@@ -241,11 +235,11 @@ export default function PortalSelection({ onNavigate }) {
         <div className="login-card slide-right">
           <div className="login-tag">
             <span>🛡️</span>
-            <span>{isHi ? 'नागरिक पोर्टल एक्सेस' : 'Citizen Portal Access'}</span>
+            <span>{t('portal.loginTag', 'Citizen Portal Access')}</span>
           </div>
 
-          <h2 className="login-heading">{isHi ? 'लॉग इन करें' : 'Log In'}</h2>
-          <p className="login-sub">{isHi ? 'अपनी पसंदीदा विधि चुनें।' : 'Choose how you want to log in.'}</p>
+          <h2 className="login-heading">{t('portal.loginHeading', 'Log In')}</h2>
+          <p className="login-sub">{t('portal.loginSub', 'Choose how you want to log in.')}</p>
 
           {/* Login Option Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -256,7 +250,7 @@ export default function PortalSelection({ onNavigate }) {
             >
               <span className="lb-left">
                 <span className="lb-icon">📱</span>
-                <span>{isHi ? 'मोबाइल नंबर से लॉग इन' : 'Login with Mobile Number'}</span>
+                <span>{t('portal.tabMobile', 'Login with Mobile Number')}</span>
               </span>
               <span className="arrow">→</span>
             </button>
@@ -268,7 +262,7 @@ export default function PortalSelection({ onNavigate }) {
             >
               <span className="lb-left">
                 <span className="lb-icon">🪪</span>
-                <span>{isHi ? 'ABHA नंबर / रोल नंबर' : 'Login with ABHA Number'}</span>
+                <span>{t('portal.tabAbha', 'Login with ABHA Number')}</span>
               </span>
               <span className="arrow">→</span>
             </button>
@@ -280,7 +274,7 @@ export default function PortalSelection({ onNavigate }) {
             >
               <span className="lb-left">
                 <span className="lb-icon">✉️</span>
-                <span>{isHi ? 'गूगल खाते से लॉग इन' : 'Login with Gmail'}</span>
+                <span>{t('portal.tabGmail', 'Login with Gmail')}</span>
               </span>
               <span className="arrow">→</span>
             </button>
@@ -290,7 +284,7 @@ export default function PortalSelection({ onNavigate }) {
           {activePanel === 'mobile' && (
             <div className="inline-panel">
               <p className="inline-panel-title">
-                {isHi ? 'अपना 10-अंकीय मोबाइल नंबर दर्ज करें' : 'Enter Your Mobile Number'}
+                {t('portal.enterMobile', 'Enter Your Mobile Number')}
               </p>
               <div className="input-prefix">
                 <span className="prefix">+91</span>
@@ -311,12 +305,12 @@ export default function PortalSelection({ onNavigate }) {
                   disabled={loading || mobileNumber.length !== 10}
                   type="button"
                 >
-                  {loading ? (isHi ? 'भेजा जा रहा है...' : 'Sending OTP...') : (isHi ? 'OTP भेजें →' : 'Send OTP →')}
+                  {loading ? t('portal.sendingOtp', 'Sending OTP...') : t('portal.sendOtp', 'Send OTP →')}
                 </button>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                    {feedbackMsg || (isHi ? '6-अंकीय OTP दर्ज करें:' : 'Enter the 6-digit OTP sent to your mobile:')}
+                    {feedbackMsg || t('portal.enterOtpPrompt', 'Enter the 6-digit OTP sent to your mobile:')}
                   </p>
                   <div className="otp-row">
                     {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -338,7 +332,7 @@ export default function PortalSelection({ onNavigate }) {
                     disabled={loading}
                     type="button"
                   >
-                    {loading ? (isHi ? 'सत्यापित हो रहा है...' : 'Verifying...') : (isHi ? 'सत्यापित करें एवं आगे बढ़ें →' : 'Verify & Enter Portal →')}
+                    {loading ? t('portal.verifying', 'Verifying...') : t('portal.verifyAndEnter', 'Verify & Enter Portal →')}
                   </button>
                 </div>
               )}
@@ -349,7 +343,7 @@ export default function PortalSelection({ onNavigate }) {
           {activePanel === 'abha' && (
             <div className="inline-panel">
               <p className="inline-panel-title">
-                {isHi ? 'अपना 14-अंकीय ABHA या रोल नंबर दर्ज करें' : 'Enter 14-Digit ABHA or Roll Number'}
+                {t('portal.enterAbhaPrompt', 'Enter 14-Digit ABHA or Roll Number')}
               </p>
               <div className="input-prefix">
                 <span className="prefix">ABHA</span>
@@ -367,7 +361,7 @@ export default function PortalSelection({ onNavigate }) {
                 disabled={loading || !abhaNumber.trim()}
                 type="button"
               >
-                {loading ? (isHi ? 'जांच हो रही है...' : 'Checking...') : (isHi ? 'रिकॉर्ड खोजें →' : 'Find My Health Record →')}
+                {loading ? t('portal.checking', 'Checking...') : t('portal.checkRecord', 'Find My Health Record →')}
               </button>
             </div>
           )}
@@ -376,7 +370,7 @@ export default function PortalSelection({ onNavigate }) {
           {activePanel === 'gmail' && (
             <div className="inline-panel">
               <p className="inline-panel-title">
-                {isHi ? 'Google खाते से जारी रखें' : 'Continue with Google Account'}
+                {t('portal.googleRedirect', 'Continue with Google Account')}
               </p>
               <div className="gmail-state">
                 <div className="google-logo">
@@ -389,10 +383,10 @@ export default function PortalSelection({ onNavigate }) {
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)' }}>
-                    {isHi ? 'Google साइन-इन पर पुनर्निर्देशित' : 'Redirect to Google Sign-In'}
+                    {t('portal.googleRedirect', 'Redirect to Google Sign-In')}
                   </div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                    {isHi ? 'आपको सुरक्षित रूप से कनेक्ट किया जाएगा' : "You'll be securely authenticated"}
+                    {t('portal.googleSecure', "You'll be securely authenticated")}
                   </div>
                 </div>
               </div>
@@ -409,16 +403,16 @@ export default function PortalSelection({ onNavigate }) {
                 }}
                 type="button"
               >
-                {isHi ? 'Google से जारी रखें →' : 'Continue with Google →'}
+                {t('portal.continueGoogle', 'Continue with Google →')}
               </button>
             </div>
           )}
 
-          <div className="or-divider">{isHi ? 'या' : 'OR'}</div>
+          <div className="or-divider">{t('portal.orDivider', 'OR')}</div>
 
           {/* Register Link */}
           <div className="login-register-link">
-            <span>{isHi ? 'क्या आपके पास ABHA नंबर नहीं है? ' : "Don't have an ABHA yet? "}</span>
+            <span>{t('portal.noAbhaPrompt', "Don't have an ABHA yet? ")}</span>
             <a 
               href="#register"
               onClick={(e) => {
@@ -426,7 +420,7 @@ export default function PortalSelection({ onNavigate }) {
                 if (onNavigate) onNavigate('identity');
               }}
             >
-              {isHi ? 'अभी पंजीकरण करें →' : 'Register now →'}
+              {t('portal.registerNow', 'Register now →')}
             </a>
           </div>
 
@@ -434,9 +428,7 @@ export default function PortalSelection({ onNavigate }) {
           <div className="enc-box">
             <span>🔒</span>
             <span>
-              {isHi 
-                ? 'DPDP अधिनियम 2023 एवं 256-बिट एन्क्रिप्शन द्वारा पूर्णतः सुरक्षित।' 
-                : 'Protected by DPDP Act 2023 and 256-bit AES encryption.'}
+              {t('portal.securityNote', 'Protected by DPDP Act 2023 and 256-bit AES encryption.')}
             </span>
           </div>
         </div>
