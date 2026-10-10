@@ -589,7 +589,7 @@ export default function PatientIdentity({ onNavigate }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn-outline"
@@ -597,6 +597,17 @@ export default function PatientIdentity({ onNavigate }) {
                 disabled={loading}
               >
                 ← {isHi ? 'वापस' : 'Back'}
+              </button>
+              <button
+                type="button"
+                className="btn-outline"
+                style={{ borderColor: '#1A5C38', color: '#1A5C38', fontWeight: 700 }}
+                onClick={() => {
+                  setStep('rollNumber');
+                  setMessage(isHi ? 'बैकएंड बायपास सक्रिय। पंजीकरण जारी रखें।' : 'Backend services bypassed. Continue registration.');
+                }}
+              >
+                ⚡ {isHi ? 'आगे बढ़ें (बायपास)' : 'Next (Bypass Backend) →'}
               </button>
               <button
                 type="button"

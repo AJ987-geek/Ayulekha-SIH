@@ -157,6 +157,31 @@ export default function PortalSelection({ onNavigate }) {
     }
   };
 
+  // ── Bypass Backend Services & Go Directly to Patient Dashboard ──
+  const handleBypassToDashboard = () => {
+    const defaultPatient = {
+      id: 'P001',
+      name: 'Rahul Sharma',
+      abha: '2510991147',
+      age: 32,
+      gender: 'Male',
+      mobile: '9876543210',
+      bloodGroup: 'B+',
+      allergies: 'Peanuts',
+      email: email.trim() || 'rahul.sharma@example.com',
+      medicalHistory: ['Mild asthma diagnosed in 2022', 'Seasonal pollen allergy']
+    };
+    localStorage.setItem('abhaId', defaultPatient.abha);
+    if (onNavigate) {
+      onNavigate('dashboard', {
+        patientId: defaultPatient.id,
+        patient: defaultPatient,
+        medicalHistory: defaultPatient.medicalHistory,
+        email: defaultPatient.email
+      });
+    }
+  };
+
   return (
     <main className="hero-section-wrap">
       <div className="hero-grid">
@@ -362,8 +387,59 @@ export default function PortalSelection({ onNavigate }) {
               >
                 ← Back
               </button>
+              
+              {/* Direct Bypass in OTP Screen */}
+              <button
+                type="button"
+                onClick={handleBypassToDashboard}
+                style={{
+                  width: '100%',
+                  marginTop: '10px',
+                  padding: '10px',
+                  background: 'rgba(26,92,56,0.08)',
+                  border: '1.5px dashed #1A5C38',
+                  borderRadius: '10px',
+                  color: '#1A5C38',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>⚡ Next (Bypass Backend Services) →</span>
+              </button>
             </div>
           )}
+
+          {/* Quick Bypass Button on Main Login Card */}
+          <div style={{ marginTop: '16px' }}>
+            <button
+              type="button"
+              onClick={handleBypassToDashboard}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: '#F0FDF4',
+                border: '1.5px solid #16A34A',
+                borderRadius: '10px',
+                color: '#166534',
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+              title="Click to directly enter Patient Dashboard without waiting for backend email/OTP services"
+            >
+              <span>⚡ Next / Skip Backend Login →</span>
+            </button>
+          </div>
 
           <div className="or-divider">{t('portal.orDivider', 'OR')}</div>
 
