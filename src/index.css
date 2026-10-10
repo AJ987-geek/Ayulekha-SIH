@@ -3,46 +3,86 @@
 @tailwind utilities;
 
 :root {
-  /* === AUBERGINE & OYSTER COLOUR TOKENS === */
+  /* === ABDM (AYUSHMAN BHARAT) COLOUR TOKENS === */
 
-  /* Material Design Semantic */
-  --surface: #fff7fc;
-  --surface-dim: #e3d6e4;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #fdeffe;
-  --surface-container: #f7eaf8;
-  --surface-container-high: #f2e4f2;
-  --surface-container-highest: #ecdeed;
-  --on-surface: #201923;
-  --on-surface-variant: #4c444c;
-  --outline: #7e747c;
-  --outline-variant: #cfc3cc;
-  --primary: #331737;
-  --on-primary: #ffffff;
-  --primary-container: #4a2c4e;
-  --on-primary-container: #ba94bc;
-  --secondary: #7b580c;
-  --on-secondary: #ffffff;
-  --secondary-container: #fecd79;
-  --on-secondary-container: #785508;
-  --tertiary: #002819;
-  --on-tertiary: #ffffff;
-  --tertiary-container: #00402a;
-  --on-tertiary-container: #66af8c;
-  --error: #ba1a1a;
-  --on-error: #ffffff;
-  --error-container: #ffdad6;
-  --on-error-container: #93000a;
-  --background: #fff7fc;
-  --on-background: #201923;
-  --inverse-surface: #362e38;
-  --inverse-on-surface: #faecfb;
-  --inverse-primary: #e2b9e4;
-  --primary-fixed: #ffd6ff;
-  --primary-fixed-dim: #e2b9e4;
-  --secondary-fixed: #ffdea9;
-  --secondary-fixed-dim: #efbf6c;
-  --tertiary-fixed: #a8f2cc;
+  /* Brand Colors */
+  --primary:        #1A5C38;
+  --primary-dark:   #0D3B25;
+  --primary-light:  #2D7A52;
+  --primary-hover:  #16502F;
+  --accent:         #E8631A;
+  --accent-hover:   #CC5516;
+  --accent-light:   #FFF0E8;
+
+  /* Status Colors */
+  --success:        #2E7D32;
+  --success-light:  #E8F5E9;
+  --warning:        #F59E0B;
+  --warning-light:  #FFFBEB;
+  --error:          #D32F2F;
+  --error-light:    #FFEBEE;
+  --info:           #1565C0;
+  --info-light:     #E3F2FD;
+
+  /* Neutrals */
+  --white:          #FFFFFF;
+  --bg-page:        #F0F7F3;
+  --bg-card:        #FFFFFF;
+  --bg-muted:       #F5F7F5;
+  --border:         #C8E0D4;
+  --border-light:   #E4EFE9;
+  --divider:        #E0EBE5;
+
+  /* Text */
+  --text-primary:   #111827;
+  --text-secondary: #374151;
+  --text-muted:     #6B7280;
+  --text-light:     #9CA3AF;
+  --text-inverse:   #FFFFFF;
+
+  /* Header / Sidebar */
+  --header-bg:      #0D2B1E;
+  --sidebar-bg:     #0F2D20;
+  --sidebar-active: #1A5C38;
+  --sidebar-hover:  #1A3D2A;
+  --sidebar-text:   #C8DDD2;
+  --sidebar-text-active: #FFFFFF;
+
+  /* Material Design Semantic Mapping */
+  --surface: #F0F7F3;
+  --surface-dim: #D6E4DB;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #F5F9F6;
+  --surface-container: #EAF2ED;
+  --surface-container-high: #E1ECE5;
+  --surface-container-highest: #D6E4DB;
+  --on-surface: #111827;
+  --on-surface-variant: #374151;
+  --outline: #6B7280;
+  --outline-variant: #C8E0D4;
+  --on-primary: #FFFFFF;
+  --primary-container: #16502F;
+  --on-primary-container: #C8E0D4;
+  --secondary: #E8631A;
+  --on-secondary: #FFFFFF;
+  --secondary-container: #FFF0E8;
+  --on-secondary-container: #CC5516;
+  --tertiary: #0D2B1E;
+  --on-tertiary: #FFFFFF;
+  --tertiary-container: #1A5C38;
+  --on-tertiary-container: #A3D9BE;
+  --error-container: #FFEBEE;
+  --on-error-container: #93000A;
+  --background: #F0F7F3;
+  --on-background: #111827;
+  --inverse-surface: #111827;
+  --inverse-on-surface: #F0F7F3;
+  --inverse-primary: #85D6A5;
+  --primary-fixed: #C8E0D4;
+  --primary-fixed-dim: #A3D9BE;
+  --secondary-fixed: #FFD8C2;
+  --secondary-fixed-dim: #FFB38A;
+  --tertiary-fixed: #A8F2CC;
 
   /* Brand Semantic Aliases */
   --canvas-bg: var(--surface);
@@ -51,23 +91,23 @@
   --ink-primary: var(--on-surface);
   --ink-secondary: var(--on-surface-variant);
   --ink-muted: var(--outline);
-  --brand-aubergine-base: var(--primary-container);
-  --brand-aubergine-deep: var(--primary);
-  --brand-aubergine-light: #6e4573;
+  --brand-aubergine-base: var(--primary);
+  --brand-aubergine-deep: var(--primary-dark);
+  --brand-aubergine-light: var(--primary-light);
   --brand-aubergine-tint: var(--surface-container-high);
-  --brand-brass-base: #9a7328;
-  --brand-brass-text: #7a5a1c;
+  --brand-brass-base: var(--accent);
+  --brand-brass-text: var(--accent-hover);
   --status-critical: var(--error);
-  --status-warning: var(--secondary);
+  --status-warning: var(--warning);
   --hairline-border: var(--outline-variant);
-  --hairline-inner: var(--surface-container-high);
+  --hairline-inner: var(--border-light);
 
   /* Typography */
-  --font-body: 'Mukta', sans-serif;
+  --font-body: 'Noto Sans', 'Noto Sans Devanagari', 'Mukta', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
   /* Elevation */
-  --soft-lift: 0 1px 3px rgba(33, 26, 36, 0.06);
+  --soft-lift: 0 2px 8px rgba(13, 43, 30, 0.08);
 }
 
 /* Global utility */
