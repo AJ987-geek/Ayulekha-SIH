@@ -1,17 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './DoctorDashboard.css';
 
-const QUEUE = [
-  { token: 'B-40', name: 'Maya Devi',          age: '62y F', condition: 'Follow-up Thyroid',         status: 'done'        },
-  { token: 'B-41', name: 'Gurpreet Singh',      age: '39y M', condition: 'Lumbar Sprain',             status: 'done'        },
-  { token: 'B-42', name: 'Ananya Sengupta',     age: '28y F', condition: 'Acute Migraine',            status: 'in-progress' },
-  { token: 'B-43', name: 'Rameshwar Sharma',    age: '54y M', condition: 'Exertional Chest Pain',     status: 'waiting', redFlag: true },
-  { token: 'B-44', name: 'Sunita Rao',          age: '47y F', condition: 'Hypertension Review',       status: 'waiting'     },
-  { token: 'B-45', name: 'Amitav Roy',          age: '33y M', condition: 'Seasonal Bronchitis',       status: 'waiting'     },
-  { token: 'B-46', name: 'Farhana Khatun',      age: '29y F', condition: 'Routine Antenatal 28w',     status: 'waiting'     },
-  { token: 'B-47', name: 'Vikramaditya Joshi',  age: '68y M', condition: 'Post-Op Knee Assessment',  status: 'waiting'     },
-  { token: 'B-48', name: 'Kavita Narang',       age: '41y F', condition: 'Dermatitis Rash',           status: 'waiting'     },
-];
+// Remove static QUEUE
 
 function formatTime(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -20,9 +10,56 @@ function formatTime(totalSeconds) {
 }
 
 export default function DoctorDashboard({ onNavigate }) {
+  const [queue, setQueue] = useState([]);
+  const [nextPatientRecords, setNextPatientRecords] = useState([]);
   const [elapsed, setElapsed] = useState(252); // 04:12 start
   const [toast, setToast] = useState({ visible: false, message: '' });
   const toastTimerRef = useRef(null);
+
+  // Fetch queue
+  useEffect(() => {
+    const fetchQueue = async () => {
+      try {
+        const res = await fetch('/api/patients/queue');
+        const data = await res.json();
+        if (data.queue) {
+          setQueue(data.queue);
+        }
+      } catch (err) {
+        console.error('Failed to fetch queue:', err);
+      }
+    };
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const nowServing = queue.length > 0 ? queue[0] : null;
+  const nextPatient = queue.length > 1 ? queue[1] : null;
+
+  // Fetch nextPatient OCR records
+  useEffect(() => {
+    if (nextPatient && nextPatient.id) {
+      fetch(`/api/patients/${nextPatient.id}/records`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.records) setNextPatientRecords(data.records);
+        })
+        .catch(err => console.error('Failed to fetch records:', err));
+    } else {
+      setNextPatientRecords([]);
+    }
+  }, [nextPatient?.id]);
+
+  // Extract medicines from nextPatientRecords
+  const allTables = nextPatientRecords.flatMap(record => record.tables || []);
+  const medicineTable = allTables.find(t => 
+    t.title.toLowerCase().includes('medication') || 
+    t.title.toLowerCase().includes('medicine') ||
+    t.title.toLowerCase().includes('prescription') ||
+    t.columns.some(c => c.toLowerCase().includes('medication') || c.toLowerCase().includes('drug') || c.toLowerCase().includes('medicine'))
+  );
+  const medicines = medicineTable ? medicineTable.rows : [];
 
   // Stopwatch
   useEffect(() => {
@@ -52,6 +89,13 @@ export default function DoctorDashboard({ onNavigate }) {
       {/* ── TOP BREADCRUMB BAR ─────────────────────────────── */}
       <div className="dd-breadcrumb">
         <div className="dd-breadcrumb-left">
+          <button 
+            type="button" 
+            onClick={() => onNavigate && onNavigate('portal')}
+            style={{ background: 'var(--dd-primary)', color: '#fff', border: 'none', borderRadius: '4px', padding: '3px 10px', fontSize: '11px', cursor: 'pointer', marginRight: '10px', fontWeight: 600 }}
+          >
+            ← Portal
+          </button>
           <span className="dd-mono-label dd-outline">AyuLeakha Live Clinical Engine</span>
           <span className="dd-dot dd-secondary-bg" />
           <span className="dd-mono-label dd-on-surface-variant">Station OPD-04B · Room 104</span>
@@ -81,7 +125,7 @@ export default function DoctorDashboard({ onNavigate }) {
             </div>
 
             {/* Giant Token */}
-            <div className="dd-giant-token">B-42</div>
+            <div className="dd-giant-token">{nowServing ? nowServing.token : '--'}</div>
 
             <p className="dd-body-md dd-on-surface dd-fw-medium">Room 104 · Dr. R. K. Mukherjee</p>
             <p className="dd-caption dd-on-surface-variant dd-mb-xl">Internal Medicine · Senior Attending</p>
@@ -164,83 +208,112 @@ export default function DoctorDashboard({ onNavigate }) {
 
             {/* Patient identity */}
             <div className="dd-patient-block">
-              <h2 className="dd-headline-lg">Rameshwar Sharma, 54y M</h2>
-              <div className="dd-patient-meta">
-                <span className="dd-mono-token dd-primary-container-text dd-fw-semi">TOKEN #B-43</span>
-                <span className="dd-outline">·</span>
-                <span className="dd-mono-token dd-outline">NDHM-8849-B2</span>
-                <span className="dd-outline">·</span>
-                <span className="dd-mono-label dd-tertiary-text">Consent: Signed</span>
-              </div>
+              {nextPatient ? (
+                <>
+                  <h2 className="dd-headline-lg">{nextPatient.name}, {nextPatient.age}</h2>
+                  <div className="dd-patient-meta">
+                    <span className="dd-mono-token dd-primary-container-text dd-fw-semi">TOKEN #{nextPatient.token}</span>
+                    <span className="dd-outline">·</span>
+                    <span className="dd-mono-token dd-outline">{nextPatient.abha || 'NDHM-XXXX'}</span>
+                    <span className="dd-outline">·</span>
+                    <span className="dd-mono-label dd-tertiary-text">Consent: Signed</span>
+                  </div>
+                </>
+              ) : (
+                <h2 className="dd-headline-lg">No Patients Waiting</h2>
+              )}
             </div>
 
-            {/* Triage summary */}
-            <div className="dd-triage-block">
-              <span className="dd-mono-label dd-outline dd-block dd-mb-2xs">Triage Clinical Summary</span>
-              <p className="dd-body-lg dd-on-surface">
-                4-day retrosternal tightness with exertional dyspnea. Known T2D (8 yrs) on
-                Metformin. Reported allergy to Penicillin.
-              </p>
-            </div>
+            {nextPatient && (
+              <>
+                {/* Triage summary */}
+                <div className="dd-triage-block">
+                  <span className="dd-mono-label dd-outline dd-block dd-mb-2xs">Triage Clinical Summary (Symptoms & HPI)</span>
+                  <p className="dd-body-lg dd-on-surface">
+                    {nextPatient.story || "Patient has completed triage via AyuLekha Intake. Review clinical narrative for details."}
+                  </p>
+                  
+                  {nextPatient.symptoms && nextPatient.symptoms.conditions && nextPatient.symptoms.conditions.length > 0 && (
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <span className="dd-mono-label dd-outline dd-block dd-mb-2xs">Reported Conditions</span>
+                      <div className="dd-tags-row">
+                        {nextPatient.symptoms.conditions.map((cond, i) => (
+                          <span key={i} className="dd-tag dd-tag-amber">{cond.condition}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-            {/* Clinical tags */}
-            <div className="dd-tags-row">
-              <span className="dd-tag dd-tag-red">
-                <span className="dd-tag-dot dd-error-bg" />
-                RED FLAG: CHEST TIGHTNESS
-              </span>
-              <span className="dd-tag dd-tag-amber">
-                <span className="material-symbols-outlined dd-icon-xs">schedule</span>
-                QUEUE WAIT: 38 MIN
-              </span>
-              <span className="dd-tag dd-tag-surface">INTAKE: CORE</span>
-              <span className="dd-tag dd-tag-green">ABHA VERIFIED</span>
-            </div>
+                {/* OCR Medicines */}
+                {medicines.length > 0 && (
+                  <div className="dd-vitals-block" style={{ marginTop: '1rem', border: '1px solid var(--color-outline-variant)' }}>
+                    <div className="dd-vitals-header" style={{ backgroundColor: 'var(--color-surface-container)' }}>
+                      <span className="dd-mono-label dd-outline">OCR Extracted Medications</span>
+                      <span className="dd-mono-token dd-on-surface-variant">From Uploaded Records</span>
+                    </div>
+                    <div style={{ padding: '0.75rem 1rem' }}>
+                      <ul style={{ listStyleType: 'disc', paddingLeft: '1.25rem', color: 'var(--color-on-surface)', fontSize: '0.875rem' }}>
+                        {medicines.slice(0, 4).map((row, idx) => (
+                          <li key={idx} style={{ marginBottom: '0.25rem' }}>
+                            <span style={{ fontWeight: 600 }}>{row.medication || row.medicine || Object.values(row)[0]}</span>
+                            {(row.dosage || row.dose || row.frequency) ? ` - ${row.dosage || row.dose || ''} ${row.frequency || ''}` : ''}
+                          </li>
+                        ))}
+                        {medicines.length > 4 && <li><span className="dd-mono-token dd-outline">+{medicines.length - 4} more medications</span></li>}
+                      </ul>
+                    </div>
+                  </div>
+                )}
 
-            {/* Vitals table */}
-            <div className="dd-vitals-block">
-              <div className="dd-vitals-header">
-                <span className="dd-mono-label dd-outline">Preliminary Vitals Taken 14:10</span>
-                <span className="dd-mono-token dd-on-surface-variant">Nurse: S. Joseph</span>
-              </div>
-              <div className="dd-vitals-grid">
-                <div className="dd-vital-cell">
-                  <span className="dd-mono-label dd-outline">BP SYS/DIA</span>
-                  <span className="dd-mono-token dd-error-text dd-fw-semi dd-vital-val">148/92 mmHg</span>
+                {/* Vitals table */}
+                <div className="dd-vitals-block" style={{ marginTop: '1rem' }}>
+                  <div className="dd-vitals-header">
+                    <span className="dd-mono-label dd-outline">Preliminary Vitals Taken</span>
+                    <span className="dd-mono-token dd-on-surface-variant">Self-Reported / Kiosk</span>
+                  </div>
+                  <div className="dd-vitals-grid">
+                    <div className="dd-vital-cell">
+                      <span className="dd-mono-label dd-outline">BP SYS/DIA</span>
+                      <span className="dd-mono-token dd-on-surface dd-fw-semi dd-vital-val">--</span>
+                    </div>
+                    <div className="dd-vital-cell">
+                      <span className="dd-mono-label dd-outline">SpO2</span>
+                      <span className="dd-mono-token dd-on-surface dd-fw-semi dd-vital-val">--</span>
+                    </div>
+                    <div className="dd-vital-cell">
+                      <span className="dd-mono-label dd-outline">TEMP</span>
+                      <span className="dd-mono-token dd-on-surface dd-fw-semi dd-vital-val">--</span>
+                    </div>
+                    <div className="dd-vital-cell">
+                      <span className="dd-mono-label dd-outline">WEIGHT</span>
+                      <span className="dd-mono-token dd-on-surface dd-fw-semi dd-vital-val">--</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="dd-vital-cell">
-                  <span className="dd-mono-label dd-outline">SpO2</span>
-                  <span className="dd-mono-token dd-primary-container-text dd-fw-semi dd-vital-val">97% Room Air</span>
-                </div>
-                <div className="dd-vital-cell">
-                  <span className="dd-mono-label dd-outline">TEMP</span>
-                  <span className="dd-mono-token dd-on-surface dd-fw-semi dd-vital-val">98.4°F</span>
-                </div>
-                <div className="dd-vital-cell">
-                  <span className="dd-mono-label dd-outline">RANDOM GLUC</span>
-                  <span className="dd-mono-token dd-secondary-text dd-fw-semi dd-vital-val">184 mg/dL</span>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           {/* Primary CTA */}
-          <div className="dd-cta-block">
-            <button
-              className="dd-open-brief-btn"
-              onClick={() => showToast('Initializing Encounter Record for Rameshwar Sharma (NDHM-8849-B2)...')}
-            >
-              <div className="dd-cta-left">
-                <span className="material-symbols-outlined dd-icon-md">clinical_notes</span>
-                <span className="dd-body-md dd-fw-medium">Open full brief &amp; encounter record</span>
+          {nextPatient && (
+            <div className="dd-cta-block">
+              <button
+                className="dd-open-brief-btn"
+                onClick={() => showToast(`Initializing Encounter Record for ${nextPatient.name}...`)}
+              >
+                <div className="dd-cta-left">
+                  <span className="material-symbols-outlined dd-icon-md">clinical_notes</span>
+                  <span className="dd-body-md dd-fw-medium">Open full brief &amp; encounter record</span>
+                </div>
+                <span className="dd-cta-arrow">→</span>
+              </button>
+              <div className="dd-cta-hint">
+                <span className="dd-mono-label dd-outline">Press Enter to Launch Encounter</span>
+                <span className="dd-mono-label dd-outline">Includes EHR &amp; Past 6 Prescriptions</span>
               </div>
-              <span className="dd-cta-arrow">→</span>
-            </button>
-            <div className="dd-cta-hint">
-              <span className="dd-mono-label dd-outline">Press Enter to Launch Encounter</span>
-              <span className="dd-mono-label dd-outline">Includes EHR &amp; Past 6 Prescriptions</span>
             </div>
-          </div>
+          )}
 
           <div className="dd-col-hairline" />
         </div>
@@ -250,7 +323,7 @@ export default function DoctorDashboard({ onNavigate }) {
           <div className="dd-queue-header">
             <div className="dd-queue-title-row">
               <span className="dd-mono-label dd-outline">Today's Queue</span>
-              <span className="dd-mono-token dd-on-surface-variant dd-fw-medium">(18 patients waiting)</span>
+              <span className="dd-mono-token dd-on-surface-variant dd-fw-medium">({queue.length} patients in queue)</span>
             </div>
             <span className="dd-mono-label dd-primary-container-text dd-fw-semi">Desk 04</span>
           </div>
@@ -263,7 +336,7 @@ export default function DoctorDashboard({ onNavigate }) {
 
           {/* Row list */}
           <div className="dd-queue-list">
-            {QUEUE.map((p) => (
+            {queue.map((p) => (
               <div
                 key={p.token}
                 className={`dd-queue-row${p.status === 'in-progress' ? ' dd-row-active' : ''}`}

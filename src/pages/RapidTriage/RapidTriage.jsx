@@ -64,8 +64,15 @@ export default function RapidTriage({ onNavigate }) {
     <div className="triage-container relative">
       {/* Top Header */}
       <header className="triage-header">
-        <div className="triage-header-left font-mono">
-          <span className="dot">•</span> {t('rapidTriage.headerLeft')}
+        <div className="triage-header-left font-mono" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button 
+            type="button" 
+            onClick={() => onNavigate && onNavigate('portal')}
+            style={{ background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            ← Portal
+          </button>
+          <span><span className="dot">•</span> {t('rapidTriage.headerLeft')}</span>
         </div>
         <div className="triage-header-right font-mono">
           {t('rapidTriage.headerRight')}
