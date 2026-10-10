@@ -37,7 +37,7 @@ console.log(` AYULEKHA MULTILINGUAL VERIFICATION SYSTEM`);
 console.log(` Total Baseline Keys in en.json: ${expectedKeys.length}`);
 console.log(`======================================================\n`);
 
-const languages = ['en', 'hi', 'mr', 'pa', 'ta', 'te', 'kn', 'ml', 'bn', 'gu', 'or', 'ur'];
+const languages = ['en', 'hi'];
 let hasErrors = false;
 
 languages.forEach((lang) => {

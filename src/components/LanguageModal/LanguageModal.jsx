@@ -30,7 +30,7 @@ export default function LanguageModal({ onSelectLanguage }) {
         <div className="lang-modal-body">
           <h2 className="lang-modal-title">Select Your Language</h2>
           <p className="lang-modal-subtitle">
-            भाषा का चयन करें • ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ • आपली भाषा निवडा • আপনার ভাষা বাছুন • மொழியைத் தேர்ந்தெடுக்கவும்
+            Please choose your preferred language • अपनी पसंदीदा भाषा का चयन करें
           </p>
 
           <div className="lang-grid">
