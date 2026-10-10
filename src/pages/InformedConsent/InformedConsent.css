@@ -40,9 +40,17 @@
   gap: 16px;
 }
 
-.brand-icon-small {
-  font-size: 24px;
-  color: #2b3a67;
+.brand-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .header-brand-text {
@@ -51,10 +59,10 @@
 }
 
 .header-brand-text .brand-title {
-  font-size: 22px;
-  font-weight: 600;
-  color: #142450;
-  line-height: 1;
+  font-size: 26px;
+  font-weight: 700;
+  color: darkgreen;
+  line-height: 1.1;
 }
 
 .header-brand-text .brand-sub {
@@ -78,7 +86,7 @@
   padding: 8px 16px;
   border-radius: 4px;
   background-color: #f6f3ed;
-  color: #142450;
+  color: #1A5C38;
   font-size: 16px;
   font-weight: 500;
   border: none;
@@ -103,14 +111,14 @@
 }
 
 .lang-toggle .active {
-  color: #142450;
+  color: #1A5C38;
   font-weight: 600;
 }
 
 .user-icon {
   width: 32px;
   height: 32px;
-  background-color: #142450;
+  background-color: #1A5C38;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -163,7 +171,7 @@
 }
 
 .nav-item.active {
-  color: #142450;
+  color: #1A5C38;
   font-weight: 600;
   position: relative;
 }
@@ -183,7 +191,8 @@
 /* Main */
 .consent-main {
   width: 100%;
-  padding-top: 140px; /* Accounts for fixed header */
+  padding-top: 140px;
+  /* Accounts for fixed header */
   padding-bottom: 112px;
   background-color: #F5F2EC;
 }
@@ -265,7 +274,7 @@
 
 .intro-title {
   font-size: 28px;
-  color: #142450;
+  color: darkgreen;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.015em;
@@ -311,7 +320,7 @@
   gap: 4px;
   padding: 4px 8px;
   background-color: #EEF1F8;
-  color: #1B2647;
+  color: #1A5C38;
   border-radius: 2px;
   letter-spacing: 0.08em;
 }
@@ -364,7 +373,7 @@
   height: 32px;
   border-radius: 2px;
   background-color: white;
-  border: 2px solid #142450;
+  border: 2px solid #1A5C38;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,7 +381,7 @@
 }
 
 .custom-checkbox.checked {
-  background-color: #142450;
+  background-color: #1A5C38;
 }
 
 .custom-checkbox.error-ring {
@@ -388,7 +397,7 @@
 }
 
 .custom-checkbox.checked .check-icon {
-  transform: scale(1);
+  transform: scale(2);
 }
 
 .consent-item-content {
@@ -424,7 +433,7 @@
 }
 
 .item-title-label:hover .item-title-en {
-  color: #142450;
+  color: #1A5C38;
 }
 
 .item-title-hi {
@@ -458,11 +467,11 @@
 }
 
 .audio-btn:hover {
-  color: #142450;
+  color: #1A5C38;
 }
 
 .audio-btn.playing {
-  color: #142450;
+  color: #1A5C38;
   font-weight: 600;
 }
 
@@ -475,8 +484,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .item-desc-list {
@@ -532,15 +546,20 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .submit-consent-btn {
   width: 100%;
   min-height: 64px;
   padding: 0 24px;
-  background-color: #2b3a67;
+  background-color: #1A5C38;
   color: white;
   font-size: 22px;
   font-weight: 600;
@@ -555,7 +574,7 @@
 }
 
 .submit-consent-btn:hover:not(:disabled) {
-  background-color: #142450;
+  background-color: #0D3B25;
 }
 
 .submit-consent-btn:disabled {
@@ -582,7 +601,7 @@
 
 .paper-opt-out-btn:hover {
   color: #1c1c18;
-  text-decoration-color: #142450;
+  text-decoration-color: #1A5C38;
 }
 
 /* Telemetry Footer */
@@ -678,7 +697,7 @@
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .emergency-call-btn:hover {
@@ -708,60 +727,78 @@
     height: 64px;
     padding: 0 12px;
   }
+
   .header-brand-text .brand-title {
     font-size: 18px;
   }
+
   .header-brand-text .brand-sub {
     font-size: 10px;
   }
+
   .header-right {
     gap: 8px;
   }
+
   .listen-assist-btn {
     padding: 6px 10px;
     font-size: 13px;
   }
+
   .consent-main {
     padding-top: 110px;
     padding-bottom: 80px;
   }
+
   .consent-content {
     padding: 16px 12px 0;
   }
+
   .intro-title {
     font-size: 24px;
   }
+
   .intro-desc {
     font-size: 15px;
     margin-top: 10px;
   }
+
   .consent-item {
     gap: 14px;
   }
-  .item-title-en, .item-title-hi {
+
+  .item-title-en,
+  .item-title-hi {
     font-size: 17px;
   }
+
   .item-desc-list li {
     font-size: 15px;
   }
+
   .submit-consent-btn {
     min-height: 52px;
     font-size: 17px;
     padding: 0 16px;
   }
+
   .paper-opt-out-btn {
     font-size: 15px;
   }
+
   .bottom-footer-content {
     height: 56px;
     padding: 0 12px;
   }
+
   .emergency-call-btn {
     padding: 8px 14px;
   }
+
   .em-text {
     font-size: 13px;
   }
+
   .footer-meta {
     font-size: 10px;
     gap: 4px;

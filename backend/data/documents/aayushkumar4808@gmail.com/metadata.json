@@ -817,5 +817,68 @@
       }
     ],
     "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
+  },
+  {
+    "filename": "2164-6066_2026016-8.jpg.jpeg",
+    "timestamp": "2026-10-10T11:54:51.396790Z",
+    "page_count": 1,
+    "engine": "Groq Vision OCR",
+    "summary": "### Prescriptions\n| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |\n|---|------------|-------------------|-----------|----------|--------------|\n| 1 | Ventrix LC | 1 tab | 1-0-0 | 10 day |  |\n| 2 | Sompraz D 40 | 1 tab | 1-0-0 | 10 day |  |\n| 3 | Ondem 4 | 1 tab | 1\u2011s.os | Not legible |  |\n| 4 | Neris S | 1 tab | 1-0-0 | 10 day |  |\n| 5 | Jupros E2 | 1 tab | 1-0-0 | 10 day |  |\n\n### Prescription Summary\n- Five tablets prescribed; four have a 10\u2011day course, Ondem\u202f4 is PRN (as needed).  \n- All medications are oral tablets.  \n- Duration for Ondem\u202f4 is not legible.",
+    "tables": [
+      {
+        "title": "Prescriptions",
+        "columns": [
+          "#",
+          "Medication",
+          "Dosage / Strength",
+          "Frequency",
+          "Duration",
+          "Instructions"
+        ],
+        "rows": [
+          {
+            "#": "1",
+            "Medication": "Ventrix LC",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "2",
+            "Medication": "Sompraz D 40",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "3",
+            "Medication": "Ondem 4",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1\u2011s.os",
+            "Duration": "Not legible",
+            "Instructions": ""
+          },
+          {
+            "#": "4",
+            "Medication": "Neris S",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          },
+          {
+            "#": "5",
+            "Medication": "Jupros E2",
+            "Dosage / Strength": "1 tab",
+            "Frequency": "1-0-0",
+            "Duration": "10 day",
+            "Instructions": ""
+          }
+        ]
+      }
+    ],
+    "path": "/api/patients/aayushkumar4808@gmail.com/records/download/2164-6066_2026016-8.jpg.jpeg"
   }
 ]

@@ -858,6 +858,28 @@
 }
 
 @media(max-width:768px) {
+  .dash-body {
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible !important;
+  }
+  .app-layout {
+    height: auto !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible !important;
+    flex-direction: column;
+  }
+  .main-area {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .dash-content {
+    overflow-y: visible !important;
+    height: auto !important;
+    padding: 14px;
+  }
   .sidebar { 
     position: fixed; 
     top: 0;
@@ -887,7 +909,6 @@
   .dash-header { padding: 0 14px; gap: 8px; }
   .dh-abha { display: none; }
   .dh-center { display: none; }
-  .dash-content { padding: 14px; }
   .home-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .symptom-grid { grid-template-columns: repeat(2, 1fr); }

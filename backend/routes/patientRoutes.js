@@ -84,7 +84,7 @@ router.post('/check-abha', (req, res) => {
         const patients = getPatients();
 
         const patient = patients.find(
-            p => p.abha === abha.trim()
+            p => p.abha === abha.trim() || p.rollNumber === abha.trim() || p.id === abha.trim()
         );
 
         if (patient) {
@@ -230,11 +230,16 @@ router.post('/verify-email-otp', (req, res) => {
         `[AUTH] Email verified successfully: ${email}`
     );
 
+    const patients = getPatients();
+    const patient = patients.find(p => p.email === email.trim());
+
     return res.json({
         success: true,
         message: 'Email verified successfully',
         verified: true,
-        email
+        email,
+        exists: !!patient,
+        patient: patient || null
     });
 });
 

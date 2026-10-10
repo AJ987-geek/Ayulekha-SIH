@@ -101,33 +101,30 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
       <header className="consent-header-wrapper">
         <div className="consent-header">
           <div className="header-left">
-            <span className="material-symbols-outlined brand-icon-small">
-              add
-            </span>
-
-            <div className="header-brand-text">
-              <span className="brand-title">
-                {t('informedConsent.brandTitle')}
-              </span>
-
-              <span className="brand-sub font-mono">
-                {t('informedConsent.brandSub')}
-              </span>
+            <div className="brand-logo-wrap" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img 
+                src="/assets/logo.svg" 
+                alt="AyuLekha" 
+                className="brand-logo-img" 
+                style={{ height: '40px', width: 'auto' }}
+              />
+              <div className="header-brand-text">
+                <span className="brand-title">
+                  {t('informedConsent.brandTitle') || 'AyuLekha'}
+                </span>
+                <span className="brand-sub font-mono" style={{ fontSize: '11px', color: '#5C6172', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {t('informedConsent.brandSub') || 'AIIMS OPD • BLOCK B • ROOM 104'}
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="header-right">
-            <button className="listen-assist-btn font-mono">
-              <span className="material-symbols-outlined">
-                volume_up
-              </span>
-              {t('informedConsent.listenAssist')}
-            </button>
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="lang-toggle font-mono"
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(26,92,56,0.08)', border: '1.5px solid #1A5C38', borderRadius: '8px', fontWeight: 'bold', color: '#1A5C38', fontSize: '13px' }}
               onClick={openLanguageModal}
               title="Select Language"
             >
@@ -136,35 +133,10 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
             </button>
 
-            <div className="user-icon">
-              <span className="material-symbols-outlined">
-                person
-              </span>
-            </div>
+
           </div>
         </div>
 
-        <div className="header-divider">
-          <div className="progress-nav-container">
-            <nav className="progress-nav">
-              <a href="#" className="nav-item">
-                {t('informedConsent.nav1')}
-              </a>
-
-              <a href="#" className="nav-item active">
-                {t('informedConsent.nav2')}
-              </a>
-
-              <a href="#" className="nav-item">
-                {t('informedConsent.nav3')}
-              </a>
-
-              <a href="#" className="nav-item">
-                {t('informedConsent.nav4')}
-              </a>
-            </nav>
-          </div>
-        </div>
       </header>
 
       <main className="consent-main">
@@ -172,17 +144,9 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
 
           {/* Top Bar */}
           <div className="registry-top-bar">
-            <div className="stage-info font-mono">
-              <span className="dot"></span>
-              {t('informedConsent.stageInfo')}
-            </div>
 
-            <div className="registry-ref font-mono">
-              {t('informedConsent.registryRef')}
-            </div>
           </div>
 
-          <div className="divider"></div>
 
           {/* Intro Section */}
           <div className="intro-section">
@@ -196,21 +160,10 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
               {t('informedConsent.introDesc')}
             </p>
 
-            <div className="admin-stamp font-mono">
-              <span className="stamp-badge">
-                <span className="material-symbols-outlined">
-                  verified_user
-                </span>
-                {t('informedConsent.stampBadge')}
-              </span>
 
-              <span className="stamp-text">
-                {t('informedConsent.stampText')}
-              </span>
-            </div>
           </div>
 
-          <div className="divider"></div>
+
 
           {/* Consent Items */}
           <div className="consent-items-list">
@@ -232,13 +185,11 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
                 />
 
                 <div
-                  className={`custom-checkbox ${
-                    consentEHR ? 'checked' : ''
-                  } ${
-                    showValidationHint && !consentEHR
+                  className={`custom-checkbox ${consentEHR ? 'checked' : ''
+                    } ${showValidationHint && !consentEHR
                       ? 'error-ring'
                       : ''
-                  }`}
+                    }`}
                 >
                   <span className="material-symbols-outlined check-icon">
                     check
@@ -257,28 +208,7 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
                     </span>
                   </label>
 
-                  <button
-                    className={`audio-btn font-mono ${
-                      playingAudio1 ? 'playing' : ''
-                    }`}
-                    onClick={toggleAudio1}
-                  >
-                    {playingAudio1 ? (
-                      <>
-                        <span className="material-symbols-outlined spin-icon">
-                          sync
-                        </span>
-                        {t('informedConsent.playingAudio1')}
-                      </>
-                    ) : (
-                      <>
-                        <span className="material-symbols-outlined">
-                          play_circle
-                        </span>
-                        {t('informedConsent.listenAudio1')}
-                      </>
-                    )}
-                  </button>
+
                 </div>
 
                 <ul className="item-desc-list">
@@ -298,12 +228,7 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
                   </li>
                 </ul>
 
-                <div className="item-footer font-mono">
-                  <span className="material-symbols-outlined">
-                    lock
-                  </span>
-                  {t('informedConsent.ehrScope')}
-                </div>
+
               </div>
             </div>
 
@@ -316,13 +241,11 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
                 htmlFor="consent-voice"
               >
                 <div
-                  className={`custom-checkbox ${
-                    consentVoice ? 'checked' : ''
-                  } ${
-                    showValidationHint && !consentVoice
+                  className={`custom-checkbox ${consentVoice ? 'checked' : ''
+                    } ${showValidationHint && !consentVoice
                       ? 'error-ring'
                       : ''
-                  }`}
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -351,28 +274,7 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
                     </span>
                   </label>
 
-                  <button
-                    className={`audio-btn font-mono ${
-                      playingAudio2 ? 'playing' : ''
-                    }`}
-                    onClick={toggleAudio2}
-                  >
-                    {playingAudio2 ? (
-                      <>
-                        <span className="material-symbols-outlined spin-icon">
-                          sync
-                        </span>
-                        {t('informedConsent.playingAudio2')}
-                      </>
-                    ) : (
-                      <>
-                        <span className="material-symbols-outlined">
-                          play_circle
-                        </span>
-                        {t('informedConsent.listenAudio2')}
-                      </>
-                    )}
-                  </button>
+
                 </div>
 
                 <ul className="item-desc-list">
@@ -391,13 +293,6 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
                     <span>{t('informedConsent.voiceL3')}</span>
                   </li>
                 </ul>
-
-                <div className="item-footer font-mono">
-                  <span className="material-symbols-outlined">
-                    shield
-                  </span>
-                  {t('informedConsent.voicePrivacy')}
-                </div>
               </div>
             </div>
           </div>

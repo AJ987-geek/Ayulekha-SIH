@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import TimelineNav from '../../components/TimelineNav/TimelineNav';
 import './YourStory.css';
 
 export default function YourStory({ onNavigate, email, patientId, patient, medicalHistory }) {
@@ -47,7 +46,7 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
     if (!response.ok) {
       throw new Error(
         (await response.json().catch(() => ({}))).detail ||
-          'The interviewer is unavailable. Please try again.'
+        'The interviewer is unavailable. Please try again.'
       );
     }
 
@@ -59,42 +58,53 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
     setError('');
     setAnswer('');
 
-    window.speechSynthesis?.cancel();
-
-    request('start', { language: selectedLanguage })
+    request('start', {
+      language: selectedLanguage,
+      patientId: patientId,
+      medicalHistory: medicalHistory,
+    })
       .then((data) => {
         setConversationId(data.conversationId);
         setTurn(data);
-        speakQuestion(data.question, selectedLanguage);
+        speakQuestion(data.question, data.language);
       })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        setError(e.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
     startInterview(language);
 
     return () => {
-      recognition.current?.stop();
-      window.speechSynthesis?.cancel();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (recognition.current) {
+        recognition.current.stop();
+      }
     };
-  }, [language]);
+  }, []);
 
   const handleMicMouseDown = () => {
     if (isRecording) {
-      recognition.current?.stop();
+      if (recognition.current) {
+        recognition.current.stop();
+      }
       return;
     }
 
-    if (loading) return;
+    setError('');
 
     const Recognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!Recognition) {
       setError(
-        'Speech recognition is not supported by this browser. You can type your answer instead.'
+        'Speech recognition is not supported in this browser. Please type your answer.'
       );
       return;
     }
@@ -102,7 +112,6 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
     const recognizer = new Recognition();
 
     recognizer.lang = getSpeechLang(language);
-
     recognizer.interimResults = true;
 
     recognizer.onstart = () => {
@@ -146,7 +155,6 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
       if (!value.trim()) {
         setError('Please answer before continuing.');
       }
-
       return;
     }
 
@@ -198,177 +206,89 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
     }
   };
 
-  const handleLanguageChange = (selectedLanguage) => {
-    toggleLanguage(selectedLanguage);
-    startInterview(selectedLanguage);
-  };
-
   return (
     <div className="story-container">
-
-      {/* Top Global Header */}
+      {/* Top Global Header (With Local SVG Logo & Forest Green Styling) */}
       <header className="story-header">
         <div className="story-header-inner">
-
           <div className="story-header-left">
-            <img
-              src="https://lh3.googleusercontent.com/aida/AEtjO1WsmWm1b7dSIe0kmK-rc-_LIXyDScv_VWCU3xv3WQuNLdpL6-gjkhlrbb44rh9lvIozRSFtDSd_OCrjR6_C6RbXNWGIFLv2mqcZkO_eDqJhE4gnQh8AIKIKYuXOkncgudqzoPzHLtcEsAVcBq9xEz66WgMK58JBTyL3Y3wcOMDaCYR2ynibKHZD-8yROJZdYRR_2IXRuwPn1sZgeWt_sQvCLgw5CsyaS7fWfVeh6NfpTkAZ9pqEdJkIZQ"
-              alt="AyuLekha"
-              className="story-brand-logo"
-            />
-
-            <div className="story-header-divider"></div>
-
-            <div className="story-header-context">
-              AIIMS OPD • BLOCK B • ROOM 104
+            <div className="brand-logo-wrap">
+              <img
+                src="/assets/logo.svg"
+                alt="AyuLekha"
+                className="story-brand-logo"
+              />
+              <div className="header-brand-text">
+                <span className="brand-title">AyuLekha</span>
+                <span className="brand-sub font-mono">
+                  {t('yourStory.brandSub') || 'AIIMS OPD • BLOCK B • ROOM 104'}
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="story-header-right">
-
             <button
               type="button"
-              className="lang-btn focus-ring"
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#f1f5f9', border: '2px solid #000', borderRadius: '8px', fontWeight: 'bold' }}
+              className="lang-toggle font-mono"
+              style={{
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                background: 'rgba(26,92,56,0.08)',
+                border: '1.5px solid #1A5C38',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                color: '#1A5C38',
+                fontSize: '13px',
+              }}
               onClick={openLanguageModal}
               title={t('selectLanguage') || 'Select Language'}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>translate</span>
-              <span>{currentLangObj.nativeName}</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_drop_down</span>
-            </button>
-
-            <button
-              className="listen-btn focus-ring"
-              onClick={() => speakQuestion(turn?.question)}
-            >
-              <svg
-                className="listen-icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
-              </svg>
-
-              <span>{t('yourStory.listenAssist')}</span>
-            </button>
-
-            <div className="user-badge">
-              <span className="status-dot"></span>
-              <span>
-                TOKEN: <strong className="token-strong">#B-42</strong>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                translate
               </span>
-            </div>
-
+              <span>{currentLangObj?.nativeName || 'Language'}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                arrow_drop_down
+              </span>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Nav Rail */}
-      <TimelineNav currentStep="story" onNavigate={onNavigate} />
-
       {/* Main Content */}
       <main className="story-main">
-
-        <div className="story-queue-info">
-
-          <div className="queue-wait-text">
-            Token 47 · now serving 31 · about 38 minutes
-          </div>
-
-          <div className="active-mode-label">
-            Core interview · about 12 questions
-          </div>
-
-          <div className="intake-variants">
-
-            <span className="intake-label">
-              Intake Pace:
-            </span>
-
-            <span
-              className="intake-option"
-              title="Queue wait: >45 mins"
-            >
-              <strong className="intake-option-bold">
-                Full:
-              </strong>{' '}
-              Full intake · ~18 questions
-            </span>
-
-            <span
-              className="intake-option active"
-              title="Queue wait: ~30–45 mins"
-            >
-              <strong className="intake-option-bold">
-                Core:
-              </strong>{' '}
-              Core interview · ~12 questions (Active)
-            </span>
-
-            <span
-              className="intake-option"
-              title="Queue wait: ~15–30 mins"
-            >
-              <strong className="intake-option-bold">
-                Focused:
-              </strong>{' '}
-              Focused check · ~6 questions
-            </span>
-
-            <span
-              className="intake-option"
-              title="Queue wait: <15 mins"
-            >
-              <strong className="intake-option-bold">
-                Triage:
-              </strong>{' '}
-              Rapid triage · ~3 questions
-            </span>
-
-          </div>
-        </div>
-
         <div className="story-hero">
-
           <div className="hero-meta">
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+              record_voice_over
+            </span>
             <span>CHIEF COMPLAINT &amp; SYMPTOM ONSET</span>
             <span className="meta-dot">•</span>
-            <span className="meta-highlight">
-              VOICE NARRATIVE MODE
-            </span>
+            <span className="meta-highlight">VOICE NARRATIVE MODE</span>
           </div>
 
           <h1 className="hero-title">
             {loading
               ? 'Preparing your next question…'
-              : turn?.question ||
-                'Your interview could not be started.'}
+              : turn?.question || 'Your interview could not be started.'}
           </h1>
 
           <p className="hero-subtitle">
             {t('yourStory.heroSubtitleVoice')}
           </p>
-
         </div>
 
         <div className="story-mic-section">
-
           <div className="mic-wrapper">
-
-            {isRecording && (
-              <div className="mic-pulse-ring pulse-ring"></div>
-            )}
+            {isRecording && <div className="mic-pulse-ring pulse-ring"></div>}
 
             <button
               type="button"
-              className="mic-btn focus-ring"
+              className={`mic-btn focus-ring ${isRecording ? 'recording' : ''}`}
               aria-label={
                 isRecording
                   ? 'Stop recording your answer'
@@ -391,12 +311,9 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
               </svg>
 
               <span className="mic-label">
-                {isRecording
-                  ? 'Tap to stop'
-                  : 'Tap to speak'}
+                {isRecording ? 'Tap to stop' : 'Tap to speak'}
               </span>
             </button>
-
           </div>
 
           <div className="mic-instructions">
@@ -416,188 +333,73 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
               opacity: isRecording ? 1 : 0.3,
             }}
           >
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.1s',
-                height: '12px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.3s',
-                height: '20px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.15s',
-                height: '32px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.45s',
-                height: '16px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.2s',
-                height: '36px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.5s',
-                height: '24px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.25s',
-                height: '40px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.05s',
-                height: '28px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.4s',
-                height: '36px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.6s',
-                height: '20px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.35s',
-                height: '32px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.1s',
-                height: '16px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.55s',
-                height: '24px',
-              }}
-            ></span>
-
-            <span
-              className={isRecording ? 'wave-bar' : ''}
-              style={{
-                animationDelay: '0.2s',
-                height: '12px',
-              }}
-            ></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.1s', height: '12px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.3s', height: '20px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.15s', height: '32px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.45s', height: '16px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.2s', height: '36px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.5s', height: '24px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.25s', height: '40px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.05s', height: '28px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.4s', height: '36px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.6s', height: '20px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.35s', height: '32px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.1s', height: '16px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.55s', height: '24px' }}></span>
+            <span className={isRecording ? 'wave-bar' : ''} style={{ animationDelay: '0.2s', height: '12px' }}></span>
           </div>
         </div>
 
         <div className="divider"></div>
 
         <div className="story-transcript">
-
           <div className="transcript-status">
-
             <span className="status-pulse-dot"></span>
-
             <span>
               {isRecording
-                ? 'Listening… release when finished'
+                ? 'Listening… tap mic to finish'
                 : 'Review or edit your answer before submitting'}
             </span>
-
             <span className="meta-dot">•</span>
-
-            <span>
-              DIALECT: HINDI / ENGLISH MIX
-            </span>
-
+            <span>DIALECT: HINDI / ENGLISH MIX</span>
           </div>
 
           <textarea
             className="conversation-input"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            placeholder="Type your answer, or hold the microphone to speak…"
+            placeholder="Type your answer, or tap the microphone to speak…"
             disabled={loading}
           />
 
-          <div className="transcript-tags">
-            {turn?.options?.map((option) => (
-              <button
-                className="tag-item"
-                type="button"
-                key={option}
-                onClick={() => {
-                  setAnswer(option);
-                  document
-                    .querySelector('.conversation-input')
-                    ?.focus();
-                }}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-
+          {turn?.options && turn.options.length > 0 && (
+            <div className="transcript-tags">
+              <span className="tags-label">Quick Suggestions:</span>
+              {turn.options.map((option) => (
+                <button
+                  className="tag-item"
+                  type="button"
+                  key={option}
+                  onClick={() => {
+                    setAnswer(option);
+                    document.querySelector('.conversation-input')?.focus();
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {error && (
-          <p className="conversation-error">
-            {error}
-          </p>
-        )}
+        {error && <p className="conversation-error">{error}</p>}
 
         <div className="story-actions">
-
           <div className="action-links">
-
             <button
               type="button"
               className="action-link focus-ring"
-              onClick={() =>
-                document
-                  .querySelector('.conversation-input')
-                  ?.focus()
-              }
+              onClick={() => document.querySelector('.conversation-input')?.focus()}
             >
               {t('yourStory.typeInstead')}
             </button>
@@ -607,10 +409,16 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
             <button
               type="button"
               className="action-link focus-ring"
+              onClick={() => speakQuestion(turn?.question)}
             >
-              {t('yourStory.tapToAnswer')}
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: '18px', verticalAlign: 'middle', marginRight: '4px' }}
+              >
+                volume_up
+              </span>
+              {t('yourStory.listenAssist') || 'Listen question'}
             </button>
-
           </div>
 
           <button
@@ -619,66 +427,37 @@ export default function YourStory({ onNavigate, email, patientId, patient, medic
             onClick={() => handleContinue()}
             disabled={loading}
           >
-            {loading
-              ? 'AI is processing…'
-              : 'Submit answer →'}
+            {loading ? 'AI is processing…' : 'Submit answer →'}
           </button>
-
         </div>
       </main>
 
       {/* Bottom Global Sticky Emergency Bar */}
       <footer className="story-footer">
-
         <div className="footer-inner">
-
           <div className="footer-compliance">
-
-            <svg
-              className="compliance-icon"
-              fill="currentColor"
-              viewBox="0 0 20 20"
+            <span
+              className="material-symbols-outlined compliance-icon"
+              style={{ fontSize: '18px' }}
             >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-
-            <span>
-              DPDP ACT 2023 &amp; ABDM ENCRYPTED •
-              ON-DEVICE WHISPER TRANSCRIPTION
+              verified_user
             </span>
-
+            <span>
+              DPDP ACT 2023 &amp; ABDM ENCRYPTED • ON-DEVICE WHISPER TRANSCRIPTION
+            </span>
           </div>
 
-          <a
-            href="#"
-            className="footer-emergency-btn focus-ring"
-          >
-            <svg
-              className="emergency-icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <a href="tel:01126588500" className="footer-emergency-btn focus-ring">
+            <span
+              className="material-symbols-outlined emergency-icon"
+              style={{ fontSize: '18px' }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-
-            <span>
-              Emergency — get help now (011-26588500)
+              emergency
             </span>
+            <span>Emergency — get help now (011-26588500)</span>
           </a>
-
         </div>
       </footer>
-
     </div>
   );
 }

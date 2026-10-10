@@ -110,5 +110,38 @@
     "age": 24,
     "bloodGroup": "O+",
     "allergies": "no"
+  },
+  {
+    "id": "P0538",
+    "name": "Ramesh",
+    "mobile": "0000000000",
+    "abha": "2510991378",
+    "email": "aayush1327.becse25@chitkara.edu.in",
+    "gender": "Male",
+    "age": 29,
+    "bloodGroup": "O+",
+    "allergies": "Peanuts"
+  },
+  {
+    "id": "P2427",
+    "name": "Vinesh",
+    "mobile": "0000000000",
+    "abha": "2510991200",
+    "email": "aayushkumar4808@gmail.com",
+    "gender": "Male",
+    "age": 21,
+    "bloodGroup": "O+",
+    "allergies": "pencillin"
+  },
+  {
+    "id": "P0515",
+    "name": "popop",
+    "mobile": "0000000000",
+    "abha": "2510991322",
+    "email": "aayushkumar4808@gmail.com",
+    "gender": "Male",
+    "age": 23,
+    "bloodGroup": "O+",
+    "allergies": "no"
   }
 ]
