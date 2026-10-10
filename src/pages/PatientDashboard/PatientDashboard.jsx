@@ -19,7 +19,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
   const citizenAge = patient?.age || 42;
   const citizenGender = patient?.gender || 'Male';
 
-  // ── Hospital Info (Current Facility) ──
+  // ── Hospital Info (Current Facility) ── 
   const [hospitalInfo, setHospitalInfo] = useState({
     name: 'AIIMS New Delhi',
     address: 'Ansari Nagar, New Delhi',
