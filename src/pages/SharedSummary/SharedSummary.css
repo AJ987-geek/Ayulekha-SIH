@@ -1,0 +1,61 @@
+
+.shared-summary-page {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 24px;
+  color: #18312d;
+  font-family: inherit;
+}
+
+.shared-summary-header {
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #dce7e3;
+}
+
+.shared-summary-header h1 {
+  margin: 0;
+  color: #187a63;
+}
+
+.shared-summary-header p {
+  margin: 8px 0 0;
+  color: #647873;
+}
+
+.shared-summary-card,
+.shared-summary-message {
+  margin-bottom: 20px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #dce7e3;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(24, 49, 45, 0.05);
+  overflow-wrap: anywhere;
+}
+
+.shared-summary-card h2,
+.shared-summary-message h2 {
+  margin-top: 0;
+  color: #187a63;
+}
+
+.shared-summary-content {
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.shared-summary-card pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.shared-summary-notice {
+  color: #647873;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.shared-summary-message {
+  border-color: #e7c7c7;
+}

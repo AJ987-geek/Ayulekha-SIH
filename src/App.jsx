@@ -1,5 +1,5 @@
 import { useState } from 'react';
-
+import LanguageModal from './components/LanguageModal/LanguageModal';
 import './index.css';
 import { PatientProvider } from './contexts/PatientContext';
 
@@ -20,15 +20,35 @@ import NewAppointment from './pages/NewAppointment/NewAppointment';
 import DoctorRegistration from './pages/DoctorRegistration/DoctorRegistration';
 import DoctorOnboarding from './pages/DoctorOnboarding/DoctorOnboarding';
 import DoctorDashboard from './pages/DoctorDashboard/DoctorDashboard';
+import SharedSummary from './pages/SharedSummary/SharedSummary';
+function getInitialRoute() {
+  const match = window.location.pathname.match(
+    /^\/shared-summary\/([a-f0-9]{64})$/i
+  );
 
+  return match
+    ? { page: 'shared-summary', props: { token: match[1] } }
+    : { page: 'portal', props: {} };
+}
 function AppRoutes() {
-  const [currentPage, setCurrentPage] = useState('portal');
-  const [pageProps, setPageProps] = useState({});
-
+  const [initialRoute] = useState(getInitialRoute);
+const [currentPage, setCurrentPage] = useState(initialRoute.page);
+const [pageProps, setPageProps] = useState(initialRoute.props);
   const handleNavigate = (page, props = {}) => {
     setCurrentPage(page);
     setPageProps(props);
   };
+    // -----------------------------------------
+  // SHARED SUMMARY (QR CODE)
+  // -----------------------------------------
+
+  if (currentPage === 'shared-summary') {
+    return (
+      <div className="app-shell">
+        <SharedSummary token={pageProps.token} />
+      </div>
+    );
+  }
 
   // -----------------------------------------
   // PATIENT IDENTITY
@@ -54,6 +74,7 @@ function AppRoutes() {
           email={pageProps.email}
           patientId={pageProps.patientId}
           patient={pageProps.patient}
+          abha={pageProps.abha}
           medicalHistory={pageProps.medicalHistory}
         />
       </div>
@@ -83,6 +104,8 @@ function AppRoutes() {
           onNavigate={handleNavigate}
           email={pageProps.email}
           patientId={pageProps.patientId}
+          abha={pageProps.abha}
+          patient={pageProps.patient}
         />
       </div>
     );
@@ -98,7 +121,10 @@ function AppRoutes() {
         <DoctorSummary
           summary={pageProps.summary}
           patientId={pageProps.patientId}
-          onComplete={() => handleNavigate('identity')}
+          patient={pageProps.patient}
+          abha={pageProps.abha}
+          onNavigate={handleNavigate}
+          onComplete={() => handleNavigate('doctor-dashboard')}
         />
       </div>
     );
@@ -115,6 +141,8 @@ function AppRoutes() {
           onNavigate={handleNavigate}
           email={pageProps.email}
           patientId={pageProps.patientId}
+          abha={pageProps.abha}
+          patient={pageProps.patient}
         />
       </div>
     );
@@ -187,7 +215,13 @@ function AppRoutes() {
   if (currentPage === 'doctor-dashboard') {
     return (
       <div className="app-shell">
-        <DoctorDashboard onNavigate={handleNavigate} />
+        <DoctorDashboard
+          onNavigate={handleNavigate}
+          patientId={pageProps.patientId}
+          patient={pageProps.patient}
+          abha={pageProps.abha}
+          summary={pageProps.summary}
+        />
       </div>
     );
   }
@@ -208,13 +242,16 @@ function AppRoutes() {
   // DEFAULT / PORTAL
   // -----------------------------------------
 
-  return (
-    <div className="app-shell">
-      <Header />
-      <PortalSelection onNavigate={handleNavigate} />
-      <Footer />
-    </div>
-  );
+
+return (
+  <div className="app-shell">
+    <Header />
+    <PortalSelection onNavigate={handleNavigate} />
+    <Footer />
+    <LanguageModal />
+  </div>
+);
+
 }
 
 export default function App() {
