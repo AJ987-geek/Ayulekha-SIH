@@ -5,11 +5,12 @@ import './PortalSelection.css';
 export default function PortalSelection({ onNavigate }) {
   const { t } = useLanguage();
 
-  const [activePanel, setActivePanel] = useState('abha'); // 'abha' | 'gmail'
+  const [activePanel, setActivePanel] = useState('abha'); // 'abha' | 'mobile'
   const [abhaNumber, setAbhaNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [emailStep, setEmailStep] = useState('input'); // 'input' | 'otp'
-  const [emailOtp, setEmailOtp] = useState('');
+  const [phone, setPhone] = useState('');
+  const [phoneStep, setPhoneStep] = useState('input'); // 'input' | 'otp'
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [otpNotice, setOtpNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export default function PortalSelection({ onNavigate }) {
         }
       } else {
         alert(t('portal.noRecordFound', 'No record found. Please complete citizen registration.'));
-        if (onNavigate) onNavigate('identity');
+        if (onNavigate) onNavigate('identity', { initialMode: 'register', initialAbha: cleanAbha });
       }
     } catch (err) {
       console.warn('Check ABHA network error:', err);
@@ -85,57 +86,65 @@ export default function PortalSelection({ onNavigate }) {
     }
   };
 
-  // ── Handle Email Login ──
-  const handleEmailContinue = async () => {
-    const cleanEmail = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      alert(t('portal.invalidEmail', 'Please enter a valid email address'));
+  // ── Handle Mobile Phone OTP Dispatch ──
+  const handlePhoneContinue = async () => {
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit mobile phone number.');
       return;
     }
 
     setLoading(true);
+    setOtpNotice('');
     try {
-      const response = await fetch('/api/patients/send-otp', {
+      const response = await fetch('/api/patients/send-phone-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail })
+        body: JSON.stringify({ phone: cleanPhone })
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || t('portal.otpError', 'Unable to send OTP'));
+        alert(data.detail || data.message || 'Unable to dispatch phone OTP.');
         return;
       }
-      setEmailStep('otp');
+      setPhoneStep('otp');
+      if (data.dev_otp) {
+        setOtpNotice(`Code dispatched to +91 ${cleanPhone}. (Trial code: ${data.dev_otp} or bypass 123456)`);
+      } else {
+        setOtpNotice(`OTP sent successfully to +91 ******${cleanPhone.slice(-4)}`);
+      }
     } catch (err) {
       console.error(err);
-      alert(t('portal.networkError', 'Unable to connect. Please try again.'));
+      alert('Network error while requesting phone OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyEmailOtp = async () => {
-    const cleanOtp = emailOtp.trim();
+  // ── Verify Mobile Phone OTP ──
+  const handleVerifyPhoneOtp = async () => {
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    const cleanOtp = phoneOtp.trim();
     if (cleanOtp.length !== 6) {
-      alert(t('portal.invalidOtp', 'Please enter a valid 6-digit OTP'));
+      alert('Please enter the 6-digit OTP code.');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch('/api/patients/verify-email-otp', {
+      const response = await fetch('/api/patients/verify-phone-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), otp: cleanOtp })
+        body: JSON.stringify({ phone: cleanPhone, otp: cleanOtp })
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.message || t('portal.otpInvalid', 'Invalid OTP'));
+        alert(data.detail || data.message || 'Invalid OTP code.');
         return;
       }
 
-      if (data.exists && data.patient) {
+      // Existing patient found
+      if (data.patient) {
         localStorage.setItem('abhaId', data.patient.abha);
         if (onNavigate) {
           onNavigate('dashboard', {
@@ -145,13 +154,20 @@ export default function PortalSelection({ onNavigate }) {
             email: data.patient.email || ''
           });
         }
-      } else {
-        alert(t('portal.noRecordFound', 'No record found. Please complete citizen registration.'));
-        if (onNavigate) onNavigate('identity');
+      } else if (data.isNewPatient) {
+        // Phone verified, route to register ABHA ID
+        alert('Phone verified! Please enter your ABHA ID to complete first-time registration.');
+        if (onNavigate) {
+          onNavigate('identity', {
+            initialMode: 'register',
+            initialPhone: cleanPhone,
+            phoneVerified: true,
+          });
+        }
       }
     } catch (err) {
       console.error(err);
-      alert(t('portal.networkError', 'Unable to connect. Please try again.'));
+      alert('Verification network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -277,28 +293,28 @@ export default function PortalSelection({ onNavigate }) {
             </button>
 
             <button
-              className={`login-btn lb-gmail ${activePanel === 'gmail' ? 'active-tab' : ''}`}
-              onClick={() => { setActivePanel('gmail'); setEmailStep('input'); setEmailOtp(''); }}
+              className={`login-btn lb-gmail ${activePanel === 'mobile' ? 'active-tab' : ''}`}
+              onClick={() => { setActivePanel('mobile'); setPhoneStep('input'); setPhoneOtp(''); setOtpNotice(''); }}
               type="button"
             >
               <span className="lb-left">
-                <span>{t('portal.tabEmail', 'Login with Email')}</span>
+                <span>{t('portal.tabMobile', 'Login with Mobile Number (OTP)')}</span>
               </span>
               <span className="arrow">→</span>
             </button>
           </div>
 
-          {/* ABHA Panel (default) */}
+          {/* ABHA Panel */}
           {activePanel === 'abha' && (
             <div className="inline-panel">
               <p className="inline-panel-title">
-                {t('portal.enterAbhaPrompt', 'Enter 10-Digit ABHA ID')}
+                {t('portal.enterAbhaPrompt', 'Enter 14-Digit ABHA ID')}
               </p>
               <div className="input-prefix">
                 <span className="prefix">ABHA</span>
                 <input
                   type="text"
-                  placeholder="e.g. 2510991000"
+                  placeholder="e.g. 91-4820-9921-3041 or 2510991000"
                   value={abhaNumber}
                   onChange={(e) => setAbhaNumber(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleCheckAbha(); }}
@@ -317,70 +333,76 @@ export default function PortalSelection({ onNavigate }) {
             </div>
           )}
 
-          {/* Email Panel */}
-          {activePanel === 'gmail' && emailStep === 'input' && (
+          {/* Mobile Number Panel */}
+          {activePanel === 'mobile' && phoneStep === 'input' && (
             <div className="inline-panel">
               <p className="inline-panel-title">
-                {t('portal.enterEmail', 'Enter Your Email ID')}
+                Enter 10-Digit Mobile Number / मोबाइल नंबर
               </p>
               <div className="input-prefix">
-                <span className="prefix">✉️</span>
+                <span className="prefix">+91</span>
                 <input
-                  type="email"
-                  placeholder="yourname@gmail.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleEmailContinue(); }}
-                  autoComplete="email"
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handlePhoneContinue(); }}
                   disabled={loading}
+                  autoFocus
                 />
               </div>
               <button
                 className="send-otp-btn"
-                onClick={handleEmailContinue}
-                disabled={!email.trim() || loading}
+                onClick={handlePhoneContinue}
+                disabled={phone.length !== 10 || loading}
                 type="button"
               >
-                {loading ? t('portal.sending', 'Sending...') : t('portal.continueEmail', 'Continue →')}
+                {loading ? 'Sending OTP via SMS...' : 'Get OTP via SMS →'}
               </button>
             </div>
           )}
 
-          {/* Email OTP Panel */}
-          {activePanel === 'gmail' && emailStep === 'otp' && (
+          {/* Mobile OTP Panel */}
+          {activePanel === 'mobile' && phoneStep === 'otp' && (
             <div className="inline-panel">
               <p className="inline-panel-title">
-                {t('portal.enterOtp', 'Enter 6-Digit OTP')}
+                Enter 6-Digit Phone OTP / 6-अंकीय ओटीपी
               </p>
+              {otpNotice && (
+                <div style={{ background: '#E8F5E9', border: '1px solid #C8E6C9', color: '#1B5E20', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '10px', fontWeight: 600 }}>
+                  📱 {otpNotice}
+                </div>
+              )}
               <div className="input-prefix">
                 <span className="prefix">🔑</span>
                 <input
                   type="text"
                   placeholder="• • • • • •"
                   maxLength={6}
-                  value={emailOtp}
-                  onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyEmailOtp(); }}
+                  value={phoneOtp}
+                  onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyPhoneOtp(); }}
                   disabled={loading}
                   autoFocus
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px' }}>
-                 <span style={{ color: 'var(--text-muted)' }}>Sent to {email}</span>
-                 <button type="button" onClick={handleEmailContinue} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }} disabled={loading}>Resend</button>
+                 <span style={{ color: 'var(--text-muted)' }}>Sent to +91 {phone}</span>
+                 <button type="button" onClick={handlePhoneContinue} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} disabled={loading}>Resend OTP</button>
               </div>
               <button
                 className="send-otp-btn"
-                onClick={handleVerifyEmailOtp}
-                disabled={loading || emailOtp.length !== 6}
+                onClick={handleVerifyPhoneOtp}
+                disabled={loading || phoneOtp.length !== 6}
                 type="button"
                 style={{ marginTop: '12px' }}
               >
-                {loading ? t('portal.verifying', 'Verifying...') : t('portal.verifyProceed', 'Verify & Proceed →')}
+                {loading ? 'Verifying OTP...' : 'Verify & Log In →'}
               </button>
               <button
                 className="btn-outline"
-                onClick={() => { setEmailStep('input'); setEmailOtp(''); }}
+                onClick={() => { setPhoneStep('input'); setPhoneOtp(''); setOtpNotice(''); }}
                 type="button"
                 style={{ width: '100%', marginTop: '8px', padding: '12px' }}
                 disabled={loading}
@@ -409,7 +431,7 @@ export default function PortalSelection({ onNavigate }) {
                   gap: '6px'
                 }}
               >
-                <span>⚡ Next (Bypass Backend Services) →</span>
+                <span>⚡ Test Bypass (123456) →</span>
               </button>
             </div>
           )}
@@ -450,7 +472,7 @@ export default function PortalSelection({ onNavigate }) {
               href="#register"
               onClick={(e) => {
                 e.preventDefault();
-                if (onNavigate) onNavigate('identity');
+                if (onNavigate) onNavigate('identity', { initialMode: 'register' });
               }}
             >
               {t('portal.registerNow', 'Register now →')}

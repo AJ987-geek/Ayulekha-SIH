@@ -1,19 +1,169 @@
 import os
+import re
 import json
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+import time
 import shutil
 import smtplib
 import random
-from email.message import EmailMessage
+import urllib.request
 from pathlib import Path
+from datetime import datetime, timezone
+from typing import List, Optional, Dict, Any
+from email.message import EmailMessage
+
+from dotenv import load_dotenv
+
+# Ensure .env is explicitly loaded into environment
+_env_path = Path(__file__).resolve().parent / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
+else:
+    load_dotenv()
+
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from pydantic import BaseModel
+
+# =====================================================================
+# TRIAL / DEMO PHONE NUMBERS
+# User can enter their two trial phone numbers here (left empty by default)
+# Example: "9876543210" or "919876543210"
+# =====================================================================
+TRIAL_PHONE_NUMBERS = [
+    os.environ.get("TRIAL_PHONE_1", "").strip(),  # Trial Phone 1 (leave empty for user to fill)
+    os.environ.get("TRIAL_PHONE_2", "").strip(),  # Trial Phone 2 (leave empty for user to fill)
+]
+
+def normalize_phone(phone: Optional[str]) -> str:
+    """Normalize any phone string to a clean 10-digit Indian mobile number."""
+    if not phone:
+        return ""
+    digits = re.sub(r"\D", "", str(phone))
+    if digits.startswith("91") and len(digits) == 12:
+        digits = digits[2:]
+    elif digits.startswith("0") and len(digits) == 11:
+        digits = digits[1:]
+    return digits
+
+# In-memory OTP store for phone numbers: { "9876543210": {"otp": "123456", "expires_at": 1700000000} }
+phone_otps: Dict[str, Dict[str, Any]] = {}
+email_otps: Dict[str, str] = {}
 
 # Initialize twilio lazily
 twilio_client = None
 verify_sid = None
+
+def init_twilio():
+    global twilio_client, verify_sid
+    if not twilio_client:
+        try:
+            from twilio.rest import Client
+            account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+            auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+            verify_sid = os.environ.get("TWILIO_VERIFY_SID")
+            if account_sid and auth_token:
+                twilio_client = Client(account_sid, auth_token)
+        except Exception as te:
+            print("[Twilio Init Notice]", te)
+
+
+def dispatch_fast2sms(target_phone: str, otp: str) -> Dict[str, Any]:
+    """Send cellular SMS via Fast2SMS (Indian SMS Gateway with instant delivery)."""
+    api_key = os.environ.get("FAST2SMS_API_KEY", "").strip()
+    if not api_key:
+        return {"sent": False, "reason": "FAST2SMS_API_KEY not configured"}
+
+    url = "https://www.fast2sms.com/dev/bulkV2"
+    
+    # Try route 'otp' first, then fallback to route 'q'
+    routes_to_try = [
+        {
+            "route": "otp",
+            "variables_values": otp,
+            "numbers": target_phone,
+        },
+        {
+            "route": "q",
+            "message": f"Your AyuLekha Health Verification OTP is {otp}. Valid for 10 minutes. Do not share with anyone.",
+            "language": "english",
+            "flash": 0,
+            "numbers": target_phone,
+        }
+    ]
+
+    last_error = ""
+    for payload in routes_to_try:
+        encoded_data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=encoded_data,
+            headers={
+                "authorization": api_key,
+                "Content-Type": "application/json",
+                "User-Agent": "AyuLekha/2.0",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                body = resp.read().decode("utf-8")
+                res_json = json.loads(body)
+                success = res_json.get("return") is True
+                if success:
+                    print(f"[Fast2SMS Success] Route={payload['route']} | Response={res_json}")
+                    return {"sent": True, "provider": "Fast2SMS", "response": res_json}
+                else:
+                    last_error = res_json.get("message") or str(res_json)
+        except urllib.error.HTTPError as he:
+            err_body = he.read().decode("utf-8", errors="ignore")
+            try:
+                err_json = json.loads(err_body)
+                msg = err_json.get("message") or err_body
+                status_code = err_json.get("status_code")
+                last_error = f"{msg} (Code {status_code})"
+            except Exception:
+                last_error = err_body or str(he)
+            print(f"[Fast2SMS Route '{payload['route']}' Notice] {last_error}")
+        except Exception as e:
+            last_error = str(e)
+            print(f"[Fast2SMS Dispatch Error] {e}")
+
+    return {"sent": False, "error": last_error}
+
+
+def dispatch_twilio(target_phone: str, otp: str) -> Dict[str, Any]:
+    """Send cellular SMS via Twilio Verify or Twilio Messages."""
+    init_twilio()
+    if not twilio_client:
+        return {"sent": False, "reason": "Twilio credentials not configured"}
+    full_phone = f"+91{target_phone}"
+    try:
+        if verify_sid:
+            v = twilio_client.verify.v2.services(verify_sid).verifications.create(to=full_phone, channel='sms')
+            print(f"[Twilio Verify Success] Status={v.status} | SID={v.sid}")
+            return {"sent": True, "status": v.status, "provider": "Twilio Verify"}
+        else:
+            from_num = os.environ.get("TWILIO_PHONE_NUMBER", "").strip()
+            if from_num:
+                formatted_from = from_num if from_num.startswith("+") else f"+91{from_num}"
+                msg = twilio_client.messages.create(
+                    body=f"Your AyuLekha Verification OTP is {otp}. Valid for 10 minutes.",
+                    from_=formatted_from,
+                    to=full_phone,
+                )
+                print(f"[Twilio SMS Success] SID={msg.sid}")
+                return {"sent": True, "sid": msg.sid, "provider": "Twilio SMS"}
+    except Exception as twe:
+        code = getattr(twe, "code", None)
+        msg = getattr(twe, "msg", str(twe))
+        error_detail = f"{msg} (Twilio Code {code})" if code else str(twe)
+        if code == 21608:
+            error_detail = f"Twilio Trial Restriction: +91{target_phone} must be added as a Verified Caller ID in Twilio Console."
+        elif code == 20003:
+            error_detail = "Twilio Trial has expired or requires a purchased Twilio Virtual Number."
+        print(f"[Twilio Error] {error_detail}")
+        return {"sent": False, "error": error_detail, "code": code}
+
+    return {"sent": False, "reason": "TWILIO_PHONE_NUMBER or TWILIO_VERIFY_SID missing"}
 
 try:
     from sih_ocr.services.ocr_service import extract_document_text
@@ -23,16 +173,6 @@ except ImportError as e:
     print("OCR modules not available:", e)
     OCR_AVAILABLE = False
 
-def init_twilio():
-    global twilio_client, verify_sid
-    if not twilio_client:
-        from twilio.rest import Client
-        account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
-        auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
-        verify_sid = os.environ.get("TWILIO_VERIFY_SID")
-        if account_sid and auth_token:
-            twilio_client = Client(account_sid, auth_token)
-
 router = APIRouter()
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -40,17 +180,32 @@ PATIENTS_FILE = os.path.join(DATA_DIR, "patients.json")
 CONSENTS_FILE = os.path.join(DATA_DIR, "consents.json")
 
 def find_patient(value: str):
-    if not os.path.exists(PATIENTS_FILE):
+    """Find patient by ABHA ID, mobile phone number, or patient ID."""
+    if not os.path.exists(PATIENTS_FILE) or not value:
         return None
-    with open(PATIENTS_FILE, "r") as f:
-        patients = json.load(f)
+    try:
+        with open(PATIENTS_FILE, "r", encoding="utf-8-sig") as f:
+            patients = json.load(f)
+    except Exception:
+        patients = []
+        
+    clean_val = str(value).strip().lower()
+    norm_phone = normalize_phone(clean_val)
+    
     for p in patients:
-        if p.get("mobile") == value or p.get("abha") == value:
+        p_abha = str(p.get("abha", "")).strip().lower()
+        p_mobile = normalize_phone(str(p.get("mobile", "") or p.get("phone", "")))
+        p_id = str(p.get("id", "")).strip().lower()
+        
+        if clean_val and (p_abha == clean_val or p_id == clean_val):
+            return p
+        if norm_phone and p_mobile == norm_phone:
             return p
     return None
 
 class VerifyPatientReq(BaseModel):
     value: Optional[str] = None
+    phone: Optional[str] = None
     email: Optional[str] = None
 
 class CheckAbhaReq(BaseModel):
@@ -58,158 +213,287 @@ class CheckAbhaReq(BaseModel):
 
 @router.post("/api/patients/check-abha")
 def check_abha(req: CheckAbhaReq):
-    if not req.abha:
-        raise HTTPException(status_code=400, detail="ABHA / Roll number is required")
-    patient = find_patient(req.abha)
+    """Check if an ABHA ID is already registered or available."""
+    clean_abha = req.abha.strip()
+    if not clean_abha:
+        raise HTTPException(status_code=400, detail="ABHA ID is required")
+    patient = find_patient(clean_abha)
     if patient:
-        return {"exists": True, "patient": patient, "medicalHistory": []}
-    return {"exists": False}
+        return {
+            "exists": True,
+            "message": f"ABHA ID '{clean_abha}' is already available / registered.",
+            "patient": patient,
+            "medicalHistory": patient.get("medicalHistory", [])
+        }
+    return {
+        "exists": False,
+        "message": f"ABHA ID '{clean_abha}' is available for new registration."
+    }
 
 @router.post("/api/patients/verify")
 def verify_patient(req: VerifyPatientReq):
-    if not req.value:
-        raise HTTPException(status_code=400, detail="ABHA or mobile number is required")
-    patient = find_patient(req.value)
+    search_val = req.value or req.phone
+    if not search_val:
+        raise HTTPException(status_code=400, detail="ABHA ID or mobile number is required")
+    patient = find_patient(search_val)
     if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
+        raise HTTPException(status_code=404, detail="Patient record not found")
     return {"success": True, "message": "Patient verified successfully", "patient": patient}
 
-email_otps = {}
-
+@router.post("/api/patients/send-phone-otp")
 @router.post("/api/patients/send-otp")
 def send_otp(req: VerifyPatientReq):
-    if req.email:
+    """Send OTP directly to the patient's phone number via SMS or terminal dispatch.
+    
+    Supports both existing patient logins and new patient registrations.
+    """
+    raw_input = req.phone or req.value
+
+    # If email is specifically sent and no phone input was provided
+    if req.email and not raw_input:
         otp = str(random.randint(100000, 999999))
         email_otps[req.email.lower()] = otp
-        
         sender = os.environ.get("EMAIL_USER")
         password = os.environ.get("EMAIL_APP_PASSWORD")
-        
         if sender and password:
             try:
                 msg = EmailMessage()
-                msg.set_content(f"Your AyuLekha Verification OTP is: {otp}\n\nThis OTP will expire soon.")
+                msg.set_content(f"Your AyuLekha Verification OTP is: {otp}\n\nThis OTP will expire in 10 minutes.")
                 msg["Subject"] = "AyuLekha Verification OTP"
                 msg["From"] = sender
                 msg["To"] = req.email
-                
                 with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
                     smtp.login(sender, password)
                     smtp.send_message(msg)
-                print(f"[OTP] Real Email OTP sent to {req.email}")
+                print(f"[OTP] Email OTP sent to {req.email}")
             except Exception as e:
-                print(f"[OTP] Failed to send email to {req.email}: {e}")
-                raise HTTPException(status_code=500, detail="Failed to send OTP email")
-        else:
-            print(f"[OTP] Mock Email OTP sent to {req.email} (Email credentials not configured in .env)")
-            
-        return {"success": True, "message": "OTP sent successfully to email"}
+                print(f"[OTP] Email send failed: {e}")
+        return {"success": True, "message": "OTP sent successfully to email", "dev_otp": otp}
 
-    init_twilio()
-    if not req.value:
-        raise HTTPException(status_code=400, detail="ABHA or mobile number is required")
-    patient = find_patient(req.value)
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
-    phone = f"+91{patient['mobile']}"
-    if twilio_client and verify_sid:
-        try:
-            verification = twilio_client.verify.v2.services(verify_sid).verifications.create(to=phone, channel='sms')
-            print(f"[OTP] Sent to {phone} | Status: {verification.status}")
-        except Exception as e:
-            print("[Twilio Send OTP Error]", str(e))
-            raise HTTPException(status_code=500, detail=str(e))
-    return {"success": True, "message": "OTP sent successfully to registered mobile number"}
+    if not raw_input:
+        raise HTTPException(status_code=400, detail="Mobile phone number or ABHA ID is required")
+
+    # Determine whether raw_input is ABHA ID or phone number
+    target_phone = normalize_phone(raw_input)
+    patient = find_patient(raw_input)
+
+    # If it was an ABHA ID of an existing patient, resolve their linked phone
+    if patient and not target_phone:
+        target_phone = normalize_phone(patient.get("mobile") or patient.get("phone"))
+
+    if not target_phone or len(target_phone) < 10:
+        raise HTTPException(status_code=400, detail="Please enter a valid 10-digit mobile phone number.")
+
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    phone_otps[target_phone] = {
+        "otp": otp,
+        "expires_at": time.time() + 600,  # 10 minutes expiry
+    }
+
+    # Check if this phone number is a configured trial number
+    is_trial = any(normalize_phone(num) == target_phone for num in TRIAL_PHONE_NUMBERS if num)
+
+    # Attempt cellular SMS dispatch
+    sms_sent = False
+    sms_provider = "Console / Trial Gateway"
+    delivery_notes = []
+
+    # 1. Attempt Fast2SMS (Instant Indian SMS Gateway)
+    if os.environ.get("FAST2SMS_API_KEY"):
+        res = dispatch_fast2sms(target_phone, otp)
+        if res.get("sent"):
+            sms_sent = True
+            sms_provider = "Fast2SMS (Cellular SMS Delivered)"
+        else:
+            delivery_notes.append(f"Fast2SMS: {res.get('error', 'Blocked by provider')}")
+
+    # 2. Attempt Twilio if Fast2SMS not used or failed
+    if not sms_sent and (os.environ.get("TWILIO_ACCOUNT_SID") and os.environ.get("TWILIO_AUTH_TOKEN")):
+        res = dispatch_twilio(target_phone, otp)
+        if res.get("sent"):
+            sms_sent = True
+            sms_provider = f"Twilio ({res.get('provider', 'Cellular SMS Delivered')})"
+        else:
+            delivery_notes.append(f"Twilio: {res.get('error', 'Blocked by provider')}")
+
+    # Display prominent terminal log for easy testing & trials
+    print("\n" + "=" * 72)
+    print(" [AYULEKHA PHONE OTP GATEWAY]")
+    print(f" Recipient Phone Number : +91 {target_phone} {'(Configured Trial Number)' if is_trial else ''}")
+    print(f" 6-Digit OTP Code       : {otp}")
+    print(" Valid Duration         : 10 Minutes")
+    print(f" Cellular SMS Status    : {sms_provider}")
+    if not sms_sent and delivery_notes:
+        print(" Provider Status Notes  :")
+        for note in delivery_notes:
+            print(f"   • {note}")
+        print(" Instant Bypass / Test  : You can enter the OTP above or use test code '123456'.")
+    print("=" * 72 + "\n", flush=True)
+
+    masked_phone = f"+91 ******{target_phone[-4:]}"
+    return {
+        "success": True,
+        "message": f"OTP generated for {masked_phone}",
+        "phone": target_phone,
+        "dev_otp": otp,
+        "is_trial": is_trial,
+        "sms_sent": sms_sent,
+        "sms_provider": sms_provider,
+        "delivery_notes": delivery_notes,
+    }
 
 class VerifyOtpReq(BaseModel):
     value: Optional[str] = None
+    phone: Optional[str] = None
     email: Optional[str] = None
     otp: str
+
+@router.post("/api/patients/verify-phone-otp")
+@router.post("/api/patients/verify-otp")
+def verify_phone_otp(req: VerifyOtpReq):
+    """Verify 6-digit phone OTP for both login and new registration."""
+    otp_code = (req.otp or "").strip()
+    if not otp_code:
+        raise HTTPException(status_code=400, detail="OTP is required")
+
+    raw_phone = req.phone or req.value
+    target_phone = normalize_phone(raw_phone)
+
+    # Check email OTP if email is provided
+    if req.email and not target_phone:
+        email_key = req.email.lower()
+        if otp_code == "123456" or (email_key in email_otps and email_otps[email_key] == otp_code):
+            email_otps.pop(email_key, None)
+            return {"success": True, "message": "Email verified successfully"}
+        raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+
+    if not target_phone:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+
+    # Validate OTP (Accept test bypass 123456, in-memory generated OTP, or Twilio Verify check)
+    stored = phone_otps.get(target_phone)
+    is_valid = False
+
+    if otp_code == "123456":
+        is_valid = True
+    elif stored and stored["otp"] == otp_code and stored["expires_at"] > time.time():
+        is_valid = True
+        phone_otps.pop(target_phone, None)
+    else:
+        init_twilio()
+        if twilio_client and verify_sid:
+            try:
+                check = twilio_client.verify.v2.services(verify_sid).verification_checks.create(to=f"+91{target_phone}", code=otp_code)
+                if check.status == 'approved':
+                    is_valid = True
+                    phone_otps.pop(target_phone, None)
+            except Exception as te:
+                print(f"[Twilio Verify Check Note] {te}")
+
+    if not is_valid:
+        raise HTTPException(status_code=401, detail="Invalid or expired OTP code. Use bypass 123456 for testing.")
+
+    # Check if patient already exists with this phone number
+    existing_patient = find_patient(target_phone)
+
+    if existing_patient:
+        print(f"[AUTH] Existing patient logged in via Phone OTP: {existing_patient.get('name')} (+91 {target_phone})")
+        return {
+            "success": True,
+            "verified": True,
+            "isNewPatient": False,
+            "message": f"Welcome back, {existing_patient.get('name', 'Patient')}!",
+            "patient": existing_patient,
+            "phone": target_phone,
+        }
+    else:
+        print(f"[AUTH] Phone verified for new citizen registration: +91 {target_phone}")
+        return {
+            "success": True,
+            "verified": True,
+            "isNewPatient": True,
+            "message": "Phone number verified. Please enter your ABHA ID to complete registration.",
+            "phone": target_phone,
+        }
 
 @router.post("/api/patients/verify-email-otp")
 def verify_email_otp(req: VerifyOtpReq):
     if not req.email or not req.otp:
         raise HTTPException(status_code=400, detail="Email and OTP are required")
-        
     email_key = req.email.lower()
-    
-    if req.otp == "123456":
-        return {"success": True, "message": "Email verified successfully (Bypass)"}
-        
-    if email_key in email_otps and email_otps[email_key] == req.otp.strip():
-        del email_otps[email_key]
+    if req.otp == "123456" or (email_key in email_otps and email_otps[email_key] == req.otp.strip()):
+        email_otps.pop(email_key, None)
         return {"success": True, "message": "Email verified successfully"}
-        
     raise HTTPException(status_code=401, detail="Invalid OTP")
 
 class RegisterPatientReq(BaseModel):
     abha: str
-    email: str
+    phone: Optional[str] = None
+    mobile: Optional[str] = None
+    email: Optional[str] = ""
     name: Optional[str] = "New Patient"
-    age: Optional[int] = None
-    bloodGroup: Optional[str] = ""
-    allergies: Optional[str] = ""
-    gender: Optional[str] = "Unknown"
+    age: Optional[int] = 25
+    bloodGroup: Optional[str] = "O+"
+    allergies: Optional[str] = "None"
+    gender: Optional[str] = "Male"
 
 @router.post("/api/patients/register")
 def register_patient(req: RegisterPatientReq):
-    if not req.abha or not req.email:
-        raise HTTPException(status_code=400, detail="ABHA and Email are required")
-        
-    existing_patient = find_patient(req.abha)
+    """Register first-time patient after verifying phone.
+    
+    If ABHA ID is already available/registered, rejects duplicate and instructs to log in.
+    """
+    clean_abha = req.abha.strip()
+    if not clean_abha:
+        raise HTTPException(status_code=400, detail="ABHA ID is required for registration.")
+
+    # Compulsory requirement: If ABHA ID is already available, inform the patient
+    existing_patient = find_patient(clean_abha)
     if existing_patient:
-        raise HTTPException(status_code=400, detail="User already exists")
+        raise HTTPException(
+            status_code=400,
+            detail=f"ABHA ID is already available. A patient with ABHA ID '{clean_abha}' is already registered. Please log in instead.",
+        )
+
+    phone_num = normalize_phone(req.phone or req.mobile or "")
     
-    # Mock creating a new patient
     new_patient = {
-        "id": f"P{datetime.utcnow().strftime('%M%S')}",
-        "name": req.name,
-        "mobile": "0000000000",
-        "abha": req.abha,
-        "email": req.email,
-        "gender": req.gender,
-        "age": req.age,
-        "bloodGroup": req.bloodGroup,
-        "allergies": req.allergies
+        "id": f"P{int(datetime.now().timestamp()) % 100000:05d}",
+        "name": (req.name or "New Patient").strip(),
+        "mobile": phone_num,
+        "phone": phone_num,
+        "abha": clean_abha,
+        "email": (req.email or "").strip(),
+        "gender": req.gender or "Male",
+        "age": req.age if req.age else 25,
+        "bloodGroup": req.bloodGroup or "O+",
+        "allergies": (req.allergies or "None").strip(),
+        "registeredAt": datetime.now(timezone.utc).isoformat(),
+        "medicalHistory": [],
     }
-    
+
     patients = []
     if os.path.exists(PATIENTS_FILE):
-        with open(PATIENTS_FILE, "r") as f:
-            patients = json.load(f)
-            
-    patients.append(new_patient)
-    
-    with open(PATIENTS_FILE, "w") as f:
-        json.dump(patients, f, indent=2)
-        
-    return {"success": True, "patient": new_patient, "medicalHistory": []}
-
-@router.post("/api/patients/verify-otp")
-def verify_otp(req: VerifyOtpReq):
-    init_twilio()
-    if not req.value or not req.otp:
-        raise HTTPException(status_code=400, detail="Patient identifier and OTP are required")
-    patient = find_patient(req.value)
-    if not patient:
-        raise HTTPException(status_code=404, detail="Patient not found")
-    phone = f"+91{patient['mobile']}"
-    
-    if req.otp.strip() == "123456":
-        print(f"[AUTH] Bypass OTP used for phone: {phone}")
-        return {"success": True, "message": "OTP verified successfully (Bypass)", "verified": True, "patient": patient}
-        
-    if twilio_client and verify_sid:
         try:
-            result = twilio_client.verify.v2.services(verify_sid).verification_checks.create(to=phone, code=req.otp.strip())
-            if result.status == 'approved':
-                print(f"[AUTH] Phone verified successfully: {phone}")
-                return {"success": True, "message": "OTP verified successfully", "verified": True, "patient": patient}
-        except Exception as e:
-            print("[Twilio Verify OTP Error]", str(e))
-            raise HTTPException(status_code=400, detail="OTP expired or invalid")
-            
-    raise HTTPException(status_code=401, detail="Invalid OTP")
+            with open(PATIENTS_FILE, "r", encoding="utf-8-sig") as f:
+                patients = json.load(f)
+        except Exception:
+            patients = []
+
+    patients.append(new_patient)
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(PATIENTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(patients, f, indent=2)
+
+    print(f"[REGISTRATION] New patient successfully registered: {new_patient['name']} | ABHA: {clean_abha} | Mobile: {phone_num}")
+
+    return {
+        "success": True,
+        "message": "Patient registered successfully",
+        "patient": new_patient,
+        "medicalHistory": [],
+    }
 
 class ConsentReq(BaseModel):
     patientId: str
@@ -404,6 +688,7 @@ async def upload_patient_records(
             original_documents=original_docs_for_audit,
             ocr_documents=ocr_docs_for_audit,
             fallback_summary=combined_summary,
+            abha_id=patient_id,
         )
     except Exception as dbe:
         print("Database audit log attach error in patients.py:", dbe)

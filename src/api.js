@@ -33,7 +33,7 @@ export async function verifyPatient(value) {
  * @param {string} value  ABHA ID or 10-digit mobile number
  */
 export async function sendOtp(value) {
-  return apiFetch('/send-otp', { value });
+  return apiFetch('/send-otp', { value, phone: value });
 }
 
 /**
@@ -42,7 +42,7 @@ export async function sendOtp(value) {
  * @param {string} otp    6-digit OTP
  */
 export async function verifyOtp(value, otp) {
-  return apiFetch('/verify-otp', { value, otp });
+  return apiFetch('/verify-otp', { value, phone: value, otp });
 }
 
 /**

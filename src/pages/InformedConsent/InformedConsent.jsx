@@ -46,8 +46,8 @@ export default function InformedConsent({ onNavigate, email, patientId, patient,
     setIsSubmitting(true);
 
     try {
-      // Use the verified email as the identifier for this session.
-      const patientIdentifier = email || 'GUEST';
+      // Use the verified patient ID, ABHA, or email as the identifier
+      const patientIdentifier = patientId || patient?.id || patient?.abha || email || 'GUEST';
 
       const response = await fetch(
         '/api/patients/consent',

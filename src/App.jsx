@@ -17,7 +17,6 @@ import Records from './pages/Records/Records';
 import Done from './pages/Done/Done';
 import PatientDashboard from './pages/PatientDashboard/PatientDashboard';
 import NewAppointment from './pages/NewAppointment/NewAppointment';
-import DoctorDashboard from './pages/DoctorDashboard/DoctorDashboard';
 import LanguageModal from './components/LanguageModal/LanguageModal';
 
 function AppRoutes() {
@@ -36,7 +35,7 @@ function AppRoutes() {
   if (currentPage === 'identity') {
     return (
       <div className="app-shell">
-        <PatientIdentity onNavigate={handleNavigate} />
+        <PatientIdentity onNavigate={handleNavigate} {...pageProps} />
       </div>
     );
   }
@@ -161,18 +160,6 @@ function AppRoutes() {
     return (
       <div className="app-shell">
         <NewAppointment onNavigate={handleNavigate} />
-      </div>
-    );
-  }
-
-  // -----------------------------------------
-  // DOCTOR DASHBOARD
-  // -----------------------------------------
-
-  if (currentPage === 'doctor-dashboard') {
-    return (
-      <div className="app-shell">
-        <DoctorDashboard onNavigate={handleNavigate} />
       </div>
     );
   }

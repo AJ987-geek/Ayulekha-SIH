@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import './PatientDashboard.css';
+import StructuredOcrView from '../../components/StructuredOcrView/StructuredOcrView';
 
 export default function PatientDashboard({ onNavigate, patient, patientId, summary }) {
   const { language, openLanguageModal, currentLangObj, getSpeechLang, t } = useLanguage();
@@ -11,13 +12,47 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
   const [activeSection, setActiveSection] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // ── Patient Info ──
-  const citizenName = patient?.name || 'Ram Kumar Sharma';
-  const abhaNumber = patient?.abha || patientId || '91-4820-9921-3041';
-  const citizenMobile = patient?.mobile || '9876543210';
-  const citizenBlood = patient?.bloodGroup || 'B+';
-  const citizenAge = patient?.age || 42;
-  const citizenGender = patient?.gender || 'Male';
+  // ── Patient Info (Resolved dynamically from props or localStorage) ──
+  const [activePatient, setActivePatient] = useState(() => {
+    if (patient) return patient;
+    try {
+      const saved = localStorage.getItem('ayulekha_current_patient');
+      if (saved) return JSON.parse(saved);
+    } catch (_) { }
+    return null;
+  });
+
+  useEffect(() => {
+    if (patient) {
+      setActivePatient(patient);
+    } else {
+      const savedAbha = localStorage.getItem('abhaId') || patientId;
+      if (savedAbha) {
+        fetch('/api/patients/check-abha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ abha: savedAbha })
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.exists && data.patient) {
+              setActivePatient(data.patient);
+              try {
+                localStorage.setItem('ayulekha_current_patient', JSON.stringify(data.patient));
+              } catch (_) { }
+            }
+          })
+          .catch(err => console.warn('Patient fetch note:', err));
+      }
+    }
+  }, [patient, patientId]);
+
+  const citizenName = activePatient?.name || patient?.name || 'Registered Citizen';
+  const abhaNumber = activePatient?.abha || patient?.abha || patientId || localStorage.getItem('abhaId') || '';
+  const citizenMobile = activePatient?.mobile || patient?.mobile || '';
+  const citizenBlood = activePatient?.bloodGroup || patient?.bloodGroup || 'O+';
+  const citizenAge = activePatient?.age || patient?.age || 25;
+  const citizenGender = activePatient?.gender || patient?.gender || 'Male';
 
   // ── Hospital Info (Current Facility) ── 
   const [hospitalInfo, setHospitalInfo] = useState({
@@ -105,6 +140,10 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
   const [auditUploadDocType, setAuditUploadDocType] = useState('auto');
   const [searchAuditQuery, setSearchAuditQuery] = useState('');
   const [isAuditLogsLoading, setIsAuditLogsLoading] = useState(false);
+  const [sharingTrail, setSharingTrail] = useState([]);
+  const [shareConsentModal, setShareConsentModal] = useState({ open: false, summaryId: '', abhaId: '' });
+  const [activeShareKeys, setActiveShareKeys] = useState({});
+  const [isGeneratingShareKey, setIsGeneratingShareKey] = useState(false);
 
   // Clear stale appointment data from browser localStorage on initialization
   useEffect(() => {
@@ -119,6 +158,111 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
     }
   }, []);
 
+  const fetchSharingTrail = async () => {
+    try {
+      const res = await fetch('/api/patients/sharing-trail');
+      const data = await res.json();
+      if (data && Array.isArray(data.sharing_trail)) {
+        setSharingTrail(data.sharing_trail);
+      }
+    } catch (e) {
+      console.warn('Sharing trail load note:', e);
+    }
+  };
+
+  const fetchActiveShareKeys = async () => {
+    try {
+      const targetAbha = abhaNumber || '91-4820-9921-3041';
+      const res = await fetch(`/api/patients/active-share-keys?abha_id=${encodeURIComponent(targetAbha)}`);
+      const data = await res.json();
+      if (data && Array.isArray(data.share_keys)) {
+        const keyMap = {};
+        data.share_keys.forEach(k => {
+          if (!keyMap[k.summary_id]) {
+            keyMap[k.summary_id] = k;
+          }
+        });
+        setActiveShareKeys(keyMap);
+      }
+    } catch (e) {
+      console.warn('Active share keys load note:', e);
+    }
+  };
+
+  const handleOpenShareConsent = (summaryId) => {
+    setShareConsentModal({
+      open: true,
+      summaryId: summaryId,
+      abhaId: abhaNumber || '91-4820-9921-3041',
+    });
+  };
+
+  const handleConfirmGenerateShareKey = async () => {
+    if (!shareConsentModal.summaryId) return;
+    setIsGeneratingShareKey(true);
+    try {
+      const res = await fetch('/api/patients/generate-share-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary_id: shareConsentModal.summaryId,
+          abha_id: shareConsentModal.abhaId,
+          consent_confirmed: true,
+        }),
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setActiveShareKeys(prev => ({
+          ...prev,
+          [data.summary_id]: {
+            share_id: data.share_id,
+            summary_id: data.summary_id,
+            time_created: data.time_created,
+          }
+        }));
+        triggerToast(
+          isHi 
+            ? `नया शेयरिंग कोड तैयार: ${data.share_id}` 
+            : `New Dynamic Sharing ID: ${data.share_id} generated. Share with your doctor.`,
+          'success'
+        );
+        setShareConsentModal({ open: false, summaryId: '', abhaId: '' });
+      } else {
+        alert(data.detail || data.message || 'Failed to generate sharing key.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while generating sharing key.');
+    } finally {
+      setIsGeneratingShareKey(false);
+    }
+  };
+
+  const handleStopSharing = async (summaryId, doctorName) => {
+    if (!window.confirm(isHi ? `क्या आप ${doctorName || 'डॉक्टर'} के साथ डेटा शेयरिंग रोकना चाहते हैं?` : `Are you sure you want to stop sharing summary ${summaryId} with ${doctorName || 'the doctor'}?`)) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/patients/revoke-sharing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary_id: summaryId, doctor_name: doctorName }),
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        triggerToast(isHi ? `डेटा शेयरिंग रोक दी गई है (${doctorName})` : `Data sharing with ${doctorName || 'doctor'} has been stopped.`, 'info');
+        setActiveShareKeys(prev => {
+          const updated = { ...prev };
+          delete updated[summaryId];
+          return updated;
+        });
+        fetchSharingTrail();
+      }
+    } catch (e) {
+      console.warn('Revoke sharing error:', e);
+    }
+  };
+
   const fetchAuditLogs = async () => {
     setIsAuditLogsLoading(true);
     try {
@@ -127,6 +271,8 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
       if (data && Array.isArray(data.logs)) {
         setAuditLogs(data.logs);
       }
+      fetchSharingTrail();
+      fetchActiveShareKeys();
     } catch (err) {
       console.warn('Audit logs load note:', err);
     } finally {
@@ -1163,15 +1309,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               </div>
 
               {/* Hospital Switcher Button */}
-              <button
-                type="button"
-                className="btn-outline"
-                style={{ padding: '4px 10px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                onClick={() => setIsHospitalModalOpen(true)}
-              >
-                <span>🏥 {hospitalInfo.name}</span>
-                <span style={{ fontSize: '10px' }}>▾</span>
-              </button>
+
             </div>
 
             <div className="dh-right">
@@ -1201,7 +1339,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
               {/* ABHA Badge */}
               <div className="dh-abha" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
                 <span style={{ color: 'var(--success)' }}>●</span>
-                <span>ABHA: <strong>{abhaNumber.slice(0, 10)}...</strong></span>
+                <span>ABHA: <strong>{abhaNumber.slice(0, 10)}</strong></span>
               </div>
 
               {/* User Avatar */}
@@ -1256,17 +1394,8 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                     </div>
                   </div>
                   <div className="acb-right" style={{ textAlign: 'center' }}>
-                    <div style={{ width: '90px', height: '90px', background: '#fff', color: '#000', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', margin: '0 auto 10px' }}>
-                      [ QR CODE ]
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-accent"
-                      style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '6px' }}
-                      onClick={() => triggerToast(isHi ? 'ABHA कार्ड डाउनलोड हो गया!' : 'ABHA Card PDF downloaded successfully!', 'success')}
-                    >
-                      📥 {isHi ? 'कार्ड डाउनलोड' : 'Download Card'}
-                    </button>
+
+
                   </div>
                 </div>
 
@@ -1335,28 +1464,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 </div>
 
                 {/* Stats Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                  <div className="card" style={{ padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-                    <div style={{ fontSize: '24px' }}>📁</div>
-                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary)' }}>{ocrRecords.length || 3}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isHi ? 'स्वास्थ्य रिकॉर्ड्स' : 'Health Records'}</div>
-                  </div>
-                  <div className="card" style={{ padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-                    <div style={{ fontSize: '24px' }}>📜</div>
-                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--accent)' }}>{auditLogs.length}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isHi ? 'ऑडिट लॉग्स' : 'Audit Logs'}</div>
-                  </div>
-                  <div className="card" style={{ padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-                    <div style={{ fontSize: '24px' }}>💊</div>
-                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary)' }}>{medicines.length}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isHi ? 'सक्रिय दवाइयाँ' : 'Active Medicines'}</div>
-                  </div>
-                  <div className="card" style={{ padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-                    <div style={{ fontSize: '24px' }}>🩺</div>
-                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--success)' }}>120/80</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{isHi ? 'रक्तचाप (BP)' : 'Blood Pressure'}</div>
-                  </div>
-                </div>
+
 
                 {/* Rotating Health Tip */}
                 <div style={{ background: '#E8F5E9', border: '1.5px solid rgba(46,125,50,0.2)', borderRadius: '12px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', gap: '16px' }}>
@@ -1385,7 +1493,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 <div className="card" style={{ padding: '20px', border: '1.5px solid var(--border)', borderRadius: '14px', marginBottom: '24px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <span className="badge" style={{ background: '#E8F5E9', color: 'var(--success)' }}>
-                      📜 SQLite Audit Trail • {auditLogs.length} Records Logged
+                      📜 Audit Trail • {auditLogs.length} Records Logged
                     </span>
                     <button
                       type="button"
@@ -1436,38 +1544,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 </div>
 
                 {/* Active Prescriptions Table (from OCR or default) */}
-                <div className="card" style={{ padding: '20px', border: '1.5px solid var(--border)', borderRadius: '14px', marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 700 }}>
-                      💊 {isHi ? 'सक्रिय दवाइयाँ (OCR द्वारा सत्यापित)' : 'Active Prescriptions (OCR Verified)'}
-                    </h3>
-                    <span className="badge" style={{ background: 'rgba(26,92,56,0.1)', color: 'var(--primary)' }}>
-                      PaddleOCR / TrOCR
-                    </span>
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                      <thead>
-                        <tr style={{ background: 'var(--bg-muted)', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
-                          <th style={{ padding: '10px' }}>Medication Name</th>
-                          <th style={{ padding: '10px' }}>Dosage</th>
-                          <th style={{ padding: '10px' }}>Timing</th>
-                          <th style={{ padding: '10px' }}>Duration</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {medicines.map((m, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid var(--divider)' }}>
-                            <td style={{ padding: '10px', fontWeight: 600 }}>{m.Name || m[0]}</td>
-                            <td style={{ padding: '10px' }}>{m.Dosage || m[1]}</td>
-                            <td style={{ padding: '10px' }}>{m.Frequency || m[2]}</td>
-                            <td style={{ padding: '10px' }}>{m.Duration || m[3] || 'As needed'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+
               </section>
             )}
 
@@ -1703,6 +1780,46 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                   </div>
                 </div>
 
+                {/* Live Data Sharing Alert Banner */}
+                {sharingTrail && sharingTrail.length > 0 && (
+                  <div className="card" style={{ padding: '16px 20px', borderRadius: '12px', marginBottom: '20px', background: '#ecfdf5', border: '1.5px solid #6ee7b7' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '20px' }}>🛡️</span>
+                      <span style={{ fontWeight: 800, color: '#065f46', fontSize: '15px' }}>
+                        {isHi ? 'डेटा शेयरिंग सक्रिय सूचना (Live Data Sharing Notice)' : 'Live Data Sharing Notice'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#047857', lineHeight: 1.6 }}>
+                      {sharingTrail.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '8px 0', borderBottom: idx < sharingTrail.length - 1 ? '1px dashed #a7f3d0' : 'none' }}>
+                          <div>
+                            • Summary <strong>{item.summary_id}</strong> is actively shared with <strong>{item.doctor_name}</strong> (Medical License: #{item.doctor_license}, Doctor Station IP: <strong>{item.doctor_ip}</strong>).
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleStopSharing(item.summary_id, item.doctor_name)}
+                            style={{
+                              background: '#fee2e2',
+                              color: '#b91c1c',
+                              border: '1px solid #fca5a5',
+                              padding: '4px 12px',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            🛑 {isHi ? 'शेयरिंग रोकें' : 'Stop Sharing'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Filter and Search Bar */}
                 <div className="card" style={{ padding: '16px 20px', borderRadius: '12px', marginBottom: '20px', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
@@ -1795,31 +1912,122 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                           setExpandedOcrDocId(null);
                         }}
                       >
-                        {/* Left: Summary ID Only */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                        {/* Left: Summary ID & Dynamic Sharing */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                           <span
                             style={{
                               fontFamily: 'monospace',
-                              fontSize: '15px',
+                              fontSize: '14px',
                               fontWeight: 800,
                               color: '#1A5C38',
                               background: '#E8F5E9',
-                              padding: '6px 14px',
+                              padding: '5px 12px',
                               borderRadius: '8px',
                               border: '1px solid #C8E6C9',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '8px'
+                              gap: '6px'
                             }}
-                            title="Click to copy summary_id"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopyId(log.summary_id);
-                            }}
+                            title="Permanent Record ID"
                           >
                             🆔 {log.summary_id}
-                            <span style={{ fontSize: '12px', opacity: 0.7 }}>📋</span>
                           </span>
+
+                          {/* Active Dynamic Sharing ID Badge */}
+                          {activeShareKeys[log.summary_id] && (
+                            <span
+                              style={{
+                                fontFamily: 'monospace',
+                                fontSize: '13px',
+                                fontWeight: 800,
+                                color: '#065f46',
+                                background: '#d1fae5',
+                                padding: '5px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid #6ee7b7',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                cursor: 'pointer'
+                              }}
+                              title="Active Dynamic Sharing ID. Click to copy"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyId(activeShareKeys[log.summary_id].share_id);
+                              }}
+                            >
+                              🔑 {activeShareKeys[log.summary_id].share_id}
+                              <span style={{ fontSize: '11px', opacity: 0.8 }}>📋</span>
+                            </span>
+                          )}
+
+                          {/* Generate / Rotate Share ID Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenShareConsent(log.summary_id);
+                            }}
+                            style={{
+                              background: activeShareKeys[log.summary_id] ? '#fef3c7' : '#1A5C38',
+                              color: activeShareKeys[log.summary_id] ? '#92400e' : '#ffffff',
+                              border: activeShareKeys[log.summary_id] ? '1px solid #fde68a' : 'none',
+                              padding: '5px 12px',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}
+                            title={activeShareKeys[log.summary_id] ? "Generate new one-time sharing key" : "Generate doctor sharing ID"}
+                          >
+                            {activeShareKeys[log.summary_id] ? '🔄 New Share ID' : '🔑 Share with Doctor'}
+                          </button>
+
+                          {(() => {
+                            const sharedItem = sharingTrail.find(s => s.summary_id === log.summary_id);
+                            if (sharedItem) {
+                              return (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                  <span style={{
+                                    background: '#ecfdf5',
+                                    color: '#065f46',
+                                    border: '1px solid #a7f3d0',
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}>
+                                    <span>🟢</span>
+                                    <span>Shared with {sharedItem.doctor_name}</span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStopSharing(log.summary_id, sharedItem.doctor_name)}
+                                    style={{
+                                      background: '#fee2e2',
+                                      color: '#b91c1c',
+                                      border: '1px solid #fca5a5',
+                                      padding: '3px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Stop sharing this record with doctor"
+                                  >
+                                    🛑 Stop Sharing
+                                  </button>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
 
                         {/* Right: Time Created + Edit / Open Actions */}
@@ -1913,79 +2121,7 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 </div>
 
                 {/* 3-Stage Visual Architecture Pipeline Status Badges */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-                  {/* Stage 1: STT */}
-                  <div style={{
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1.5px solid',
-                    borderColor: isStoryRecording || storyStage === 'stt_listening' ? '#2E7D32' : 'var(--border)',
-                    background: isStoryRecording || storyStage === 'stt_listening' ? '#E8F5E9' : '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: isStoryRecording ? '0 0 10px rgba(46,125,50,0.25)' : 'none',
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <span style={{ fontSize: '24px' }}>🎙️</span>
-                    <div>
-                      <div style={{ fontSize: '11px', fontWeight: 800, color: isStoryRecording ? '#1A5C38' : 'var(--text-muted)' }}>
-                        STAGE 1: STT
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: isStoryRecording ? '#1A5C38' : '#1c1c18' }}>
-                        {isStoryRecording ? (isHi ? 'आवाज सुन रहा है...' : 'Listening (Noise Cut)') : (isHi ? 'माइक तैयार' : 'Speech to Text')}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Stage 2: LLM */}
-                  <div style={{
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1.5px solid',
-                    borderColor: storyStage === 'llm_thinking' ? '#1565C0' : 'var(--border)',
-                    background: storyStage === 'llm_thinking' ? '#E3F2FD' : '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: storyStage === 'llm_thinking' ? '0 0 10px rgba(21,101,192,0.25)' : 'none',
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <span style={{ fontSize: '24px' }}>🧠</span>
-                    <div>
-                      <div style={{ fontSize: '11px', fontWeight: 800, color: storyStage === 'llm_thinking' ? '#1565C0' : 'var(--text-muted)' }}>
-                        STAGE 2: LLM
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: storyStage === 'llm_thinking' ? '#1565C0' : '#1c1c18' }}>
-                        {storyStage === 'llm_thinking' ? (isHi ? 'विश्लेषण जारी...' : 'Groq Socrates Thinking') : 'Groq Socrates (Ready)'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stage 3: TTS */}
-                  <div style={{
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1.5px solid',
-                    borderColor: storyStage === 'tts_speaking' ? '#E65100' : 'var(--border)',
-                    background: storyStage === 'tts_speaking' ? '#FFF3E0' : '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    boxShadow: storyStage === 'tts_speaking' ? '0 0 10px rgba(230,81,0,0.25)' : 'none',
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <span style={{ fontSize: '24px' }}>🔊</span>
-                    <div>
-                      <div style={{ fontSize: '11px', fontWeight: 800, color: storyStage === 'tts_speaking' ? '#E65100' : 'var(--text-muted)' }}>
-                        STAGE 3: TTS
-                      </div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: storyStage === 'tts_speaking' ? '#E65100' : '#1c1c18' }}>
-                        {storyStage === 'tts_speaking' ? (isHi ? 'उत्तर बोल रहा है...' : 'WebTTS Speaking') : (isTtsMuted ? 'Muted' : 'WebTTS Active')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Main Voice-AI Chat Box Container */}
                 <div
@@ -2563,9 +2699,52 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                   <span className="badge" style={{ background: '#E8F5E9', color: '#1A5C38', fontWeight: 800, padding: '4px 10px', borderRadius: '6px' }}>
                     SQLITE AUDIT LOG
                   </span>
-                  <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '14px', color: '#1A5C38', background: 'rgba(26,92,56,0.08)', padding: '3px 10px', borderRadius: '6px' }}>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '14px', color: '#1A5C38', background: 'rgba(26,92,56,0.08)', padding: '3px 10px', borderRadius: '6px' }} title="Permanent Record ID">
                     🆔 {selectedAuditLog.summary_id}
                   </span>
+                  {activeShareKeys[selectedAuditLog.summary_id] && (
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        color: '#065f46',
+                        background: '#d1fae5',
+                        border: '1px solid #6ee7b7',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                      title="Active Dynamic Sharing ID. Click to copy"
+                      onClick={() => handleCopyId(activeShareKeys[selectedAuditLog.summary_id].share_id)}
+                    >
+                      🔑 {activeShareKeys[selectedAuditLog.summary_id].share_id}
+                      <span style={{ fontSize: '11px', opacity: 0.8 }}>📋</span>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenShareConsent(selectedAuditLog.summary_id)}
+                    style={{
+                      background: activeShareKeys[selectedAuditLog.summary_id] ? '#fef3c7' : '#1A5C38',
+                      color: activeShareKeys[selectedAuditLog.summary_id] ? '#92400e' : '#ffffff',
+                      border: activeShareKeys[selectedAuditLog.summary_id] ? '1px solid #fde68a' : 'none',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title={activeShareKeys[selectedAuditLog.summary_id] ? "Generate new one-time sharing key" : "Generate doctor sharing ID"}
+                  >
+                    {activeShareKeys[selectedAuditLog.summary_id] ? '🔄 Rotate Share ID' : '🔑 Share with Doctor'}
+                  </button>
                   <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
                     🕒 {selectedAuditLog.time_created ? new Date(selectedAuditLog.time_created).toLocaleString() : 'N/A'}
                   </span>
@@ -3032,27 +3211,8 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                             </div>
 
                             {isOcrOpen && (
-                              <div style={{ borderTop: '1px solid #E8F5E9', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {ocrDoc.structured_summary && (
-                                  <div>
-                                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#1A5C38', marginBottom: '4px' }}>
-                                      STRUCTURED OCR CLINICAL EXTRACTION:
-                                    </div>
-                                    <div style={{ background: '#FAF9F6', border: '1px solid #E5E0D5', borderRadius: '8px', padding: '12px', fontSize: '13px', lineHeight: 1.65, whiteSpace: 'pre-wrap', maxHeight: '260px', overflowY: 'auto' }}>
-                                      {ocrDoc.structured_summary}
-                                    </div>
-                                  </div>
-                                )}
-                                {ocrDoc.ocr_text && ocrDoc.ocr_text !== ocrDoc.structured_summary && (
-                                  <div>
-                                    <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '4px' }}>
-                                      RAW DIGITIZED OCR TEXT:
-                                    </div>
-                                    <div style={{ background: '#F5F5F5', border: '1px solid #E0E0E0', borderRadius: '8px', padding: '12px', fontSize: '12px', fontFamily: 'monospace', lineHeight: 1.5, whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
-                                      {ocrDoc.ocr_text}
-                                    </div>
-                                  </div>
-                                )}
+                              <div style={{ borderTop: '1px solid #E8F5E9', paddingTop: '12px' }}>
+                                <StructuredOcrView ocrDoc={ocrDoc} />
                               </div>
                             )}
                           </div>
@@ -3077,6 +3237,136 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 onClick={() => setSelectedAuditLog(null)}
               >
                 {isHi ? 'बंद करें' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Patient Share Consent & Security Warning Modal ── */}
+      {shareConsentModal.open && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => setShareConsentModal({ open: false, summaryId: '', abhaId: '' })}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '24px 28px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+              border: '1px solid #e2e8f0'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '22px'
+              }}>
+                🔒
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#1e293b' }}>
+                  {isHi ? 'चिकित्सक डेटा शेयरिंग सहमति' : 'Patient Consent & Security Warning'}
+                </h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  {isHi ? 'सुरक्षित एक-बार उपयोग योग्य शेयरिंग कोड' : 'Secure Dynamic Sharing Key Generation'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{
+              background: '#fffbeb',
+              border: '1px solid #fef3c7',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              fontSize: '13px',
+              lineHeight: 1.6,
+              color: '#92400e',
+              marginBottom: '16px'
+            }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 700 }}>
+                ⚠️ {isHi ? 'महत्वपूर्ण गोपनीयता सूचना:' : 'Important Privacy & Consent Notice:'}
+              </p>
+              <p style={{ margin: 0 }}>
+                {isHi
+                  ? `आप अपने स्वास्थ्य रिकॉर्ड (${shareConsentModal.summaryId}) के लिए एक नया अनूठा शेयरिंग कोड तैयार करने जा रहे हैं। यह कोड केवल अपने अधिकृत डॉक्टर के साथ साझा करें। किसी भी अज्ञात व्यक्ति के साथ यह कोड साझा न करें, क्योंकि यह उन्हें आपका क्लिनिकल सारांश और डिजिटाइज़्ड दस्तावेज़ देखने की अनुमति देता है।`
+                  : `You are about to generate a new, one-time dynamic sharing ID for record (${shareConsentModal.summaryId}). Only share this ID directly with your authorized treating doctor. Do not share this code with anyone else, as anyone with this active code can view your medical summary and digitized documents.`}
+              </p>
+            </div>
+
+            <div style={{
+              fontSize: '12px',
+              color: '#475569',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              marginBottom: '20px'
+            }}>
+              <strong>{isHi ? 'लक्षित रिकॉर्ड:' : 'Target Record:'}</strong> {shareConsentModal.summaryId}
+              <br />
+              <strong>{isHi ? 'मरीज़ आभा आईडी:' : 'Patient ABHA ID:'}</strong> {shareConsentModal.abhaId}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShareConsentModal({ open: false, summaryId: '', abhaId: '' })}
+                disabled={isGeneratingShareKey}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '8px',
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                {isHi ? 'रद्द करें' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmGenerateShareKey}
+                disabled={isGeneratingShareKey}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '8px',
+                  background: '#1A5C38',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 6px rgba(26,92,56,0.3)'
+                }}
+              >
+                {isGeneratingShareKey ? '⏳ Generating...' : (isHi ? '✅ सहमति दें व कोड बनाएं' : '✅ I Consent & Generate Key')}
               </button>
             </div>
           </div>

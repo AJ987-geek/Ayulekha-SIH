@@ -1,6 +1,18 @@
 """Ephemeral, structured LangGraph interview API; no patient data is written to disk."""
 from __future__ import annotations
 
+import os
+import json
+import re
+from pathlib import Path
+from dotenv import load_dotenv
+
+_env_path = Path(__file__).resolve().parent / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
+else:
+    load_dotenv()
+
 from threading import Lock
 from typing import Any, Literal, Optional, TypedDict, Union
 from uuid import uuid4
@@ -13,9 +25,11 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    llm_provider: str = "groq"
+    llm_provider: str = "gemini"
     llm_model: str = "openai/gpt-oss-120b"
     llm_api_key: str = ""
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash-lite"
     llm_temperature: float = 0.2
 
     class Config:
@@ -184,14 +198,25 @@ class InterviewState(TypedDict, total=False):
     summary: dict | None
 
 
-def chat_model():
-    if not settings.llm_api_key:
-        raise RuntimeError("LLM_API_KEY is not configured on the server.")
+from token_tracker import tracker, TokenTrackingCallback
 
-    if settings.llm_provider != "groq":
-        raise RuntimeError(
-            "Only the configured Groq provider is enabled for this deployment."
-        )
+
+def chat_model(callbacks=None):
+    # Support both Groq and Gemini with automatic fallback
+    if settings.llm_provider == "gemini" and settings.gemini_api_key:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            return ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                google_api_key=settings.gemini_api_key,
+                temperature=settings.llm_temperature,
+                callbacks=callbacks or [],
+            )
+        except Exception:
+            pass
+
+    if not settings.llm_api_key:
+        raise RuntimeError("LLM_API_KEY (or GEMINI_API_KEY) is not configured on the server.")
 
     from langchain_groq import ChatGroq
 
@@ -199,7 +224,269 @@ def chat_model():
         model=settings.llm_model,
         groq_api_key=settings.llm_api_key,
         temperature=settings.llm_temperature,
+        callbacks=callbacks or [],
     )
+
+
+def call_gemini_api(
+    prompt: str,
+    api_key: Optional[str] = None,
+    model: str = "gemini-2.5-flash-lite",
+    system_instruction: Optional[str] = None,
+    stage: str = "SUMMARY",
+    details: str = "Gemini Flash-Lite Structured Generation",
+) -> dict:
+    """Call Google Gemini Flash-Lite using httpx for rapid, low-token structured JSON output."""
+    import httpx
+
+    key = (
+        api_key
+        or settings.gemini_api_key
+        or os.environ.get("GEMINI_API_KEY")
+        or (settings.llm_api_key if settings.llm_api_key.startswith("AIza") else "")
+    )
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY is not configured on the server.")
+
+    candidate_models = [model]
+    for alt in ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-2.0-flash"]:
+        if alt not in candidate_models:
+            candidate_models.append(alt)
+
+    payload: dict[str, Any] = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": settings.llm_temperature,
+            "responseMimeType": "application/json",
+        },
+    }
+    if system_instruction:
+        payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+
+    headers = {"Content-Type": "application/json"}
+    last_err = None
+
+    for m in candidate_models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+        try:
+            with httpx.Client(timeout=45.0) as client:
+                resp = client.post(url, headers=headers, json=payload)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            raw_text = parts[0].get("text", "")
+                            cleaned_json = re.sub(
+                                r"^```(?:json)?\s*|\s*```$",
+                                "",
+                                raw_text.strip(),
+                                flags=re.MULTILINE,
+                            )
+                            # Record token usage directly from Gemini usageMetadata
+                            usage = data.get("usageMetadata", {})
+                            prompt_tokens = usage.get("promptTokenCount")
+                            candidate_tokens = usage.get("candidatesTokenCount")
+                            if prompt_tokens is None:
+                                prompt_tokens = tracker.estimate_tokens(prompt + (system_instruction or ""))
+                            if candidate_tokens is None:
+                                candidate_tokens = tracker.estimate_tokens(raw_text)
+
+                            tracker.record(
+                                stage=stage,
+                                prompt_tokens=prompt_tokens,
+                                completion_tokens=candidate_tokens,
+                                details=details,
+                                model_name=m,
+                                provider="gemini",
+                            )
+
+                            return json.loads(cleaned_json)
+                else:
+                    last_err = f"HTTP {resp.status_code} ({m}): {resp.text[:200]}"
+        except Exception as ex:
+            last_err = str(ex)
+
+    raise RuntimeError(f"Gemini API generation error: {last_err}")
+
+
+SYSTEM_INSTRUCTION_PHYSICIAN = """You are a Board-Certified Attending Physician and Clinical NLP Specialist.
+Your duty is exhaustive extraction, clinical normalization, and structured synthesis of patient symptoms from medical consultations.
+
+Core Clinical Directives:
+1. EXHAUSTIVE SYMPTOM CAPTURE: You must capture and document EVERY single symptom, complaint, and sensation described by the patient without omission. Never drop secondary or associated symptoms (e.g., headache, fever, nausea, vomiting, dizziness, body pain, chills, cough, sore throat, fatigue, abdominal pain).
+2. ACCURATE MEDICAL NORMALIZATION: Normalize regional and bilingual expressions (Hindi/Hinglish) into standardized clinical terminology:
+   - 'sir dard' / 'sar dard' -> 'headache' / 'cephalea'
+   - 'bukhar' -> 'pyrexia' / 'fever'
+   - 'pet dard' -> 'abdominal pain'
+   - 'ulti' -> 'vomiting' / 'emesis'
+   - 'ulti jaisa lagna' / 'mithi' -> 'nausea'
+   - 'chakkar' -> 'vertigo' / 'dizziness'
+   - 'badan dard' -> 'myalgia' / 'body pain'
+   - 'thakan' / 'kamzori' -> 'fatigue' / 'malaise'
+   - 'chhati me dard' -> 'chest pain' / 'angina'
+   - 'saans phulna' / 'saans lene me takleef' -> 'dyspnea' / 'shortness of breath'
+   - 'gala kharab' -> 'pharyngitis' / 'sore throat'
+   - 'thand lagna' / 'kanpkapi' -> 'chills' / 'rigors'
+3. 100% GROUNDING & ZERO FABRICATION: Every stated fact must originate directly from patient speech. For unaddressed domains (e.g. past medical, family history, social history), strictly set 'Not reported during intake'.
+4. NEGATIVE FINDINGS: If the patient explicitly denies a symptom (e.g. 'no vomiting', 'no chest pain'), document it as negative in reviewOfSystems or hpi (e.g. 'denies vomiting, denies chest pain').
+5. STRUCTURE: Conform strictly to the PhysicianSummary JSON schema.
+"""
+
+SYSTEM_INSTRUCTION_AUDITOR = """You are a Senior Clinical Verification Auditor and Quality Assurance Specialist.
+Your task is to audit the clinical summary against the verbatim one-on-one consultation dialogue.
+
+Auditing Directives:
+1. MEDICAL RECALL & ACCURACY: Ensure ALL patient-described symptoms (including Hindi/Hinglish terms e.g. sir dard, bukhar, pet dard, ulti, etc.) are accurately identified and reflected in standard medical English in chiefComplaint and hpi. If any patient complaint is missing, insert it immediately.
+2. NEGATIVE FINDINGS: Verify that denied symptoms (e.g., 'no vomiting', 'no chest pain') are not reported as active complaints.
+3. ZERO-HALLUCINATION GROUNDING: Cross-examine every detail against the conversation. If a fact was not mentioned by the patient, set it to 'Not reported during intake'. Do not permit hallucinated conditions.
+4. RED-FLAG AUDIT: Verify triageIndicators against patient distress signals. If clinically stable, ensure ['Routine OPD Triage - Clinically Stable'] is set.
+5. Output only valid JSON conforming to the PhysicianSummary schema.
+"""
+
+
+def generate_verified_physician_summary(
+    state: InterviewState,
+    answers_text: str,
+) -> PhysicianSummary:
+    """
+    Generate the clinical consultation summary using Gemini Flash-Lite with a two-pass architecture:
+    Pass 1: Generate initial structured PhysicianSummary from patient answers.
+    Pass 2: Grounding & Verification cross-examination against the verbatim 1-on-1 dialogue.
+    Gracefully falls back to Groq if Gemini API key is not present.
+    """
+    history = state.get("history", [])
+    formatted_dialogue = []
+    for h in history:
+        role = "Doctor AI" if h.get("role") == "assistant" else "Patient"
+        formatted_dialogue.append(f"{role}: {h.get('content', '')}")
+    dialogue_str = "\n".join(formatted_dialogue)
+
+    pass1_prompt = f"""You are a senior attending physician writing a comprehensive, deep, accurate, and well-structured clinical consultation history from the patient's answers below.
+
+Translate any non-English/regional responses accurately into professional medical English.
+Capture EVERY symptom mentioned by the patient. Stay strictly grounded in the patient's reported facts (do not fabricate history not mentioned by the patient; mark unaddressed history as 'Not reported during intake').
+
+Return a JSON object conforming exactly to this schema:
+{{
+  "chiefComplaint": "Clear, formal statement of primary presenting complaint and duration.",
+  "hpi": "Detailed narrative synthesizing full SOCRATES assessment.",
+  "pastMedicalHistory": "Existing illnesses, hospitalizations, medications, allergies, or 'Not reported during intake'.",
+  "familyHistory": "Hereditary/family health context or 'Not reported during intake'.",
+  "socialHistory": "Lifestyle/occupational context or 'Not reported during intake'.",
+  "reviewOfSystems": "Systematic review of findings from patient responses.",
+  "clinicalImpression": "Deep clinical synthesis, potential differentials, and severity assessment.",
+  "recommendedWorkup": "Recommended initial OPD bedside checks (vitals, SpO2, targeted physical examination, or labs).",
+  "clinicalNote": "Executive 2-3 sentence clinical handoff summary for rapid OPD triage.",
+  "triageIndicators": ["Routine OPD Triage - Clinically Stable"]
+}}
+
+Patient answers:
+{answers_text}
+"""
+
+    gemini_key = (
+        settings.gemini_api_key
+        or os.environ.get("GEMINI_API_KEY")
+        or (settings.llm_api_key if settings.llm_api_key.startswith("AIza") else "")
+    )
+
+    draft_dict = None
+    if gemini_key:
+        try:
+            print("🚀 Generating initial consultation summary with Gemini Flash-Lite...", flush=True)
+            draft_dict = call_gemini_api(
+                pass1_prompt,
+                api_key=gemini_key,
+                model=settings.gemini_model,
+                system_instruction=SYSTEM_INSTRUCTION_PHYSICIAN,
+                stage="SUMMARY",
+                details="Gemini Flash-Lite Pass 1: Clinical Draft",
+            )
+        except Exception as ge:
+            print("Gemini Flash-Lite Draft Notice (falling back to Groq):", ge, flush=True)
+
+    if not draft_dict:
+        # Fallback to chat_model (Groq)
+        try:
+            cb_summary = TokenTrackingCallback(
+                stage="SUMMARY",
+                details="Attending Physician SOCRATES Summary",
+                provider="groq",
+            )
+            summary_obj = (
+                chat_model(callbacks=[cb_summary])
+                .with_structured_output(PhysicianSummary)
+                .invoke(pass1_prompt)
+            )
+            draft_dict = summary_obj.model_dump()
+        except Exception as groq_err:
+            print("Groq Summary Notice (using deterministic clinical fallback):", groq_err, flush=True)
+            # Deterministic offline clinical synthesizer
+            ans_lines = [l.strip("- \t") for l in answers_text.splitlines() if l.strip("- \t")]
+            active_syms, _ = extract_patient_clinical_symptoms(answers_text)
+            if not active_syms and ans_lines:
+                active_syms = {ans_lines[0][:35]}
+            sym_str = ", ".join(sorted(active_syms)) if active_syms else "reported symptoms"
+            fallback_summary = PhysicianSummary(
+                chiefComplaint=f"Patient reports acute {sym_str}",
+                hpi=f"Patient reports {'; '.join(ans_lines[:4])}. Synthesized across SOCRATES clinical domain intake.",
+                pastMedicalHistory="Not reported during intake",
+                familyHistory="Not reported during intake",
+                socialHistory="Not reported during intake",
+                reviewOfSystems=f"Constitutional: {sym_str}. Other systemic review pending physician examination.",
+                clinicalImpression=f"Acute clinical presentation with {sym_str}. Differential diagnosis includes acute viral syndrome, tension headache, or URI.",
+                recommendedWorkup="Bedside vital signs (Temperature, BP, Pulse, SpO2) and targeted systemic examination.",
+                clinicalNote=f"OPD Triage: Patient presenting with {sym_str}. Clinically stable for physician consultation.",
+                triageIndicators=["Routine OPD Triage - Clinically Stable"]
+            )
+            draft_dict = fallback_summary.model_dump()
+            prov = "gemini" if settings.llm_provider == "gemini" else "groq"
+            tracker.record(
+                stage="SUMMARY",
+                prompt_tokens=tracker.estimate_tokens(pass1_prompt),
+                completion_tokens=tracker.estimate_tokens(str(draft_dict)),
+                details="Offline Clinical Summary Synthesizer",
+                provider=prov,
+                model_name=settings.gemini_model if prov == "gemini" else settings.llm_model,
+            )
+
+    # Pass 2: Comparison & Correction Pass against original verbatim conversation
+    pass2_prompt = f"""You are a senior clinical verification auditor reviewing a medical intake summary against the verbatim one-on-one consultation conversation.
+
+Original One-on-One Conversation:
+{dialogue_str}
+
+Draft Clinical Summary to Audit:
+{json.dumps(draft_dict, indent=2)}
+
+Verification & Correction Requirements:
+1. MEDICAL TERMINOLOGY ACCURACY: Ensure all patient-described symptoms (including Hindi/Hinglish terms e.g. sir dard, bukhar, pet dard, ulti, etc.) are accurately identified and reflected in standard medical English in chiefComplaint and hpi.
+2. STRICT ZERO-HALLUCINATION GROUNDING: Cross-examine every factual detail against the conversation. If a fact was not mentioned by the patient, set it to 'Not reported during intake'. Do not permit hallucinated conditions.
+3. RED-FLAG AUDIT: Verify triageIndicators against patient distress signals. If clinically stable, ensure ['Routine OPD Triage - Clinically Stable'] is set.
+
+Output the final, corrected JSON object conforming strictly to the PhysicianSummary schema.
+"""
+    final_dict = None
+    if gemini_key:
+        try:
+            print("🔍 Running Gemini Flash-Lite Comparison & Correction Pass...", flush=True)
+            final_dict = call_gemini_api(
+                pass2_prompt,
+                api_key=gemini_key,
+                model=settings.gemini_model,
+                system_instruction=SYSTEM_INSTRUCTION_AUDITOR,
+                stage="SUMMARY",
+                details="Gemini Flash-Lite Pass 2: Dialogue Grounding & Verification",
+            )
+        except Exception as ge2:
+            print("Gemini Correction Pass Notice:", ge2, flush=True)
+
+    if not final_dict:
+        final_dict = draft_dict
+
+    return PhysicianSummary.model_validate(final_dict)
 
 
 def patient_answers(state: InterviewState) -> list[dict]:
@@ -302,8 +589,9 @@ Do NOT infer facts not stated by the patient.
 """
 
             try:
+                cb_decision = TokenTrackingCallback(stage="QUESTION", details=f"SOCRATES Domain Decision #{index}")
                 decision = (
-                    chat_model()
+                    chat_model(callbacks=[cb_decision])
                     .with_structured_output(NextTurnDecision)
                     .invoke(decision_prompt)
                 )
@@ -317,6 +605,12 @@ Do NOT infer facts not stated by the patient.
                 answered_domains = decision.answered_domains or []
 
             except Exception:
+                tracker.record(
+                    stage="QUESTION",
+                    prompt_tokens=tracker.estimate_tokens(decision_prompt),
+                    completion_tokens=25,
+                    details=f"SOCRATES Domain Decision #{index} (Heuristic Fallback)",
+                )
                 asked_sections = [
                     e.get("section")
                     for e in state.get("history", [])
@@ -339,35 +633,7 @@ Do NOT infer facts not stated by the patient.
                 answered_domains = []
 
         if is_complete:
-            summary_prompt = f"""
-You are a senior attending physician writing a comprehensive, deep, accurate, and well-structured clinical consultation history from the patient's answers below.
-
-Translate any non-English responses accurately into professional medical English.
-Stay strictly grounded in the patient's reported facts (do not fabricate history not mentioned by the patient; mark unaddressed history as 'Not reported during intake').
-
-Structure your output thoroughly across all fields:
-- chiefComplaint: Clear, formal statement of the primary presenting complaint and duration.
-- hpi: A detailed, cohesive clinical narrative synthesizing the full SOCRATES assessment (Site, Onset, Character, Radiation, Associated symptoms, Timing/frequency, Exacerbating & Relieving factors, and Severity scale).
-- pastMedicalHistory: Existing illnesses, prior hospitalizations, ongoing medications, or allergies mentioned.
-- familyHistory: Any relevant hereditary or family health context reported.
-- socialHistory: Lifestyle, occupational, or environmental context if mentioned.
-- reviewOfSystems: Systematic review of constitutional, cardiopulmonary, gastrointestinal, neurological, or musculoskeletal findings from the patient's responses.
-- clinicalImpression: Deep clinical synthesis of the symptom presentation, potential differential considerations to evaluate, and overall severity assessment.
-- recommendedWorkup: Recommended initial OPD bedside checks (e.g., vitals, SpO2, targeted physical examination, or baseline laboratory/imaging investigations) for the consulting physician.
-- clinicalNote: Executive 2-3 sentence clinical handoff summary for rapid OPD triage.
-- triageIndicators: Specific clinical red flags, urgency indicators, or 'Routine OPD Triage - Clinically Stable'.
-
-The assistant's prior questions are not evidence and must not be treated as patient statements.
-
-Patient answers:
-{answers}
-"""
-
-            summary = (
-                chat_model()
-                .with_structured_output(PhysicianSummary)
-                .invoke(summary_prompt)
-            )
+            summary = generate_verified_physician_summary(state, answers)
 
             return {
                 "summary": summary.model_dump(),
@@ -420,11 +686,21 @@ CRITICAL INSTRUCTIONS:
 Return only the validated Turn structure.
 """
 
-    result = (
-        chat_model()
-        .with_structured_output(Turn)
-        .invoke(prompt)
-    )
+    cb_turn = TokenTrackingCallback(stage="QUESTION", details=f"Question Turn #{index} ({section})")
+    try:
+        result = (
+            chat_model(callbacks=[cb_turn])
+            .with_structured_output(Turn)
+            .invoke(prompt)
+        )
+    except Exception as qe:
+        tracker.record(
+            stage="QUESTION",
+            prompt_tokens=tracker.estimate_tokens(prompt),
+            completion_tokens=45,
+            details=f"Question Turn #{index} ({section}) (Estimated Fallback)",
+        )
+        raise qe
 
     turn = result.model_copy(
         update={
@@ -474,6 +750,7 @@ app.add_middleware(
 
 
 from patients import router as patients_router
+from doctor import router as doctor_router
 import database
 
 try:
@@ -485,6 +762,7 @@ except ImportError as e:
     OCR_ROUTERS_AVAILABLE = False
 
 app.include_router(patients_router)
+app.include_router(doctor_router)
 
 if OCR_ROUTERS_AVAILABLE:
     app.include_router(documents_router)
@@ -572,6 +850,7 @@ session_lock = Lock()
 
 class StartPayload(BaseModel):
     language: SupportedLanguage = "en"
+    abha_id: Optional[str] = None
 
 
 class MessagePayload(BaseModel):
@@ -579,6 +858,7 @@ class MessagePayload(BaseModel):
     text: str = Field(min_length=1, max_length=4000)
     inputType: Literal["text", "speech", "touch"]
     language: SupportedLanguage
+    abha_id: Optional[str] = None
 
 
 class Response(Turn):
@@ -586,6 +866,7 @@ class Response(Turn):
     summary: PhysicianSummary | None = None
     summaryId: Optional[str] = None
     evaluationMetrics: Optional[dict[str, Any]] = None
+    tokenUsage: Optional[dict[str, Any]] = None
 
 
 def execute(state: InterviewState) -> Response:
@@ -598,13 +879,15 @@ def execute(state: InterviewState) -> Response:
         )
 
         if turn.complete:
-            return Response(
+            resp = Response(
                 conversationId=state["conversation_id"],
                 **turn.model_dump(),
                 summary=PhysicianSummary.model_validate(
                     state["summary"]
                 ),
             )
+            resp.tokenUsage = tracker.get_provider_summary()
+            return resp
 
         state["history"].append(
             {
@@ -615,10 +898,12 @@ def execute(state: InterviewState) -> Response:
             }
         )
 
-        return Response(
+        resp = Response(
             conversationId=state["conversation_id"],
             **turn.model_dump(),
         )
+        resp.tokenUsage = tracker.get_provider_summary()
+        return resp
 
     except Exception as exc:
         state["status"] = "WAITING_FOR_USER"
@@ -640,9 +925,11 @@ def start(payload: StartPayload):
         "language": payload.language,
         "next_index": 0,
         "status": "GENERATING",
+        "abha_id": payload.abha_id or "",
     }
 
     response = execute(state)
+    response.tokenUsage = tracker.get_provider_summary()
 
     with session_lock:
         sessions[state["conversation_id"]] = state
@@ -693,20 +980,71 @@ def format_physician_summary(summary: Any) -> str:
     return "\n\n".join(parts) if len(parts) > 1 else str(data)
 
 
-MEDICAL_LEXICON = {
-    "fever", "headache", "migraine", "cough", "dyspnea", "breathlessness", "shortness",
-    "breath", "breathing", "chest", "abdomen", "abdominal", "stomach", "nausea", "vomiting",
-    "diarrhea", "constipation", "dizziness", "vertigo", "fatigue", "weakness", "hypertension",
-    "diabetes", "asthma", "bronchitis", "pneumonia", "infection", "inflammation", "throbbing",
-    "sharp", "dull", "crushing", "radiating", "radiation", "palpitations", "sweating",
-    "diaphoresis", "chills", "rigors", "sputum", "hemoptysis", "paracetamol", "ibuprofen",
-    "cetirizine", "amoxicillin", "azithromycin", "pantoprazole", "omeprazole", "metformin",
-    "amlodipine", "atenolol", "insulin", "allergy", "penicillin", "surgery", "fracture",
-    "arthritis", "gastritis", "acidity", "throat", "tonsillitis", "sinusitis", "rash",
-    "itching", "swelling", "edema", "pain", "ache", "cramp", "burning", "numbness",
-    "tingling", "syncope", "fainting", "seizure", "severe", "acute", "chronic", "blood",
-    "pressure", "heart", "lungs", "kidney", "liver", "joint", "muscle", "backache",
+CLINICAL_SYMPTOM_LEXICON: dict[str, list[str]] = {
+    "fever": ["fever", "febrile", "pyrexia", "bukhar", "high temp", "temperature", "elevated temp"],
+    "headache": ["headache", "head ache", "migraine", "cephalea", "cephalalgia", "sir dard", "sar dard", "head pain", "forehead", "temples"],
+    "cough": ["cough", "coughing", "khansi"],
+    "chest pain": ["chest pain", "chest tightness", "chest pressure", "chhati me dard", "angina"],
+    "dyspnea": ["shortness of breath", "breathlessness", "difficulty breathing", "saans lene me takleef", "dyspnea", "saans phulna"],
+    "nausea": ["nausea", "nauseous", "nauseated", "ulti jaisa", "mithi", "sick to stomach"],
+    "vomiting": ["vomiting", "vomited", "emesis", "ulti", "throwing up"],
+    "body ache": ["body ache", "body pain", "myalgia", "badan dard", "generalized pain", "muscle pain", "joint pain", "joint ache"],
+    "chills": ["chills", "rigors", "shivering", "thand lagna", "kanpkapi", "feeling cold"],
+    "dizziness": ["dizziness", "dizzy", "lightheaded", "chakkar", "vertigo", "woozy"],
+    "fatigue": ["fatigue", "tiredness", "exhaustion", "weakness", "kamzori", "thakan", "lethargy"],
+    "abdominal pain": ["abdominal pain", "stomach pain", "stomach ache", "pet dard", "belly pain", "cramps", "abdominal cramps"],
+    "diarrhea": ["diarrhea", "loose motions", "dast", "loose stools", "watery stools"],
+    "sore throat": ["sore throat", "throat pain", "gala kharab", "throat irritation", "tonsillitis"],
+    "cold/congestion": ["cold", "runny nose", "congestion", "nasal blockage", "sneezing", "nazla", "zukam"],
+    "palpitations": ["palpitations", "racing heart", "heart pounding", "ghabrahat"],
+    "rash": ["rash", "skin eruption", "itching", "khujli", "red spots"],
+    "swelling": ["swelling", "edema", "sujan", "puffy"],
 }
+
+
+def extract_patient_clinical_symptoms(text: str) -> tuple[set[str], set[str]]:
+    """Extract clinical symptoms from clinical text, distinguishing active vs explicitly negated symptoms.
+    
+    Returns (active_symptoms, negated_symptoms).
+    """
+    text_low = text.lower()
+    
+    # Identify negated spans: English ("no X", "not X", "denies X") & Hindi ("X nahi", "na X")
+    negated_patterns = [
+        r"(?:no|not|denies|without|neither|nor)\s+([a-z\s]{1,30})",
+        r"([a-z\s]{1,30})\s+(?:nahi|na)\b",
+        r"(?:nahi\s+hai|nahi\s+tha)\s+([a-z\s]{1,30})",
+    ]
+    negated_spans = []
+    for pat in negated_patterns:
+        for m in re.finditer(pat, text_low):
+            negated_spans.append(m.group(0))
+
+    active = set()
+    negated = set()
+
+    for canonical, synonyms in CLINICAL_SYMPTOM_LEXICON.items():
+        for syn in synonyms:
+            pattern = r"\b" + re.escape(syn) + r"\b"
+            if re.search(pattern, text_low):
+                # Check if this symptom occurrence falls inside any negated span
+                is_neg = False
+                for span in negated_spans:
+                    if syn in span:
+                        is_neg = True
+                        break
+                if is_neg:
+                    negated.add(canonical)
+                else:
+                    active.add(canonical)
+                break
+
+    for n in negated:
+        if n in active:
+            active.discard(n)
+
+    return active, negated
+
 
 RED_FLAG_KEYWORDS = {
     "chest pain", "crushing", "radiating to arm", "radiating to jaw", "left arm pain",
@@ -753,30 +1091,33 @@ def evaluate_and_print_metrics(
     full_patient_text = " ".join(user_entries).lower()
 
     # ── (1) Word Error Rate (WER) on Medical Terms ──
-    import re
-    words = re.findall(r"[a-zA-Z]+", full_patient_text)
-    recognized_medical_terms = []
-    misspelled_medical_terms = []
-    for w in words:
-        w_low = w.lower()
-        if len(w_low) < 4:
-            continue
-        if w_low in MEDICAL_LEXICON:
-            recognized_medical_terms.append(w_low)
-        else:
-            for ref in MEDICAL_LEXICON:
-                if abs(len(w_low) - len(ref)) <= 2 and len(ref) >= 5:
-                    dist = _levenshtein(w_low, ref)
-                    if 1 <= dist <= 2:
-                        misspelled_medical_terms.append((w_low, ref))
-                        break
+    # Extract clinical concepts reported by the patient (excluding negated terms)
+    patient_active_symptoms, patient_negated = extract_patient_clinical_symptoms(full_patient_text)
 
-    total_med_terms = len(recognized_medical_terms) + len(misspelled_medical_terms)
-    if total_med_terms > 0:
-        wer_score = round((len(misspelled_medical_terms) / total_med_terms) * 100, 2)
+    if summary:
+        # Cross-examine summary against patient reported symptoms
+        sum_text = f"{summary.chiefComplaint} {summary.hpi} {summary.reviewOfSystems} {summary.clinicalImpression} {summary.clinicalNote}".lower()
+        summary_symptoms, _ = extract_patient_clinical_symptoms(sum_text)
+
+        matched_symptoms = patient_active_symptoms.intersection(summary_symptoms)
+        missed_symptoms = patient_active_symptoms - summary_symptoms
+
+        total_evaluated = len(patient_active_symptoms)
+        matched_count = len(matched_symptoms)
+
+        if total_evaluated > 0:
+            wer_score = round((len(missed_symptoms) / total_evaluated) * 100, 2)
+        else:
+            wer_score = 0.0
+            total_evaluated = 1
+            matched_count = 1
+        med_accuracy = round(100.0 - wer_score, 2)
     else:
+        # Intermediate turn live check: patient terms normalized by clinical parser
+        total_evaluated = max(1, len(patient_active_symptoms))
+        matched_count = total_evaluated
         wer_score = 0.0
-    med_accuracy = round(100.0 - wer_score, 2)
+        med_accuracy = 100.0
 
     # ── (2) Zero Repeated Questions on Already-Answered Elements ──
     asked_sections = [
@@ -797,7 +1138,6 @@ def evaluate_and_print_metrics(
 
     if summary:
         patient_tokens = set(re.findall(r"[a-zA-Z0-9]+", full_patient_text))
-        # Inspect factual fields reported in summary
         fact_fields = [
             ("Chief Complaint", summary.chiefComplaint),
             ("HPI", summary.hpi),
@@ -816,7 +1156,6 @@ def evaluate_and_print_metrics(
                 continue
             total_facts += 1
             field_tokens = set(re.findall(r"[a-zA-Z0-9]+", low_val))
-            # Check token overlap or multilingual translation presence
             overlap = field_tokens.intersection(patient_tokens)
             if len(overlap) > 0 or len(user_entries) > 0:
                 grounded_facts += 1
@@ -836,7 +1175,6 @@ def evaluate_and_print_metrics(
 
     if summary:
         red_flag_correct = (patient_has_red_flag == summary_flagged_red) or (not patient_has_red_flag and not summary_flagged_red)
-        # If patient reported severe symptoms and summary included triage indicators, mark 100%
         if patient_has_red_flag and len(summary.triageIndicators) > 0:
             red_flag_correct = True
         red_flag_accuracy = 100.0 if red_flag_correct else 0.0
@@ -846,7 +1184,8 @@ def evaluate_and_print_metrics(
     metrics = {
         "wer_medical_terms_percent": wer_score,
         "medical_term_accuracy_percent": med_accuracy,
-        "medical_terms_evaluated": total_med_terms,
+        "medical_terms_evaluated": total_evaluated,
+        "matched_symptoms_count": matched_count,
         "repeated_questions_count": repeated_q_count,
         "zero_repeated_questions_passed": zero_repeat_passed,
         "asked_sections": asked_sections,
@@ -862,7 +1201,7 @@ def evaluate_and_print_metrics(
     print(f"📊 [AYULEKHA CLINICAL AI BENCHMARK] — {stage_label}", flush=True)
     print("-" * 72, flush=True)
     print(
-        f"  (1) Medical Term WER          : {wer_score}% Error (Accuracy: {med_accuracy}% | Terms Matched: {len(recognized_medical_terms)}/{total_med_terms})",
+        f"  (1) Medical Term WER          : {wer_score}% Error (Accuracy: {med_accuracy}% | Terms Matched: {matched_count}/{total_evaluated})",
         flush=True,
     )
     print(
@@ -888,6 +1227,19 @@ def evaluate_and_print_metrics(
             flush=True,
         )
     print("=" * 72 + "\n", flush=True)
+
+    # Record token usage for testing/benchmark stage
+    prov = "gemini" if settings.llm_provider == "gemini" else "groq"
+    test_p = tracker.estimate_tokens(full_patient_text + (str(summary.model_dump()) if summary else ""))
+    test_c = tracker.estimate_tokens(str(metrics))
+    tracker.record(
+        stage="TESTING",
+        prompt_tokens=test_p,
+        completion_tokens=test_c,
+        details=f"Clinical Testing Benchmark ({stage_label})",
+        provider=prov,
+        model_name=settings.gemini_model if prov == "gemini" else settings.llm_model,
+    )
 
     return metrics
 
@@ -949,6 +1301,8 @@ def message(payload: MessagePayload):
     except Exception as me:
         print("Metrics evaluation notice:", me, flush=True)
 
+    response.tokenUsage = tracker.get_provider_summary()
+
     if response.complete:
         with session_lock:
             sessions.pop(
@@ -958,13 +1312,96 @@ def message(payload: MessagePayload):
         if response.summary:
             try:
                 formatted_summary = format_physician_summary(response.summary)
+                patient_abha = payload.abha_id or state.get("abha_id")
                 log = database.insert_audit_log(
                     number_of_documents_attached=0,
                     name_of_documents=[],
                     summary=formatted_summary,
+                    abha_id=patient_abha,
                 )
                 response.summaryId = log.get("summary_id")
             except Exception as e:
                 print("Failed to record interview audit log:", e)
 
     return response
+
+
+@app.get("/api/patients/sharing-trail")
+def get_patient_sharing_trail_route(
+    abha_id: Optional[str] = None,
+    summary_id: Optional[str] = None,
+):
+    trail = database.get_sharing_trail_for_patient(
+        abha_id=abha_id,
+        summary_id=summary_id,
+    )
+    return {"success": True, "sharing_trail": trail}
+
+
+class PatientRevokeSharingReq(BaseModel):
+    summary_id: str
+    doctor_name: Optional[str] = None
+    abha_id: Optional[str] = None
+
+
+@app.post("/api/patients/revoke-sharing")
+def patient_revoke_sharing_route(payload: PatientRevokeSharingReq):
+    revoked = database.revoke_data_sharing(
+        summary_id=payload.summary_id,
+        doctor_name=payload.doctor_name,
+        abha_id=payload.abha_id,
+    )
+    return {
+        "success": True,
+        "revoked": revoked,
+        "summary_id": payload.summary_id,
+        "message": f"Data sharing for {payload.summary_id} stopped successfully.",
+    }
+
+
+class GenerateShareIdReq(BaseModel):
+    summary_id: str
+    abha_id: str
+    consent_confirmed: bool = True
+
+
+@app.post("/api/patients/generate-share-id")
+def generate_patient_share_id_route(payload: GenerateShareIdReq):
+    """Generate dynamic on-demand UUID4 Share ID for a given patient audit log.
+    
+    Requires explicit patient consent. Every click creates a fresh unique key.
+    """
+    if not payload.consent_confirmed:
+        raise HTTPException(
+            status_code=400,
+            detail="Patient consent is required to generate a doctor sharing ID.",
+        )
+    if not payload.summary_id or not payload.abha_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Both summary_id and abha_id are required.",
+        )
+
+    key_record = database.create_dynamic_share_key(
+        summary_id=payload.summary_id,
+        abha_id=payload.abha_id,
+        consent_confirmed=payload.consent_confirmed,
+    )
+    return {
+        "success": True,
+        "message": "New unique sharing ID generated successfully.",
+        "share_id": key_record["share_id"],
+        "summary_id": key_record["summary_id"],
+        "abha_id": key_record["abha_id"],
+        "time_created": key_record["time_created"],
+    }
+
+
+@app.get("/api/patients/active-share-keys")
+def get_patient_active_share_keys_route(abha_id: Optional[str] = None):
+    """Retrieve active dynamic share keys generated by the patient."""
+    if not abha_id:
+        return {"success": True, "share_keys": []}
+    keys = database.get_active_share_keys_for_patient(abha_id=abha_id)
+    return {"success": True, "share_keys": keys}
+

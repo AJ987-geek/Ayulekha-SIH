@@ -151,9 +151,211 @@ def _classify_lab_status(val_str: str, ref_str: str) -> str:
         return "Not stated"
 
 
+KNOWN_LAB_TESTS = [
+    ("Haemoglobin", ["haemoglobin", "hemoglobin", "hb"]),
+    ("Packed Cell Volume (PCV)", ["packed cell, volume", "packed cell volume", "pcv", "hct", "hematocrit"]),
+    ("Total Leucocyte Count (TLC)", ["total leucocyte count", "total leukocyte count", "tlc", "wbc count", "white blood cell count"]),
+    ("RBC Count", ["rbc count", "red blood cell count"]),
+    ("Mean Corpuscular Volume (MCV)", ["mcv", "mean corpuscular volume"]),
+    ("Mean Corpuscular Hemoglobin (MCH)", ["mch", "mean corpuscular hemoglobin"]),
+    ("MCHC", ["mchc", "mean corpuscular hemoglobin concentration"]),
+    ("RDW", ["rdw-cv", "rdw-sd", "rdw"]),
+    ("Platelet Count", ["platelet count", "total platelets"]),
+    ("Mean Platelet Volume (MPV)", ["mpv"]),
+    ("PDW", ["pdw"]),
+    ("PCT", ["pct"]),
+    ("P-LCR", ["p-lcr"]),
+    ("P-LCC", ["p-lcc"]),
+    ("Neutrophils", ["neutrophils", "neutrophil"]),
+    ("Lymphocytes", ["lymphocytes", "lymphocyte"]),
+    ("Monocytes", ["monocytes", "monocyte"]),
+    ("Eosinophils", ["eosinophils", "eosinophil"]),
+    ("Basophils", ["basophils", "basophil"]),
+    ("Absolute Neutrophil Count", ["absolute neutrophil count", "absolute neutrophils"]),
+    ("Absolute Lymphocyte Count", ["absolute lymphocyte count", "absolute lymphocytes"]),
+    ("Absolute Monocyte Count", ["absolute monocyte count", "absolute monocytes"]),
+    ("Absolute Eosinophil Count", ["absolute eosinophil count", "absolute eosinophils"]),
+    ("Absolute Basophil Count", ["absolute basophil count", "absolute basophils"]),
+    ("ESR (Modified Westergren)", ["esr (modified westergren)", "esr", "erythrocyte sedimentation rate"]),
+    ("CRP", ["crp", "c-reactive protein"]),
+    ("Blood Glucose (Fasting)", ["blood glucose (fasting)", "fasting blood sugar", "fbs"]),
+    ("Blood Glucose (PP)", ["blood glucose (pp)", "post prandial blood sugar", "ppbs"]),
+    ("HbA1c", ["hba1c", "glycated hemoglobin"]),
+    ("Serum Creatinine", ["serum creatinine", "creatinine"]),
+    ("Blood Urea", ["blood urea", "urea"]),
+    ("Serum Bilirubin", ["serum bilirubin", "total bilirubin"]),
+    ("SGOT (AST)", ["sgot", "ast"]),
+    ("SGPT (ALT)", ["sgpt", "alt"]),
+    ("Serum Uric Acid", ["uric acid"]),
+    ("Total Cholesterol", ["total cholesterol", "cholesterol"]),
+    ("Triglycerides", ["triglycerides", "triglyceride"]),
+    ("HDL Cholesterol", ["hdl cholesterol", "hdl"]),
+    ("LDL Cholesterol", ["ldl cholesterol", "ldl"]),
+    ("Serum Sodium", ["serum sodium", "sodium"]),
+    ("Serum Potassium", ["serum potassium", "potassium"]),
+    ("Serum Calcium", ["serum calcium", "calcium"]),
+    ("TSH", ["tsh", "thyroid stimulating hormone"]),
+]
+
+_CORRUPT_GLYPH_RE = re.compile(r"\b(?:7HVW|3HUIRUPHG|0D\[|6DNHW|%RRNLQJ|7KH|DXWKHQWLFLW|7LWUHV)\b")
+
+
+def _clean_ocr_line(ln: str) -> str:
+    """Filter out unprintable control characters and Caesar-cipher font glyph corruptions from PDFs."""
+    if any(ord(c) < 32 and c not in "\t\n\r" for c in ln):
+        return ""
+    if _CORRUPT_GLYPH_RE.search(ln):
+        return ""
+    return ln.strip()
+
+
+def _extract_investigation_demographics(lines: List[str]) -> Dict[str, str]:
+    demo: Dict[str, str] = {}
+    for i, line in enumerate(lines):
+        clean_l = line.strip()
+
+        # Patient Name
+        m_name = re.search(r"(?:Patient\s+Name|Name)\s*:\s*([^\n\r]+)", clean_l, re.IGNORECASE)
+        if m_name and "Patient Name" not in demo:
+            val = m_name.group(1).strip()
+            if len(val) > 1 and not val.startswith(":"):
+                demo["Patient Name"] = val
+        if re.match(r"^(?:Patient\s+Name|Name)$", clean_l, re.IGNORECASE) and "Patient Name" not in demo:
+            for next_l in lines[i+1 : min(i+4, len(lines))]:
+                nl = next_l.strip(" :-\t")
+                if len(nl) > 1:
+                    demo["Patient Name"] = nl
+                    break
+
+        # Age / Gender
+        m_ag = re.search(r"Age\s*/?\s*Gender\s*:\s*([^\n\r]+)", clean_l, re.IGNORECASE)
+        if m_ag and "Age / Gender" not in demo:
+            val = m_ag.group(1).strip()
+            if len(val) > 1:
+                demo["Age / Gender"] = val
+        if re.match(r"^Age\s*/?\s*Gender$", clean_l, re.IGNORECASE) and "Age / Gender" not in demo:
+            for next_l in lines[i+1 : min(i+4, len(lines))]:
+                nl = next_l.strip(" :-\t")
+                if len(nl) > 1:
+                    demo["Age / Gender"] = nl
+                    break
+
+        # Patient ID / Lab ID
+        m_id = re.search(r"(?:Patient\s+ID|MaxID/Lab\s+ID|Lab\s+ID)\s*:\s*([^\n\r]+)", clean_l, re.IGNORECASE)
+        if m_id and "Patient / Lab ID" not in demo:
+            val = m_id.group(1).strip()
+            if len(val) > 1:
+                demo["Patient / Lab ID"] = val
+        if re.match(r"^(?:Patient\s+ID|Lab\s+ID)$", clean_l, re.IGNORECASE) and "Patient / Lab ID" not in demo:
+            for next_l in lines[i+1 : min(i+4, len(lines))]:
+                nl = next_l.strip(" :-\t")
+                if len(nl) > 1:
+                    demo["Patient / Lab ID"] = nl
+                    break
+
+        # Collection Date
+        m_col = re.search(r"(?:Collection\s+Date(?:/Time)?)\s*:\s*([^\n\r]+)", clean_l, re.IGNORECASE)
+        if m_col and "Collection Date" not in demo:
+            demo["Collection Date"] = m_col.group(1).strip()
+        if re.match(r"^Collection\s+Date$", clean_l, re.IGNORECASE) and "Collection Date" not in demo:
+            for next_l in lines[i+1 : min(i+4, len(lines))]:
+                nl = next_l.strip(" :-\t")
+                if len(nl) > 5 and any(c.isdigit() for c in nl):
+                    demo["Collection Date"] = nl
+                    break
+
+        # Report Date
+        m_rep = re.search(r"(?:Report(?:ing)?\s+Date(?:/Time)?)\s*:\s*([^\n\r]+)", clean_l, re.IGNORECASE)
+        if m_rep and "Report Date" not in demo:
+            demo["Report Date"] = m_rep.group(1).strip()
+        if re.match(r"^Report\s+Date$", clean_l, re.IGNORECASE) and "Report Date" not in demo:
+            for next_l in lines[i+1 : min(i+4, len(lines))]:
+                nl = next_l.strip(" :-\t")
+                if len(nl) > 5 and any(c.isdigit() for c in nl):
+                    demo["Report Date"] = nl
+                    break
+
+    return demo
+
+
 def _parse_lab_rows(lines: List[str]) -> List[Dict[str, str]]:
+    """Parse both single-line and multi-line columnar laboratory diagnostic reports."""
     rows: List[Dict[str, str]] = []
-    ignored_headers = {"page", "date", "time", "age", "phone", "mobile", "patient", "doctor", "hospital"}
+    matched_canonical = set()
+
+    # Pass 1: Multi-line Columnar / Table Matching using known medical tests
+    for canonical_name, aliases in KNOWN_LAB_TESTS:
+        for line_i, line in enumerate(lines):
+            line_low = line.lower().strip()
+            matched_alias = None
+            for alias in aliases:
+                if re.search(r"\b" + re.escape(alias) + r"\b", line_low):
+                    if "absolute" in alias or "absolute" not in line_low:
+                        matched_alias = alias
+                        break
+            if not matched_alias:
+                continue
+
+            lookahead = lines[line_i : min(line_i + 12, len(lines))]
+            val = None
+            unit = "-"
+            ref_range = "Not stated"
+
+            same_line_nums = re.findall(r"\b\d+(?:\.\d+)?\b", line)
+
+            for la_i, la_line in enumerate(lookahead[1:], start=1):
+                # Stop if another distinct known test begins
+                if any(re.search(r"\b" + re.escape(a) + r"\b", la_line.lower()) for _, a_list in KNOWN_LAB_TESTS for a in a_list if a != matched_alias and len(a) > 3):
+                    break
+
+                # Reference range
+                range_match = re.search(r"(?:<=|>=|<|>)?\s*\d+(?:\.\d+)?\s*(?:-|–|to)\s*\d+(?:\.\d+)?", la_line)
+                if range_match and ref_range == "Not stated":
+                    ref_range = range_match.group(0).strip()
+                    continue
+                lte_match = re.search(r"(?:<=|>=|<|>)\s*\d+(?:\.\d+)?", la_line)
+                if lte_match and ref_range == "Not stated":
+                    ref_range = lte_match.group(0).strip()
+                    continue
+
+                # Units
+                u_match = re.search(r"\b(g/dl|gm%|gm/dl|/cumm|10\^?9/l|10~9/l|10\^?12/l|10~12/l|fl|pg|%|mm/hr|million/cumm|10\^?3/ul)\b", la_line, re.IGNORECASE)
+                if u_match and unit == "-":
+                    unit = u_match.group(0).strip()
+                    continue
+
+                # Value
+                num_match = re.match(r"^\s*(\d+(?:\.\d+)?)\s*(?:[A-Za-z%]+)?\s*$", la_line)
+                if num_match and val is None:
+                    candidate = num_match.group(1)
+                    if not (1900 < float(candidate) < 2100):
+                        val = candidate
+                        continue
+
+            # Fallback to same-line numbers if multi-line lookahead did not yield
+            if val is None and len(same_line_nums) > 0:
+                val = same_line_nums[0]
+                u_m = re.search(r"\b(g/dl|gm%|gm/dl|/cumm|10~9/L|10\^9/L|fl|pg|%|mm/hr)\b", line, re.IGNORECASE)
+                if u_m:
+                    unit = u_m.group(0)
+                r_m = re.search(r"\d+(?:\.\d+)?\s*[-–]\s*\d+(?:\.\d+)?", line)
+                if r_m:
+                    ref_range = r_m.group(0)
+
+            if val is not None and canonical_name not in matched_canonical:
+                status = _classify_lab_status(val, ref_range if ref_range != "Not stated" else "")
+                rows.append({
+                    "Test": canonical_name,
+                    "Value": val,
+                    "Unit": unit,
+                    "Reference Range": ref_range,
+                    "Status": status,
+                })
+                matched_canonical.add(canonical_name)
+                break
+
+    # Pass 2: Single-line regex matching for any other standard lines not in KNOWN_LAB_TESTS
+    ignored_headers = {"page", "date", "time", "age", "phone", "mobile", "patient", "doctor", "hospital", "sample"}
     for raw_line in lines:
         line = raw_line.strip()
         if not line or line.startswith("--- Page") or line.startswith("|"):
@@ -165,17 +367,7 @@ def _parse_lab_rows(lines: List[str]) -> List[Dict[str, str]]:
         test_name = test_name.strip(" .:-")
         if len(test_name) < 2 or test_name.lower() in ignored_headers:
             continue
-        # Only count as lab row if unit or reference range is present, or known test keyword
-        known_lab = any(
-            k in test_name.lower()
-            for k in (
-                "hemoglobin", "hb", "wbc", "rbc", "platelet", "glucose", "sugar", "hba1c",
-                "cholesterol", "HDL", "LDL", "triglyceride", "creatinine", "urea", "bilirubin",
-                "sgot", "sgpt", "alt", "ast", "tsh", "t3", "t4", "sodium", "potassium",
-                "calcium", "vitamin", "esr", "crp", "neutrophil", "lymphocyte", "pcv", "mcv",
-            )
-        )
-        if not (unit_str or ref_str or known_lab):
+        if any(test_name.lower() in k.lower() for k in matched_canonical):
             continue
         status = _classify_lab_status(val_str, ref_str or "")
         rows.append({
@@ -185,7 +377,69 @@ def _parse_lab_rows(lines: List[str]) -> List[Dict[str, str]]:
             "Reference Range": ref_str or "Not stated",
             "Status": status,
         })
+        matched_canonical.add(test_name)
+
     return rows
+
+
+def _parse_serology_widal(lines: List[str]) -> List[Dict[str, str]]:
+    """Parse Widal agglutination serology panels."""
+    widal_rows: List[Dict[str, str]] = []
+    widal_targets = [
+        ("Salmonella Typhi (O)", [r"salmonella typhi.*\(o\)"]),
+        ("Salmonella Typhi (H)", [r"salmonella typhi.*\(h\)"]),
+        ("Salmonella Paratyphi (A,H)", [r"salmonella paratyphi.*\(a\s*,\s*h\)"]),
+        ("Salmonella Paratyphi (B,H)", [r"salmonella paratyphi.*\(b\s*,\s*h\)"]),
+    ]
+    for w_name, w_patterns in widal_targets:
+        for line_i, line in enumerate(lines):
+            if any(re.search(pat, line.lower()) for pat in w_patterns):
+                titre = None
+                cutoff = "<1:160" if "(H)" in w_name or "Paratyphi" in w_name else "<1:80"
+                for la in lines[line_i : min(line_i + 5, len(lines))]:
+                    t_match = re.search(r"(?:<|<=|>|>=)?\s*1\s*:\s*\d+", la)
+                    if t_match:
+                        titre = t_match.group(0).strip()
+                        break
+                if titre:
+                    is_non_sig = "<" in titre or "80" in titre
+                    widal_rows.append({
+                        "Antigen": w_name,
+                        "Observed Titre": titre,
+                        "Diagnostic Cutoff": cutoff,
+                        "Interpretation": "Non-Significant (<1:80/1:160)" if is_non_sig else "Significant Titre",
+                    })
+                break
+    return widal_rows
+
+
+def _parse_microbiology_culture(lines: List[str]) -> List[Dict[str, str]]:
+    """Parse Microbiology Culture & Sensitivity reports."""
+    micro: List[Dict[str, str]] = []
+    for line_i, line in enumerate(lines):
+        line_low = line.lower()
+        if "culture & sensitivity" in line_low or "aerobic incubation" in line_low or "sterile after" in line_low:
+            context = " ".join(lines[max(0, line_i - 1) : min(len(lines), line_i + 5)])
+            if "sterile after" in context.lower():
+                micro.append({
+                    "Investigation": "Blood Culture & Sensitivity",
+                    "Finding": "Sterile after 2 days of aerobic incubation at 37°C",
+                    "Status": "Negative / Sterile",
+                })
+                break
+    return micro
+
+
+def _parse_smear_notes(lines: List[str]) -> List[str]:
+    """Parse peripheral smear and microscopic morphology notes."""
+    smear: List[str] = []
+    for line in lines:
+        line_low = line.lower()
+        if any(k in line_low for k in ["normocytic", "counts within normal limits", "platelet: - adequate"]):
+            cleaned = re.sub(r"^[*\-\s]+", "", line).strip()
+            if cleaned and len(cleaned) > 5 and not any(k in cleaned.lower() for k in ["laboratory", "investigation"]):
+                smear.append(cleaned)
+    return smear
 
 
 def refine_prescription_with_context(
@@ -197,30 +451,40 @@ def refine_prescription_with_context(
 
 def generate_medical_summary(text: str, page_count: int, document_type: str = "auto") -> str:
     """
-    Format and structure digitized medical text locally (0 API keys used).
-    Works seamlessly with PaddleOCR-VL-1.6 Markdown output, PaddleOCR text, and PyMuPDF text.
+    Format and structure digitized medical text locally into clean clinical sections (0 API keys used).
+    Zero raw scanner dumps: completely removes unparsed scanner dumps in favor of structured tables and observations.
     """
     if not text or not text.strip():
         return "No readable clinical information could be extracted from this document. Please upload a clearer photo or scan."
 
     cleaned = text.strip()
 
-    # If PaddleOCR-VL-1.6 already produced Markdown tables, keep them and append a summary header if needed
+    # If already a well-formed markdown table and has zero raw text clutter, keep it
     existing_tables = extract_markdown_tables(cleaned)
-    if existing_tables:
+    if existing_tables and "### Digitized Clinical Text" not in cleaned:
         return cleaned
 
     raw_lines = [
-        ln.strip()
+        _clean_ocr_line(ln)
         for ln in cleaned.splitlines()
-        if ln.strip() and not ln.strip().startswith("--- Page")
+        if _clean_ocr_line(ln) and not _clean_ocr_line(ln).startswith("--- Page")
     ]
 
+    demographics = _extract_investigation_demographics(raw_lines)
     med_rows = _parse_prescription_rows(raw_lines)
     lab_rows = _parse_lab_rows(raw_lines)
+    widal_rows = _parse_serology_widal(raw_lines)
+    micro_rows = _parse_microbiology_culture(raw_lines)
+    smear_notes = _parse_smear_notes(raw_lines)
 
     sections: List[str] = []
 
+    # 1. Demographics Section
+    if demographics:
+        demo_bullets = [f"- **{k}:** {v}" for k, v in demographics.items()]
+        sections.append("### Patient & Investigation Details\n" + "\n".join(demo_bullets))
+
+    # 2. Prescriptions Section
     if med_rows and (document_type in ("auto", "prescription") or not lab_rows):
         table_lines = [
             "### Prescriptions",
@@ -239,9 +503,10 @@ def generate_medical_summary(text: str, page_count: int, document_type: str = "a
         ]
         sections.append("### Prescription Summary\n" + "\n".join(bullets))
 
+    # 3. Quantitative Laboratory Findings Table
     if lab_rows and (document_type in ("auto", "printed", "lab_report") or not med_rows):
         table_lines = [
-            "### Digitized Results",
+            "### Quantitative Laboratory Findings",
             "| Test | Value | Unit | Reference Range | Status |",
             "|---|---|---|---|---|",
         ]
@@ -260,10 +525,42 @@ def generate_medical_summary(text: str, page_count: int, document_type: str = "a
             sections.append("### Report Summary (Abnormal Findings)\n" + "\n".join(ab_bullets))
         else:
             sections.append(
-                f"### Report Summary\n- Extracted {len(lab_rows)} laboratory parameters locally across {page_count} page(s)."
+                f"### Report Summary\n- All {len(lab_rows)} extracted quantitative parameters are within biological reference ranges."
             )
 
-    # Always include the full digitized text block so every line read by local OCR is visible
-    sections.append(f"### Digitized Clinical Text ({page_count} Page(s))\n{cleaned}")
+    # 4. Serology & Special Panels (e.g. Widal Test)
+    if widal_rows:
+        w_lines = [
+            "### Serology — Typhoid (Widal Agglutination Panel)",
+            "| Antigen | Observed Titre | Diagnostic Cutoff | Clinical Interpretation |",
+            "|---|---|---|---|",
+        ]
+        for w in widal_rows:
+            w_lines.append(
+                f"| {w['Antigen']} | {w['Observed Titre']} | {w['Diagnostic Cutoff']} | {w['Interpretation']} |"
+            )
+        sections.append("\n".join(w_lines))
+
+    # 5. Microbiology & Culture Observations
+    if micro_rows:
+        m_lines = [
+            "### Microbiology & Culture Findings",
+            "| Investigation | Finding | Status |",
+            "|---|---|---|",
+        ]
+        for m in micro_rows:
+            m_lines.append(
+                f"| {m['Investigation']} | {m['Finding']} | {m['Status']} |"
+            )
+        sections.append("\n".join(m_lines))
+
+    # 6. Smear & Microscopic Morphology
+    if smear_notes:
+        s_bullets = [f"- {sn}" for sn in smear_notes]
+        sections.append("### Microscopic & Smear Examination\n" + "\n".join(s_bullets))
+
+    # If no tables were detected at all, show a clean structured fallback note
+    if not sections:
+        return f"### Digitized Clinical Document ({page_count} Page(s))\n- Processed document across {page_count} page(s). No actionable quantitative parameters or prescription items detected in this scan."
 
     return "\n\n".join(sections)
