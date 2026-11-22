@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"vite\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "vite",
-    "dev:backend": "npm run dev --prefix backend",
+    "dev:backend": "python -m uvicorn main:app --reload --port 8000 --app-dir backend",
+    "dev:node": "npm run dev --prefix backend",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

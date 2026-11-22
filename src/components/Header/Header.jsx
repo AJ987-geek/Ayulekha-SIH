@@ -1,7 +1,7 @@
 import { useLanguage } from '../../contexts/LanguageContext';
 import './Header.css';
 
-export default function Header() {
+export default function Header({ onNavigate }) {
   const { language, toggleLanguage, t } = useLanguage();
 
   const TICKER = t('ticker');
@@ -10,7 +10,7 @@ export default function Header() {
     <header className="header">
       <div className="header-inner">
         {/* Logo */}
-        <div className="header-logo">
+        <div className="header-logo" onClick={() => onNavigate?.('portal')} style={{ cursor: 'pointer' }}>
           <div className="logo-icon font-mono">AYU</div>
           <div className="logo-text">
             <span className="name">{t('header.title')}</span>
@@ -20,10 +20,10 @@ export default function Header() {
 
         {/* Nav */}
         <nav className="header-nav font-mono">
-          <a className="nav-link active" href="#">{t('header.nav.patientPortal')}</a>
-          <a className="nav-link" href="#">{t('header.nav.opdSchedule')}</a>
-          <a className="nav-link" href="#">{t('header.nav.verifyAbha')}</a>
-          <a className="nav-link" href="#">{t('header.nav.clinicalGuidelines')}</a>
+          <a className="nav-link active" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('portal'); }}>{t('header.nav.patientPortal')}</a>
+          <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('dashboard'); }}>{t('header.nav.opdSchedule')}</a>
+          <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('identity'); }}>{t('header.nav.verifyAbha')}</a>
+          <a className="nav-link" href="#" onClick={(e) => { e.preventDefault(); onNavigate?.('new-appointment'); }}>{t('header.nav.clinicalGuidelines')}</a>
         </nav>
 
         {/* Right */}

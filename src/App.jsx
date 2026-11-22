@@ -210,7 +210,7 @@ function AppRoutes() {
 
   return (
     <div className="app-shell">
-      <Header />
+      <Header onNavigate={handleNavigate} />
       <PortalSelection onNavigate={handleNavigate} />
       <Footer />
     </div>

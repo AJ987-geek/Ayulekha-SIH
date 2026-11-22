@@ -2,56 +2,76 @@
   {
     "id": "P001",
     "name": "Rahul Sharma",
-    "abha": "2510991147",
+    "abha": "91-4582-7719-2041",
+    "abhaAddress": "rahul@abdm",
+    "rollNumber": "2510991147",
+    "mobile": "9876543210",
     "age": "32",
     "gender": "Male",
-    "allergies": "Peanuts"
+    "allergies": "Peanuts",
+    "medicalHistory": []
   },
   {
     "id": "P002",
     "name": "Priya Singh",
-    "abha": "2510991148",
+    "abha": "91-8834-5512-9031",
+    "abhaAddress": "priya@abdm",
+    "rollNumber": "2510991148",
+    "mobile": "9812345678",
     "age": 27,
-    "gender": "Female"
+    "gender": "Female",
+    "medicalHistory": []
   },
   {
     "id": "P003",
     "name": "MD Javed",
-    "abha": "2510991149",
+    "abha": "91-2201-9943-8820",
+    "abhaAddress": "javed@abdm",
+    "rollNumber": "2510991149",
+    "mobile": "9876512345",
     "age": 20,
-    "gender": "Male"
+    "gender": "Male",
+    "medicalHistory": []
   },
   {
     "id": "P004",
     "name": "New Patient",
-    "abha": "2510991167",
+    "abha": "91-1002-3344-5566",
+    "abhaAddress": "bhavya@abdm",
+    "rollNumber": "2510991167",
     "email": "bhavyaynr07@gmail.com",
-    "age": null,
-    "gender": null,
+    "age": 22,
+    "gender": "Female",
     "medicalHistory": []
   },
   {
     "id": "P005",
-    "name": "New Patient",
-    "abha": "2510995658",
+    "name": "Bhavya Sharma",
+    "abha": "91-5658-1122-3344",
+    "abhaAddress": "bhavyasharma@abdm",
+    "rollNumber": "2510995658",
     "email": "bhavyasharma8a28@gmail.com",
-    "age": null,
-    "gender": null,
+    "age": 21,
+    "gender": "Female",
     "medicalHistory": []
   },
   {
     "id": "P006",
-    "name": "New Patient",
-    "abha": "2510991156",
+    "name": "Student Patient",
+    "abha": "91-1156-7788-9900",
+    "abhaAddress": "student@abdm",
+    "rollNumber": "2510991156",
     "email": "bhavyasharma8a28@gmail.com",
-    "age": null,
-    "gender": null,
+    "age": 20,
+    "gender": "Male",
     "medicalHistory": []
   },
   {
     "id": "P007",
     "name": "Aayush Jain",
-    "abha": "2510991327",
+    "abha": "91-1327-4455-6677",
+    "abhaAddress": "aayush@abdm",
+    "rollNumber": "2510991327",
     "email": "aayushkumar4808@gmail.com",
     "age": "32",
     "gender": "Male",
@@ -61,10 +81,13 @@
   {
     "id": "P4252",
     "name": "New Student",
-    "mobile": "0000000000",
-    "abha": "2510991326",
+    "abha": "91-1326-8899-0011",
+    "abhaAddress": "newstudent@abdm",
+    "rollNumber": "2510991326",
+    "mobile": "9800000000",
     "email": "aayushkumar4808@gmail.com",
     "gender": "Unknown",
-    "age": 20
+    "age": 20,
+    "medicalHistory": []
   }
 ]

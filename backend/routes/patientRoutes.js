@@ -66,6 +66,42 @@ function getPatients() {
     );
 }
 
+function normalizeId(val) {
+    if (!val) return '';
+    return String(val).replace(/[\s\-\.]+/g, '').toLowerCase();
+}
+
+function findPatientInList(patients, value) {
+    if (!patients || !value) return null;
+    const raw = String(value).trim().toLowerCase();
+    const norm = normalizeId(value);
+
+    return patients.find(p => {
+        const pRaws = [
+            p.abha,
+            p.abhaAddress,
+            p.rollNumber,
+            p.mobile,
+            p.id,
+            p.email
+        ].map(v => (v ? String(v).trim().toLowerCase() : ''));
+
+        if (pRaws.includes(raw)) return true;
+
+        if (norm) {
+            const pNorms = [
+                normalizeId(p.abha),
+                normalizeId(p.abhaAddress),
+                normalizeId(p.rollNumber),
+                normalizeId(p.mobile),
+                normalizeId(p.id)
+            ];
+            if (pNorms.includes(norm)) return true;
+        }
+        return false;
+    });
+}
+
 // ==========================================
 // 1. CHECK DEMO ABHA / ROLL NUMBER
 // ==========================================
@@ -82,10 +118,7 @@ router.post('/check-abha', (req, res) => {
 
     try {
         const patients = getPatients();
-
-        const patient = patients.find(
-            p => p.abha === abha.trim()
-        );
+        const patient = findPatientInList(patients, abha);
 
         if (patient) {
             console.log(

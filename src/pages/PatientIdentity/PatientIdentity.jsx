@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { usePatient } from '../../contexts/PatientContext';
 import './PatientIdentity.css';
 
 export default function PatientIdentity({ onNavigate }) {
   // input = choice screen
-  // abha = roll number check
+  // abha = abha / roll number check
   // email = email input
   // otp = OTP input
-  // rollNumber = roll number after email verification
+  // rollNumber = abha / roll number after email verification
 
   const [step, setStep] = useState('input');
 
@@ -19,21 +20,17 @@ export default function PatientIdentity({ onNavigate }) {
   const [message, setMessage] = useState('');
 
   const { language, toggleLanguage, t } = useLanguage();
+  const { setPatient } = usePatient();
 
   // =====================================================
-  // ABHA / ROLL NUMBER CHECK
+  // ABHA / PATIENT ID CHECK
   // =====================================================
 
   const handleCheckAbha = async () => {
     const value = identifier.trim();
 
     if (!value) {
-      alert('Please enter your university roll number');
-      return;
-    }
-
-    if (!/^\d+$/.test(value)) {
-      alert('Please enter a valid roll number');
+      alert('Please enter your 14-digit ABHA Number, ABHA Address (e.g. name@abdm), or Patient ID');
       return;
     }
 
@@ -59,7 +56,7 @@ export default function PatientIdentity({ onNavigate }) {
       console.log('CHECK PATIENT RESPONSE:', data);
 
       if (!response.ok) {
-        alert(data.message || 'Unable to check patient record');
+        alert(data.message || data.detail || 'Unable to check patient record');
         return;
       }
 
@@ -68,7 +65,11 @@ export default function PatientIdentity({ onNavigate }) {
       // ==========================================
 
       if (data.exists) {
-        alert('Patient record found!');
+        if (setPatient) {
+          setPatient(data.patient);
+        }
+
+        alert(`Patient record found: ${data.patient.name} (${data.patient.abha || value})`);
 
         if (onNavigate) {
           onNavigate('consent', {
@@ -87,10 +88,10 @@ export default function PatientIdentity({ onNavigate }) {
       // ==========================================
 
       setMessage(
-        'No patient record found. Please verify your email to continue.'
+        'No existing patient record found for this ABHA ID. Please verify your email to create and link your digital health record.'
       );
 
-      // Keep the entered roll number
+      // Keep the entered ABHA number
       setRollNumber(value);
 
       // Automatically move to email verification
@@ -98,7 +99,7 @@ export default function PatientIdentity({ onNavigate }) {
 
     } catch (error) {
       console.error('Patient check error:', error);
-      alert('Unable to connect to AyuLekha backend');
+      alert('Unable to connect to AyuLekha backend. Please ensure the backend server is running on port 8000.');
     } finally {
       setLoading(false);
     }
@@ -243,12 +244,7 @@ export default function PatientIdentity({ onNavigate }) {
     const email = identifier.trim();
 
     if (!value) {
-      alert('Please enter your university roll number');
-      return;
-    }
-
-    if (!/^\d+$/.test(value)) {
-      alert('Please enter a valid roll number');
+      alert('Please enter your ABHA number or patient roll number');
       return;
     }
 
@@ -281,11 +277,15 @@ export default function PatientIdentity({ onNavigate }) {
       console.log('REGISTER PATIENT RESPONSE:', data);
 
       if (!response.ok) {
-        alert(data.message || 'Unable to register patient');
+        alert(data.message || data.detail || 'Unable to register patient');
         return;
       }
 
       alert('Patient registered successfully!');
+
+      if (setPatient && data.patient) {
+        setPatient(data.patient);
+      }
 
       if (onNavigate) {
         onNavigate('consent', {
@@ -562,7 +562,7 @@ export default function PatientIdentity({ onNavigate }) {
 
             {step === 'input' && (
               <>
-                Use your university roll number to find an existing
+                Use your 14-digit ABHA Number to find an existing
                 patient record, or continue directly with email verification.
                 <br />
                 <span className="intro-hi">
@@ -573,8 +573,7 @@ export default function PatientIdentity({ onNavigate }) {
 
             {step === 'abha' && (
               <>
-                Enter your university roll number to find your existing
-                patient record.
+                Enter your 14-digit ABHA Number (e.g. 91-4582-7719-2041), ABHA Address (e.g. user@abdm), or Student ID.
               </>
             )}
 
@@ -593,8 +592,7 @@ export default function PatientIdentity({ onNavigate }) {
 
             {step === 'rollNumber' && (
               <>
-                Your email has been verified. Enter your university
-                roll number to create your patient record.
+                Your email has been verified. Enter your 14-digit ABHA Number or Roll Number to link your digital health record.
               </>
             )}
 
@@ -636,18 +634,17 @@ export default function PatientIdentity({ onNavigate }) {
                 <div className="method-title">
 
                   <strong>
-                    ABHA / Roll Number
+                    ABHA ID / ABDM
                   </strong>{' '}
 
-                  रोल नंबर
+                  आभा सत्यापन
 
                 </div>
 
 
                 <div className="method-desc">
 
-                  Use your university roll number to find an
-                  existing patient record.
+                  Instantly verify with your 14-digit ABHA Number, ABHA Address (user@abdm), or Student ID.
 
                 </div>
 
@@ -655,7 +652,7 @@ export default function PatientIdentity({ onNavigate }) {
 
 
               <div className="method-badge font-mono">
-                PATIENT ID
+                ABDM VERIFIED
               </div>
 
             </div>
@@ -763,13 +760,13 @@ export default function PatientIdentity({ onNavigate }) {
                 {step === 'abha' && (
                   <>
                     <strong>
-                      Enter Your University Roll Number
+                      Enter Your ABHA Number or ABHA Address
                     </strong>
 
                     <br />
 
                     <span className="input-hi">
-                      अपना यूनिवर्सिटी रोल नंबर दर्ज करें
+                      अपना 14-अंकीय आभा नंबर अथवा आभा पता दर्ज करें
                     </span>
                   </>
                 )}
@@ -831,7 +828,7 @@ export default function PatientIdentity({ onNavigate }) {
               <div className="gateway-badge font-mono">
 
                 {step === 'abha'
-                  ? 'PATIENT ID CHECK'
+                  ? 'ABDM HEALTH ID GATEWAY'
                   : step === 'email'
                     ? 'EMAIL OTP GATEWAY'
                     : step === 'otp'
@@ -871,7 +868,7 @@ export default function PatientIdentity({ onNavigate }) {
                 <div className="input-field-group">
 
                   <label className="input-label font-mono">
-                    UNIVERSITY ROLL NUMBER
+                    14-DIGIT ABHA NUMBER / ABHA ADDRESS / आभा संख्या
                   </label>
 
 
@@ -879,8 +876,8 @@ export default function PatientIdentity({ onNavigate }) {
 
                     <input
                       type="text"
-                      placeholder="e.g. 2510991147"
-                      className="identity-input"
+                      placeholder="e.g. 91-4582-7719-2041 or patient@abdm"
+                      className="identity-input font-mono"
                       value={identifier}
                       onChange={(e) =>
                         setIdentifier(e.target.value)
@@ -894,7 +891,7 @@ export default function PatientIdentity({ onNavigate }) {
                   <div className="input-footer">
 
                     <span className="help-text">
-                      Enter your university roll number
+                      Enter 14-digit ABHA Number (hyphens optional), ABHA address (@abdm), or student roll number
                     </span>
 
                   </div>
@@ -911,12 +908,12 @@ export default function PatientIdentity({ onNavigate }) {
                   >
 
                     {loading
-                      ? 'Checking…'
-                      : 'Find Patient Record'}
+                      ? 'Verifying with ABDM…'
+                      : 'Verify ABHA & Proceed'}
 
                     {!loading && (
                       <span className="material-symbols-outlined">
-                        arrow_forward
+                        verified_user
                       </span>
                     )}
 
@@ -1137,7 +1134,7 @@ export default function PatientIdentity({ onNavigate }) {
                 <div className="input-field-group">
 
                   <label className="input-label font-mono">
-                    UNIVERSITY ROLL NUMBER
+                    14-DIGIT ABHA NUMBER / ROLL NUMBER
                   </label>
 
 
@@ -1145,8 +1142,8 @@ export default function PatientIdentity({ onNavigate }) {
 
                     <input
                       type="text"
-                      placeholder="e.g. 2510991147"
-                      className="identity-input"
+                      placeholder="e.g. 91-4582-7719-2041 or 2510991147"
+                      className="identity-input font-mono"
                       value={rollNumber}
                       onChange={(e) =>
                         setRollNumber(e.target.value)
@@ -1160,7 +1157,7 @@ export default function PatientIdentity({ onNavigate }) {
                   <div className="input-footer">
 
                     <span className="help-text">
-                      Your verified email will be linked to this record
+                      Your verified email will be linked to this ABHA health record
                     </span>
 
                   </div>

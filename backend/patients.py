@@ -39,14 +39,41 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 PATIENTS_FILE = os.path.join(DATA_DIR, "patients.json")
 CONSENTS_FILE = os.path.join(DATA_DIR, "consents.json")
 
+import re
+
+def normalize_id(val: Optional[str]) -> str:
+    if not val:
+        return ""
+    return re.sub(r"[\s\-\.]+", "", str(val)).strip().lower()
+
 def find_patient(value: str):
-    if not os.path.exists(PATIENTS_FILE):
+    if not os.path.exists(PATIENTS_FILE) or not value:
         return None
-    with open(PATIENTS_FILE, "r") as f:
+    with open(PATIENTS_FILE, "r", encoding="utf-8") as f:
         patients = json.load(f)
+    raw = str(value).strip().lower()
+    norm = normalize_id(value)
     for p in patients:
-        if p.get("mobile") == value or p.get("abha") == value:
+        p_raws = [
+            str(p.get("abha", "")).strip().lower(),
+            str(p.get("abhaAddress", "")).strip().lower(),
+            str(p.get("rollNumber", "")).strip().lower(),
+            str(p.get("mobile", "")).strip().lower(),
+            str(p.get("id", "")).strip().lower(),
+            str(p.get("email", "")).strip().lower(),
+        ]
+        if raw in p_raws:
             return p
+        if norm:
+            p_norms = [
+                normalize_id(p.get("abha")),
+                normalize_id(p.get("abhaAddress")),
+                normalize_id(p.get("rollNumber")),
+                normalize_id(p.get("mobile")),
+                normalize_id(p.get("id")),
+            ]
+            if norm in p_norms:
+                return p
     return None
 
 class VerifyPatientReq(BaseModel):
@@ -59,11 +86,21 @@ class CheckAbhaReq(BaseModel):
 @router.post("/api/patients/check-abha")
 def check_abha(req: CheckAbhaReq):
     if not req.abha:
-        raise HTTPException(status_code=400, detail="ABHA / Roll number is required")
+        raise HTTPException(status_code=400, detail="ABHA ID or Identifier is required")
     patient = find_patient(req.abha)
     if patient:
-        return {"exists": True, "patient": patient, "medicalHistory": []}
-    return {"exists": False}
+        return {
+            "success": True,
+            "exists": True,
+            "patient": patient,
+            "medicalHistory": patient.get("medicalHistory", []),
+            "message": f"Patient record verified for {patient.get('name', 'Patient')}"
+        }
+    return {
+        "success": True,
+        "exists": False,
+        "message": "No patient record found for this ABHA ID"
+    }
 
 @router.post("/api/patients/verify")
 def verify_patient(req: VerifyPatientReq):
@@ -107,11 +144,11 @@ def send_otp(req: VerifyPatientReq):
 
     init_twilio()
     if not req.value:
-        raise HTTPException(status_code=400, detail="ABHA or mobile number is required")
+        raise HTTPException(status_code=400, detail="ABHA, mobile number or email is required")
     patient = find_patient(req.value)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-    phone = f"+91{patient['mobile']}"
+    phone = f"+91{patient.get('mobile', '9876543210')}"
     if twilio_client and verify_sid:
         try:
             verification = twilio_client.verify.v2.services(verify_sid).verifications.create(to=phone, channel='sms')
@@ -119,7 +156,9 @@ def send_otp(req: VerifyPatientReq):
         except Exception as e:
             print("[Twilio Send OTP Error]", str(e))
             raise HTTPException(status_code=500, detail=str(e))
-    return {"success": True, "message": "OTP sent successfully to registered mobile number"}
+    else:
+        print(f"[OTP] Mock OTP generated for ABHA {req.value} / phone {phone}: 123456")
+    return {"success": True, "message": "OTP sent successfully to registered mobile number (Demo code: 123456)"}
 
 class VerifyOtpReq(BaseModel):
     value: Optional[str] = None
@@ -144,32 +183,43 @@ def verify_email_otp(req: VerifyOtpReq):
 
 class RegisterPatientReq(BaseModel):
     abha: str
-    email: str
+    email: Optional[str] = None
+    name: Optional[str] = "New Patient"
 
 @router.post("/api/patients/register")
 def register_patient(req: RegisterPatientReq):
-    if not req.abha or not req.email:
-        raise HTTPException(status_code=400, detail="ABHA and Email are required")
-    
-    # Mock creating a new patient
-    new_patient = {
-        "id": f"P{datetime.utcnow().strftime('%M%S')}",
-        "name": "New Student",
-        "mobile": "0000000000",
-        "abha": req.abha,
-        "email": req.email,
-        "gender": "Unknown",
-        "age": 20
-    }
+    if not req.abha:
+        raise HTTPException(status_code=400, detail="ABHA is required")
     
     patients = []
     if os.path.exists(PATIENTS_FILE):
-        with open(PATIENTS_FILE, "r") as f:
+        with open(PATIENTS_FILE, "r", encoding="utf-8") as f:
             patients = json.load(f)
             
+    existing = find_patient(req.abha)
+    if existing:
+        if req.email:
+            existing["email"] = req.email
+        if req.name and req.name != "New Patient":
+            existing["name"] = req.name
+        with open(PATIENTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(patients, f, indent=2)
+        return {"success": True, "patient": existing, "medicalHistory": existing.get("medicalHistory", [])}
+
+    new_patient = {
+        "id": f"P{datetime.utcnow().strftime('%M%S')}",
+        "name": req.name or "New Patient",
+        "mobile": "9876543210",
+        "abha": req.abha,
+        "email": req.email or "",
+        "gender": "Unknown",
+        "age": 25,
+        "medicalHistory": []
+    }
+    
     patients.append(new_patient)
     
-    with open(PATIENTS_FILE, "w") as f:
+    with open(PATIENTS_FILE, "w", encoding="utf-8") as f:
         json.dump(patients, f, indent=2)
         
     return {"success": True, "patient": new_patient, "medicalHistory": []}

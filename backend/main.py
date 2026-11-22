@@ -443,6 +443,17 @@ except ImportError as e:
     print("OCR routers not available:", e)
     OCR_ROUTERS_AVAILABLE = False
 
+import os
+from fastapi.staticfiles import StaticFiles
+
+uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
+@app.get("/")
+def root():
+    return {"message": "AyuLekha Backend is running"}
+
 app.include_router(patients_router)
 
 if OCR_ROUTERS_AVAILABLE:
@@ -587,3 +598,8 @@ def message(payload: MessagePayload):
             )
 
     return response
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
