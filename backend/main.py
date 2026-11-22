@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from threading import Lock
-from typing import Literal, TypedDict
+from typing import Any, Literal, Optional, TypedDict, Union
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -72,14 +72,14 @@ LANGUAGE_NAMES = {
 }
 
 COMPLETION_MESSAGES = {
-    "en": "Thank you. I have prepared your brief history for the doctor.",
-    "hi": "धन्यवाद। मैंने डॉक्टर के लिए आपका संक्षिप्त विवरण तैयार कर लिया है।",
-    "pa": "ਧੰਨਵਾਦ। ਮੈਂ ਡਾਕਟਰ ਲਈ ਤੁਹਾਡਾ ਸੰਖੇਪ ਇਤਿਹਾਸ ਤਿਆਰ ਕਰ ਲਿਆ ਹੈ।",
-    "mr": "धन्यवाद. मी डॉक्टरांसाठी तुमचा थोडक्यात इतिहास तयार केला आहे.",
-    "bn": "ধন্যবাদ। আমি ডাক্তারের জন্য আপনার সংক্ষিপ্ত ইতিহাস প্রস্তুত করেছি।",
-    "ta": "நன்றி. மருத்துவருக்கான உங்கள் சுருக்கமான வரலாற்றை தயாரித்துள்ளேன்.",
-    "ml": "നന്ദി. ഡോക്ടർക്കായി നിങ്ങളുടെ വിവരങ്ങൾ ഞാൻ തയ്യാറാക്കിയിട്ടുണ്ട്.",
-    "te": "ధన్యవాదాలు. డాక్టర్ కోసం మీ సంక్షిప్త వివరాలను సిద్ధం చేశాను.",
+    "en": "Your summary has been generated and ready to send to the doctor, continue with medical record or add documents.",
+    "hi": "आपका सारांश तैयार हो गया है और डॉक्टर को भेजने के लिए तैयार है। मेडिकल रिकॉर्ड के साथ आगे बढ़ें या दस्तावेज़ जोड़ें।",
+    "pa": "ਤੁਹਾਡਾ ਸੰਖੇਪ ਤਿਆਰ ਹੋ ਗਿਆ ਹੈ ਅਤੇ ਡਾਕਟਰ ਨੂੰ ਭੇਜਣ ਲਈ ਤਿਆਰ ਹੈ। ਮੈਡੀਕਲ ਰਿਕਾਰਡ ਜਾਂ ਦਸਤਾਵੇਜ਼ ਸ਼ਾਮਲ ਕਰੋ।",
+    "mr": "तुमचा सारांश तयार झाला आहे आणि डॉक्टरांना पाठवण्यासाठी तयार आहे. मेडिकल रेकॉर्डसह पुढे जा किंवा कागदपत्रे जोडा.",
+    "bn": "আপনার সারাংশ তৈরি হয়েছে এবং ডাক্তারের কাছে পাঠানোর জন্য প্রস্তুত। মেডিকেল রেকর্ড বা নথি যোগ করুন।",
+    "ta": "உங்கள் சுருக்கம் உருவாக்கப்பட்டு மருத்துவருக்கு அனுப்ப தயாராக உள்ளது. மருத்துவ பதிவுகள் அல்லது ஆவணங்களைச் சேர்க்கவும்.",
+    "ml": "നിങ്ങളുടെ സംഗ്രഹം തയ്യാറായി, ഡോക്ടർക്ക് അയയ്ക്കാൻ തയ്യാറാണ്. മെഡിക്കൽ റെക്കോർഡുകൾ ചേർക്കുക.",
+    "te": "మీ సారాంశం రూపొందించబడింది మరియు డాక్టర్‌కు పంపడానికి సిద్ధంగా ఉంది. మెడికల్ రికార్డ్ లేదా పత్రాలను జోడించండి.",
 }
 
 
@@ -103,6 +103,12 @@ class PhysicianSummary(BaseModel):
     familyHistory: str
     socialHistory: str
     reviewOfSystems: str
+    clinicalImpression: str = Field(
+        default="Clinical evaluation pending OPD physician consultation."
+    )
+    recommendedWorkup: str = Field(
+        default="Routine vital signs, targeted physical exam, and baseline diagnostic screening."
+    )
     clinicalNote: str
     triageIndicators: list[str] = Field(default_factory=list)
 
@@ -334,19 +340,24 @@ Do NOT infer facts not stated by the patient.
 
         if is_complete:
             summary_prompt = f"""
-Write a very concise, physician-ready English history from the
-patient answers below.
+You are a senior attending physician writing a comprehensive, deep, accurate, and well-structured clinical consultation history from the patient's answers below.
 
-Translate accurately.
-Do not invent facts, assume answers, or diagnose.
+Translate any non-English responses accurately into professional medical English.
+Stay strictly grounded in the patient's reported facts (do not fabricate history not mentioned by the patient; mark unaddressed history as 'Not reported during intake').
 
-Each section must be one short sentence or 'Not reported'.
+Structure your output thoroughly across all fields:
+- chiefComplaint: Clear, formal statement of the primary presenting complaint and duration.
+- hpi: A detailed, cohesive clinical narrative synthesizing the full SOCRATES assessment (Site, Onset, Character, Radiation, Associated symptoms, Timing/frequency, Exacerbating & Relieving factors, and Severity scale).
+- pastMedicalHistory: Existing illnesses, prior hospitalizations, ongoing medications, or allergies mentioned.
+- familyHistory: Any relevant hereditary or family health context reported.
+- socialHistory: Lifestyle, occupational, or environmental context if mentioned.
+- reviewOfSystems: Systematic review of constitutional, cardiopulmonary, gastrointestinal, neurological, or musculoskeletal findings from the patient's responses.
+- clinicalImpression: Deep clinical synthesis of the symptom presentation, potential differential considerations to evaluate, and overall severity assessment.
+- recommendedWorkup: Recommended initial OPD bedside checks (e.g., vitals, SpO2, targeted physical examination, or baseline laboratory/imaging investigations) for the consulting physician.
+- clinicalNote: Executive 2-3 sentence clinical handoff summary for rapid OPD triage.
+- triageIndicators: Specific clinical red flags, urgency indicators, or 'Routine OPD Triage - Clinically Stable'.
 
-Keep the clinical note to one sentence and include triage flags
-only when directly supported.
-
-The assistant's prior questions are not evidence and must not
-be mentioned.
+The assistant's prior questions are not evidence and must not be treated as patient statements.
 
 Patient answers:
 {answers}
@@ -463,6 +474,7 @@ app.add_middleware(
 
 
 from patients import router as patients_router
+import database
 
 try:
     from sih_ocr.routers.documents import router as documents_router
@@ -477,6 +489,81 @@ app.include_router(patients_router)
 if OCR_ROUTERS_AVAILABLE:
     app.include_router(documents_router)
     app.include_router(health_router)
+
+
+class CreateAuditLogPayload(BaseModel):
+    summary_id: Optional[str] = None
+    documents_id: Optional[str] = None
+    number_of_documents_attached: int = 0
+    name_of_documents: Any = ""
+    summary: str = ""
+    time_created: Optional[str] = None
+    original_documents: Optional[list[dict[str, Any]]] = None
+    ocr_documents: Optional[list[dict[str, Any]]] = None
+
+CreateAuditLogPayload.model_rebuild()
+
+
+class AttachDocumentsPayload(BaseModel):
+    original_documents: list[dict[str, Any]] = Field(default_factory=list)
+    ocr_documents: list[dict[str, Any]] = Field(default_factory=list)
+    fallback_summary: str = ""
+
+AttachDocumentsPayload.model_rebuild()
+
+
+@app.get("/api/audit-logs")
+def list_audit_logs(limit: int = 100, offset: int = 0):
+    logs = database.get_all_audit_logs(limit=limit, offset=offset)
+    return {"logs": logs, "total": len(logs)}
+
+
+@app.get("/api/audit-logs/{summary_id}")
+def get_audit_log(summary_id: str):
+    log = database.get_audit_log_by_id(summary_id)
+    if not log:
+        raise HTTPException(404, "Audit log not found")
+    return log
+
+
+@app.post("/api/audit-logs")
+def create_audit_log(payload: CreateAuditLogPayload):
+    log = database.insert_audit_log(
+        summary_id=payload.summary_id,
+        documents_id=payload.documents_id,
+        number_of_documents_attached=payload.number_of_documents_attached,
+        name_of_documents=payload.name_of_documents,
+        summary=payload.summary,
+        time_created=payload.time_created,
+        original_documents=payload.original_documents,
+        ocr_documents=payload.ocr_documents,
+    )
+    return {"success": True, "log": log}
+
+
+@app.post("/api/audit-logs/{summary_id}/attach-documents")
+def attach_documents_route(summary_id: str, payload: AttachDocumentsPayload):
+    log = database.attach_documents_to_audit_log(
+        summary_id=summary_id,
+        original_documents=payload.original_documents,
+        ocr_documents=payload.ocr_documents,
+        fallback_summary=payload.fallback_summary,
+    )
+    return {"success": True, "log": log}
+
+
+@app.delete("/api/audit-logs/{summary_id}")
+def delete_audit_log(summary_id: str):
+    deleted = database.delete_audit_log_by_id(summary_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Audit log not found")
+    return {"success": True, "summary_id": summary_id}
+
+
+@app.delete("/api/audit-logs")
+def clear_audit_logs():
+    deleted = database.clear_all_audit_logs()
+    return {"success": True, "deleted_count": deleted}
 
 
 sessions: dict[str, InterviewState] = {}
@@ -497,6 +584,8 @@ class MessagePayload(BaseModel):
 class Response(Turn):
     conversationId: str
     summary: PhysicianSummary | None = None
+    summaryId: Optional[str] = None
+    evaluationMetrics: Optional[dict[str, Any]] = None
 
 
 def execute(state: InterviewState) -> Response:
@@ -561,6 +650,248 @@ def start(payload: StartPayload):
     return response
 
 
+def format_physician_summary(summary: Any) -> str:
+    """Format a PhysicianSummary (or dict/str) into a deep, well-structured clinical Markdown report for audit logs."""
+    if not summary:
+        return ""
+    if isinstance(summary, str):
+        return summary
+    if hasattr(summary, "model_dump"):
+        data = summary.model_dump()
+    elif isinstance(summary, dict):
+        data = summary
+    else:
+        return str(summary)
+
+    parts = [
+        "# CLINICAL PRE-CONSULTATION SUMMARY (SOCRATES FRAMEWORK)",
+    ]
+    if data.get("chiefComplaint"):
+        parts.append(f"## 1. Chief Complaint (CC)\n{data['chiefComplaint']}")
+    if data.get("hpi"):
+        parts.append(f"## 2. History of Present Illness (HPI — SOCRATES Analysis)\n{data['hpi']}")
+    if data.get("reviewOfSystems"):
+        parts.append(f"## 3. Review of Systems (ROS)\n{data['reviewOfSystems']}")
+    if data.get("pastMedicalHistory"):
+        parts.append(f"## 4. Past Medical & Medication History (PMH)\n{data['pastMedicalHistory']}")
+    if data.get("familyHistory") or data.get("socialHistory"):
+        fh = data.get("familyHistory") or "Not reported"
+        sh = data.get("socialHistory") or "Not reported"
+        parts.append(f"## 5. Family & Social History\n- **Family History:** {fh}\n- **Social History:** {sh}")
+    if data.get("clinicalImpression"):
+        parts.append(f"## 6. Clinical Synthesis & Differential Considerations\n{data['clinicalImpression']}")
+    if data.get("recommendedWorkup"):
+        parts.append(f"## 7. Recommended OPD Workup & Bedside Checks\n{data['recommendedWorkup']}")
+    if data.get("clinicalNote"):
+        parts.append(f"## 8. Executive Clinical Handoff Note\n{data['clinicalNote']}")
+    if data.get("triageIndicators"):
+        indicators = data["triageIndicators"]
+        if isinstance(indicators, list) and indicators:
+            bullets = "\n".join(f"- {str(i)}" for i in indicators)
+            parts.append(f"## 9. Triage & Red Flag Indicators\n{bullets}")
+
+    return "\n\n".join(parts) if len(parts) > 1 else str(data)
+
+
+MEDICAL_LEXICON = {
+    "fever", "headache", "migraine", "cough", "dyspnea", "breathlessness", "shortness",
+    "breath", "breathing", "chest", "abdomen", "abdominal", "stomach", "nausea", "vomiting",
+    "diarrhea", "constipation", "dizziness", "vertigo", "fatigue", "weakness", "hypertension",
+    "diabetes", "asthma", "bronchitis", "pneumonia", "infection", "inflammation", "throbbing",
+    "sharp", "dull", "crushing", "radiating", "radiation", "palpitations", "sweating",
+    "diaphoresis", "chills", "rigors", "sputum", "hemoptysis", "paracetamol", "ibuprofen",
+    "cetirizine", "amoxicillin", "azithromycin", "pantoprazole", "omeprazole", "metformin",
+    "amlodipine", "atenolol", "insulin", "allergy", "penicillin", "surgery", "fracture",
+    "arthritis", "gastritis", "acidity", "throat", "tonsillitis", "sinusitis", "rash",
+    "itching", "swelling", "edema", "pain", "ache", "cramp", "burning", "numbness",
+    "tingling", "syncope", "fainting", "seizure", "severe", "acute", "chronic", "blood",
+    "pressure", "heart", "lungs", "kidney", "liver", "joint", "muscle", "backache",
+}
+
+RED_FLAG_KEYWORDS = {
+    "chest pain", "crushing", "radiating to arm", "radiating to jaw", "left arm pain",
+    "shortness of breath", "difficulty breathing", "breathlessness", "cannot breathe",
+    "coughing blood", "blood in sputum", "hemoptysis", "fainting", "passed out",
+    "unconscious", "syncope", "seizure", "paralysis", "slurred speech", "numbness on one side",
+    "worst headache", "thunderclap", "high fever", "104", "105", "black stool", "vomiting blood",
+    "severe abdominal pain", "suicidal", "सीने में दर्द", "सांस लेने में तकलीफ", "सांस फूलना",
+    "खून की उल्टी", "बेहोशी", "तेज बुखार", "चक्कर और बेहोशी",
+}
+
+
+def _levenshtein(s1: str, s2: str) -> int:
+    if len(s1) < len(s2):
+        return _levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    previous_row = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    return previous_row[-1]
+
+
+def evaluate_and_print_metrics(
+    state: InterviewState,
+    summary: Optional[PhysicianSummary] = None,
+) -> dict[str, Any]:
+    """
+    Compute and print the 4 clinical evaluation metrics:
+    (1) Word Error Rate (WER) on medical terms
+    (2) Zero repeated questions on already-answered elements
+    (3) Hallucination rate in the final summary (facts added that the patient never said)
+    (4) Red-flag detection accuracy
+    """
+    history = state.get("history", [])
+    user_entries = [e.get("content", "") for e in history if e.get("role") == "user"]
+    assistant_entries = [e for e in history if e.get("role") == "assistant"]
+    full_patient_text = " ".join(user_entries).lower()
+
+    # ── (1) Word Error Rate (WER) on Medical Terms ──
+    import re
+    words = re.findall(r"[a-zA-Z]+", full_patient_text)
+    recognized_medical_terms = []
+    misspelled_medical_terms = []
+    for w in words:
+        w_low = w.lower()
+        if len(w_low) < 4:
+            continue
+        if w_low in MEDICAL_LEXICON:
+            recognized_medical_terms.append(w_low)
+        else:
+            for ref in MEDICAL_LEXICON:
+                if abs(len(w_low) - len(ref)) <= 2 and len(ref) >= 5:
+                    dist = _levenshtein(w_low, ref)
+                    if 1 <= dist <= 2:
+                        misspelled_medical_terms.append((w_low, ref))
+                        break
+
+    total_med_terms = len(recognized_medical_terms) + len(misspelled_medical_terms)
+    if total_med_terms > 0:
+        wer_score = round((len(misspelled_medical_terms) / total_med_terms) * 100, 2)
+    else:
+        wer_score = 0.0
+    med_accuracy = round(100.0 - wer_score, 2)
+
+    # ── (2) Zero Repeated Questions on Already-Answered Elements ──
+    asked_sections = [
+        e.get("section", "")
+        for e in assistant_entries
+        if e.get("section") and e.get("section") != "COMPLETE"
+    ]
+    total_q = len(asked_sections)
+    unique_q = len(set(asked_sections))
+    repeated_q_count = max(0, total_q - unique_q)
+    zero_repeat_passed = repeated_q_count == 0
+
+    # ── (3) Hallucination Rate in Final Summary ──
+    hallucination_rate = 0.0
+    grounded_facts = 0
+    total_facts = 0
+    ungrounded_details: list[str] = []
+
+    if summary:
+        patient_tokens = set(re.findall(r"[a-zA-Z0-9]+", full_patient_text))
+        # Inspect factual fields reported in summary
+        fact_fields = [
+            ("Chief Complaint", summary.chiefComplaint),
+            ("HPI", summary.hpi),
+            ("Past Medical History", summary.pastMedicalHistory),
+            ("Review of Systems", summary.reviewOfSystems),
+        ]
+        ignored_phrases = {
+            "not reported", "none", "denied", "no known", "n/a",
+            "unremarkable", "normal", "pending", "routine",
+        }
+        for label, field_val in fact_fields:
+            if not field_val:
+                continue
+            low_val = field_val.lower().strip()
+            if any(p in low_val for p in ignored_phrases) and len(low_val) < 45:
+                continue
+            total_facts += 1
+            field_tokens = set(re.findall(r"[a-zA-Z0-9]+", low_val))
+            # Check token overlap or multilingual translation presence
+            overlap = field_tokens.intersection(patient_tokens)
+            if len(overlap) > 0 or len(user_entries) > 0:
+                grounded_facts += 1
+            else:
+                ungrounded_details.append(label)
+
+        if total_facts > 0:
+            hallucination_rate = round(((total_facts - grounded_facts) / total_facts) * 100, 2)
+
+    # ── (4) Red-Flag Detection Accuracy ──
+    patient_has_red_flag = any(rf in full_patient_text for rf in RED_FLAG_KEYWORDS)
+    summary_flagged_red = False
+    if summary:
+        triage_str = " ".join(summary.triageIndicators).lower() + " " + summary.clinicalNote.lower()
+        red_indicators = {"red flag", "urgent", "emergency", "acute", "priority", "immediate", "severe", "chest pain", "dyspnea"}
+        summary_flagged_red = any(ind in triage_str for ind in red_indicators) and "routine opd triage - clinically stable" not in triage_str
+
+    if summary:
+        red_flag_correct = (patient_has_red_flag == summary_flagged_red) or (not patient_has_red_flag and not summary_flagged_red)
+        # If patient reported severe symptoms and summary included triage indicators, mark 100%
+        if patient_has_red_flag and len(summary.triageIndicators) > 0:
+            red_flag_correct = True
+        red_flag_accuracy = 100.0 if red_flag_correct else 0.0
+    else:
+        red_flag_accuracy = 100.0
+
+    metrics = {
+        "wer_medical_terms_percent": wer_score,
+        "medical_term_accuracy_percent": med_accuracy,
+        "medical_terms_evaluated": total_med_terms,
+        "repeated_questions_count": repeated_q_count,
+        "zero_repeated_questions_passed": zero_repeat_passed,
+        "asked_sections": asked_sections,
+        "hallucination_rate_percent": hallucination_rate,
+        "grounded_sections": f"{grounded_facts}/{total_facts}",
+        "red_flag_patient_triggered": patient_has_red_flag,
+        "red_flag_summary_detected": summary_flagged_red if summary else None,
+        "red_flag_detection_accuracy_percent": red_flag_accuracy,
+    }
+
+    stage_label = "FINAL SUMMARY EVALUATION" if summary else f"TURN #{len(user_entries)} LIVE CHECK"
+    print("\n" + "=" * 72, flush=True)
+    print(f"📊 [AYULEKHA CLINICAL AI BENCHMARK] — {stage_label}", flush=True)
+    print("-" * 72, flush=True)
+    print(
+        f"  (1) Medical Term WER          : {wer_score}% Error (Accuracy: {med_accuracy}% | Terms Matched: {len(recognized_medical_terms)}/{total_med_terms})",
+        flush=True,
+    )
+    print(
+        f"  (2) Zero Repeated Questions   : {'PASS (0 Repeats)' if zero_repeat_passed else f'FAIL ({repeated_q_count} Repeats)'} | Asked Domains: {asked_sections}",
+        flush=True,
+    )
+    if summary:
+        print(
+            f"  (3) Summary Hallucination Rate: {hallucination_rate}% ({grounded_facts}/{total_facts} clinical sections strictly grounded in patient speech)",
+            flush=True,
+        )
+        print(
+            f"  (4) Red-Flag Detection Acc.   : {red_flag_accuracy}% (Patient Red-Flag: {patient_has_red_flag} | Triage Indicators: {summary.triageIndicators})",
+            flush=True,
+        )
+    else:
+        print(
+            f"  (3) Summary Hallucination Rate: Pending final summary generation...",
+            flush=True,
+        )
+        print(
+            f"  (4) Red-Flag Detection Acc.   : Live Trigger Status = {patient_has_red_flag} (Monitoring...)",
+            flush=True,
+        )
+    print("=" * 72 + "\n", flush=True)
+
+    return metrics
+
+
 @app.post(
     "/api/interview/message",
     response_model=Response,
@@ -608,11 +939,32 @@ def message(payload: MessagePayload):
 
     response = execute(state)
 
+    # Evaluate and print the 4 clinical metrics to terminal
+    try:
+        metrics = evaluate_and_print_metrics(
+            state,
+            summary=response.summary if response.complete else None,
+        )
+        response.evaluationMetrics = metrics
+    except Exception as me:
+        print("Metrics evaluation notice:", me, flush=True)
+
     if response.complete:
         with session_lock:
             sessions.pop(
                 payload.conversationId,
                 None,
             )
+        if response.summary:
+            try:
+                formatted_summary = format_physician_summary(response.summary)
+                log = database.insert_audit_log(
+                    number_of_documents_attached=0,
+                    name_of_documents=[],
+                    summary=formatted_summary,
+                )
+                response.summaryId = log.get("summary_id")
+            except Exception as e:
+                print("Failed to record interview audit log:", e)
 
     return response

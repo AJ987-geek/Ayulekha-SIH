@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from sih_ocr.config import settings
@@ -90,6 +91,37 @@ async def upload_document(
         )
     else:
         summary = generate_medical_summary(digitized_text, page_count, requested_type)
+
+    try:
+        import database
+        now_iso = datetime.now(timezone.utc).isoformat()
+        doc_uid = f"DOC-{int(datetime.now(timezone.utc).timestamp())}"
+        database.attach_documents_to_audit_log(
+            summary_id=None,
+            original_documents=[{
+                "id": doc_uid,
+                "filename": original_filename,
+                "url": "",
+                "path": original_filename,
+                "extension": extension,
+                "size_bytes": len(content),
+                "document_type": requested_type,
+                "timestamp": now_iso,
+            }],
+            ocr_documents=[{
+                "id": f"OCR-{doc_uid}",
+                "filename": original_filename,
+                "engine": engine,
+                "page_count": page_count,
+                "ocr_text": digitized_text or summary,
+                "structured_summary": summary,
+                "tables": extract_markdown_tables(summary),
+                "timestamp": now_iso,
+            }],
+            fallback_summary=summary,
+        )
+    except Exception as dbe:
+        logger.warning("Could not record audit log: %s", dbe)
 
     return DocumentSummaryResponse(
         filename=original_filename,

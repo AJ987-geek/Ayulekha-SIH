@@ -263,18 +263,26 @@ def save_story(req: StoryReq):
     if updated:
         with open(PATIENTS_FILE, "w") as f:
             json.dump(patients, f, indent=2)
-            
+
+    try:
+        import database
+        database.insert_audit_log(
+            number_of_documents_attached=0,
+            name_of_documents=["Patient Clinical Story"],
+            summary=req.story,
+        )
+    except Exception as dbe:
+        print("Audit log insert error in save_story:", dbe)
+
     return {"success": True, "message": "Clinical story recorded successfully", "story": {"patientId": req.patientId, "story": req.story, "symptoms": req.symptoms, "status": "recorded"}}
 
 @router.post("/api/patients/{patient_id}/records")
 async def upload_patient_records(
     patient_id: str,
     document_type: str = Form("auto"),
+    summary_id: Optional[str] = Form(None),
     records: List[UploadFile] = File(...),
 ):
-    if not OCR_AVAILABLE:
-        raise HTTPException(status_code=503, detail="OCR service is unavailable.")
-
     patient_dir = os.path.join(DATA_DIR, "documents", patient_id)
     os.makedirs(patient_dir, exist_ok=True)
     metadata_file = os.path.join(patient_dir, "metadata.json")
@@ -288,8 +296,11 @@ async def upload_patient_records(
             print("Error reading metadata:", e)
     
     results = []
-    for record in records:
-        original_filename = record.filename or "uploaded_document"
+    original_docs_for_audit = []
+    ocr_docs_for_audit = []
+
+    for idx, record in enumerate(records):
+        original_filename = record.filename or f"document_{idx+1}.pdf"
         extension = Path(original_filename).suffix.lower().lstrip(".")
         content = await record.read()
         
@@ -299,40 +310,111 @@ async def upload_patient_records(
         file_path = os.path.join(patient_dir, original_filename)
         with open(file_path, "wb") as f:
             f.write(content)
+
+        download_url = f"/api/patients/{patient_id}/records/download/{original_filename}"
+        now_iso = datetime.utcnow().isoformat() + "Z"
+        doc_uid = f"DOC-{int(datetime.utcnow().timestamp())}-{idx+1}"
+
+        original_docs_for_audit.append({
+            "id": doc_uid,
+            "filename": original_filename,
+            "url": download_url,
+            "path": download_url,
+            "extension": extension,
+            "size_bytes": len(content),
+            "document_type": document_type,
+            "timestamp": now_iso,
+        })
             
         try:
-            digitized_text, page_count, engine = extract_document_text(
-                content, extension, language_hint="en", document_type=document_type
-            )
-            summary = generate_medical_summary(digitized_text, page_count, "auto")
-            tables = extract_markdown_tables(summary)
+            if OCR_AVAILABLE:
+                normalized_doc_type = "printed" if document_type in ("lab_report", "printed") else ("prescription" if document_type == "prescription" else "auto")
+                digitized_text, page_count, engine = extract_document_text(
+                    content, extension, language_hint="en", document_type=normalized_doc_type
+                )
+                summary = generate_medical_summary(digitized_text, page_count, normalized_doc_type)
+                tables = extract_markdown_tables(summary)
+            else:
+                digitized_text = f"Original document '{original_filename}' archived ({len(content)} bytes)."
+                page_count = 1
+                engine = "Direct Archive"
+                summary = f"Document **{original_filename}** uploaded and stored in clinical repository."
+                tables = []
             
             doc_record = {
+                "id": doc_uid,
                 "filename": original_filename,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": now_iso,
                 "page_count": page_count,
                 "engine": engine,
+                "raw_ocr_text": digitized_text,
                 "summary": summary,
                 "tables": tables,
-                "path": f"/api/patients/{patient_id}/records/download/{original_filename}"
+                "path": download_url
             }
             metadata.append(doc_record)
             results.append(doc_record)
+
+            ocr_docs_for_audit.append({
+                "id": f"OCR-{doc_uid}",
+                "filename": original_filename,
+                "engine": engine,
+                "page_count": page_count,
+                "ocr_text": digitized_text or summary,
+                "structured_summary": summary,
+                "tables": tables,
+                "timestamp": now_iso,
+            })
         except Exception as e:
             print(f"OCR Error processing {original_filename}:", e)
+            fallback_summary = f"Document **{original_filename}** archived. (OCR parse note: {str(e)})"
             doc_record = {
+                "id": doc_uid,
                 "filename": original_filename,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": now_iso,
+                "engine": "Archive Fallback",
                 "error": str(e),
-                "path": f"/api/patients/{patient_id}/records/download/{original_filename}"
+                "summary": fallback_summary,
+                "path": download_url
             }
             metadata.append(doc_record)
             results.append(doc_record)
+
+            ocr_docs_for_audit.append({
+                "id": f"OCR-{doc_uid}",
+                "filename": original_filename,
+                "engine": "Archive Fallback",
+                "page_count": 1,
+                "ocr_text": fallback_summary,
+                "structured_summary": fallback_summary,
+                "tables": [],
+                "timestamp": now_iso,
+            })
 
     with open(metadata_file, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
 
-    return {"success": True, "message": f"{len(records)} records processed.", "results": results}
+    audit_log_entry = None
+    try:
+        import database
+        summary_texts = [r.get("summary", "") for r in results if r.get("summary")]
+        combined_summary = "\n\n---\n\n".join(summary_texts) if summary_texts else f"{len(original_docs_for_audit)} medical document(s) uploaded and indexed."
+        audit_log_entry = database.attach_documents_to_audit_log(
+            summary_id=summary_id,
+            original_documents=original_docs_for_audit,
+            ocr_documents=ocr_docs_for_audit,
+            fallback_summary=combined_summary,
+        )
+    except Exception as dbe:
+        print("Database audit log attach error in patients.py:", dbe)
+
+    return {
+        "success": True,
+        "message": f"{len(results)} records processed.",
+        "results": results,
+        "summary_id": audit_log_entry.get("summary_id") if audit_log_entry else summary_id,
+        "audit_log": audit_log_entry,
+    }
 
 @router.get("/api/patients/{patient_id}/records")
 def get_patient_records(patient_id: str):

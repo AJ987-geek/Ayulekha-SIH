@@ -35,5 +35,9 @@ __pycache__/
 backend/.env
 .env
 
-# Tooling cache
+# Tooling & Local OCR Model Caches (downloaded via download_ocr_models.py)
 .kilo/
+backend/data/.ocr_cache/
+.model_cache/
+backend/data/documents/
+backend/uploads/

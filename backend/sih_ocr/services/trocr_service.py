@@ -59,49 +59,42 @@ class TrOCRPrescriptionService:
                 return
 
             try:
+                # Prevent Protobuf Gencode/Runtime minor version mismatch error (7.36.1 vs 7.35.1)
+                try:
+                    import google.protobuf.runtime_version as _pb_rv
+                    _pb_rv.ValidateProtobufRuntimeVersion = lambda *args, **kwargs: None
+                except Exception:
+                    pass
+
                 # Heavy imports and model download happen only when this engine is used.
                 import torch
-                from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+                from transformers import (
+                    RobertaTokenizer,
+                    TrOCRProcessor,
+                    ViTImageProcessor,
+                    VisionEncoderDecoderModel,
+                )
 
-                # The base checkpoint is materially more accurate on difficult
-                # handwriting than the small checkpoint. It is the default for
-                # prescriptions; choose the small model explicitly only when a
-                # faster cold start matters more than recognition quality.
                 model_name = os.getenv("TROCR_MODEL", "microsoft/trocr-base-handwritten")
                 cache_dir = self._cache_dir()
                 cache_dir.mkdir(parents=True, exist_ok=True)
-                logger.info("Loading TrOCR prescription model: %s", model_name)
+                has_local = (cache_dir / "models--microsoft--trocr-base-handwritten").exists()
+                logger.info("Loading TrOCR prescription model: %s (local_only=%s)", model_name, has_local)
 
-                # The handwritten model uses a Roberta BPE tokenizer. Keep the
-                # image processor on its portable implementation: it only needs
-                # Pillow/NumPy and does not require torchvision on a CPU server.
-                # The explicit fallback below still avoids AutoTokenizer's
-                # slow-tokenizer conversion path after a partial cache download.
-                try:
-                    self._processor = TrOCRProcessor.from_pretrained(
-                        model_name, cache_dir=str(cache_dir), use_fast=False
-                    )
-                except Exception as processor_exc:
-                    logger.warning("Standard TrOCR processor load failed: %s", processor_exc)
-                    from transformers import RobertaTokenizerFast, ViTImageProcessor
-
-                    image_processor = ViTImageProcessor.from_pretrained(
-                        model_name, cache_dir=str(cache_dir)
-                    )
-                    tokenizer = RobertaTokenizerFast.from_pretrained(
-                        model_name, cache_dir=str(cache_dir)
-                    )
-                    self._processor = TrOCRProcessor(
-                        image_processor=image_processor, tokenizer=tokenizer
-                    )
+                image_processor = ViTImageProcessor.from_pretrained(
+                    model_name, cache_dir=str(cache_dir), local_files_only=has_local
+                )
+                tokenizer = RobertaTokenizer.from_pretrained(
+                    model_name, cache_dir=str(cache_dir), local_files_only=has_local
+                )
+                self._processor = TrOCRProcessor(
+                    image_processor=image_processor, tokenizer=tokenizer
+                )
 
                 self._device = "cuda" if torch.cuda.is_available() else "cpu"
+                if self._device == "cpu":
+                    torch.set_num_threads(max(4, os.cpu_count() or 8))
                 load_started = time.perf_counter()
-                # Do not enable low_cpu_mem_usage here. With this combined
-                # VisionEncoderDecoder checkpoint it can leave encoder weights on
-                # PyTorch's meta device, which then fails at ``model.to(...)``.
-                # Loading normally is reliable on both CPU and CUDA; the smaller
-                # default checkpoint keeps its cold start reasonable.
                 transformers_logger = logging.getLogger("transformers.modeling_utils")
                 warning_filter = _IgnoreUnusedTrOCRPoolerWarning()
                 transformers_logger.addFilter(warning_filter)
@@ -109,10 +102,14 @@ class TrOCRPrescriptionService:
                     self._model = VisionEncoderDecoderModel.from_pretrained(
                         model_name,
                         cache_dir=str(cache_dir),
+                        local_files_only=has_local,
                     )
                 finally:
                     transformers_logger.removeFilter(warning_filter)
-                self._model.to(self._device).eval()
+                self._model.to(self._device)
+                if self._device == "cuda":
+                    self._model = self._model.half()
+                self._model.eval()
                 logger.info(
                     "TrOCR model loaded in %.1f seconds (model=%s, device=%s)",
                     time.perf_counter() - load_started, model_name, self._device,
@@ -167,14 +164,16 @@ class TrOCRPrescriptionService:
         # TrOCR resizes every crop to the same ViT input size. Running those
         # crops in small batches eliminates most per-line Python/model overhead
         # without changing the reading order.
-        batch_size = max(1, int(os.getenv("TROCR_BATCH_SIZE", "8")))
-        num_beams = max(1, int(os.getenv("TROCR_NUM_BEAMS", "4")))
-        max_new_tokens = max(16, int(os.getenv("TROCR_MAX_NEW_TOKENS", "96")))
+        batch_size = max(1, int(os.getenv("TROCR_BATCH_SIZE", "16")))
+        num_beams = max(1, int(os.getenv("TROCR_NUM_BEAMS", "1")))
+        max_new_tokens = max(16, int(os.getenv("TROCR_MAX_NEW_TOKENS", "48")))
 
         for start in range(0, len(line_images), batch_size):
             batch = line_images[start:start + batch_size]
             pixel_values = self._processor(batch, return_tensors="pt").pixel_values.to(self._device)
-            with torch.no_grad():
+            if self._device == "cuda":
+                pixel_values = pixel_values.half()
+            with torch.inference_mode():
                 generated = self._model.generate(
                     pixel_values,
                     max_new_tokens=max_new_tokens,

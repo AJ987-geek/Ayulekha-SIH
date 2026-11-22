@@ -1,8 +1,11 @@
+"""
+100% Local Deterministic Medical Document Structurer & Table Extractor.
+Operates entirely offline on local PaddleOCR-VL-1.6 / PaddleOCR / TrOCR output without any external API keys.
+"""
+
 import logging
 import re
-from typing import Dict, List, Optional
-import requests
-from sih_ocr.config import settings
+from typing import Dict, List, Optional, Tuple
 from sih_ocr.schemas.document import PrescriptionReviewContext
 
 logger = logging.getLogger(__name__)
@@ -14,12 +17,7 @@ def _plain_cell(value: str) -> str:
 
 
 def extract_markdown_tables(markdown: str) -> List[Dict[str, object]]:
-    """Convert well-formed Markdown tables into JSON-safe dataframe records.
-
-    The LLM output remains the human-readable source of truth. This lightweight
-    parser gives the API/UI a structured representation without a second model
-    call or a heavyweight pandas dependency.
-    """
+    """Convert well-formed Markdown tables into JSON-safe dataframe records."""
     tables: List[Dict[str, object]] = []
     lines = markdown.splitlines()
     index = 0
@@ -27,7 +25,11 @@ def extract_markdown_tables(markdown: str) -> List[Dict[str, object]]:
     while index + 1 < len(lines):
         header = lines[index].strip()
         separator = lines[index + 1].strip()
-        if not (header.startswith("|") and header.endswith("|") and re.fullmatch(r"[| :\-]+", separator)):
+        if not (
+            header.startswith("|")
+            and header.endswith("|")
+            and re.fullmatch(r"[| :\-]+", separator)
+        ):
             index += 1
             continue
 
@@ -51,7 +53,9 @@ def extract_markdown_tables(markdown: str) -> List[Dict[str, object]]:
                 break
             cells = [cell.strip() for cell in row.strip("|").split("|")]
             if len(cells) == len(columns):
-                rows.append(dict(zip(columns, (_plain_cell(cell) for cell in cells))))
+                rows.append(
+                    dict(zip(columns, (_plain_cell(cell) for cell in cells)))
+                )
             index += 1
 
         if rows:
@@ -60,151 +64,206 @@ def extract_markdown_tables(markdown: str) -> List[Dict[str, object]]:
     return tables
 
 
-def _call_groq(prompt: str, system_prompt: Optional[str] = None) -> Optional[str]:
-    """Call Groq API using OpenAI-compatible chat completions endpoint."""
-    api_key = settings.GROQ_API_KEY
-    if not api_key or api_key == "your_groq_api_key_here":
-        return None
+# ── Local Deterministic Prescription & Lab Report Parser ────────────────────
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": settings.GROQ_MODEL,
-        "messages": [
-            {
-                "role": "system",
-                "content": system_prompt or (
-                    "You are an expert clinical pharmacologist and medical document reader. "
-                    "You excel at deciphering messy, cursive doctor handwriting, handwritten prescriptions, "
-                    "medical abbreviations (Rx, tab, cap, syr, 1-0-1, OD, BD, TDS, SOS), and diagnostic lab reports. "
-                    "You structure all medical findings into clean, beautiful Markdown."
-                ),
-            },
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0.1,
-    }
+_MED_PREFIX_RE = re.compile(
+    r"\b(?:tab(?:let)?s?|cap(?:sule)?s?|syp|syr(?:up)?|inj(?:ection)?|oint(?:ment)?|drops?|gel|cream|lotion|sachet|inhaler|neb)\b\.?",
+    re.IGNORECASE,
+)
+_DOSE_RE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|gm|ml|iu|%|units?|tab(?:let)?s?|cap(?:sule)?s?|drops?|puff)\b",
+    re.IGNORECASE,
+)
+_FREQ_RE = re.compile(
+    r"\b(?:OD|BD|BID|TDS|TID|QID|SOS|HS|PRN|STAT|1-0-1|1-1-1|1-0-0|0-0-1|0-1-0|1-1-0|0-1-1|once\s+daily|twice\s+daily|thrice\s+daily|daily|every\s+\d+\s*h(?:ours|rs)?)\b",
+    re.IGNORECASE,
+)
+_DUR_RE = re.compile(
+    r"(?:\b(?:x|for)\s*\d+\s*(?:days?|d|weeks?|wks?|months?|mos?)\b|\b\d+\s*(?:days?|weeks?|months?)\b)",
+    re.IGNORECASE,
+)
+_INSTR_RE = re.compile(
+    r"\b(?:after\s+(?:food|meals?)|before\s+(?:food|meals?)|with\s+(?:food|meals?|water|milk)|empty\s+stomach|at\s+bedtime|morning|night|evening|as\s+needed|as\s+directed)\b",
+    re.IGNORECASE,
+)
+
+# Lab line pattern: e.g., "Hemoglobin 13.5 g/dL 12.0 - 16.0"
+_LAB_LINE_RE = re.compile(
+    r"^\s*([A-Za-z][A-Za-z0-9\s\(\)\-\/,\.]{2,40}?)\s*[:\-]?\s*(\d+(?:\.\d+)?)\s*([A-Za-z%\/\^\d\.\u00b5\u03bc]+)?\s*(?:\(?\s*(\d+(?:\.\d+)?\s*[\-–]\s*\d+(?:\.\d+)?)\s*\)?)?\s*$"
+)
+
+
+def _parse_prescription_rows(lines: List[str]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for raw_line in lines:
+        line = re.sub(r"^\s*(?:\d+[\.\)\-]|[\-\*\u2022]|Rx:?)\s*", "", raw_line.strip(), flags=re.IGNORECASE)
+        if len(line) < 3:
+            continue
+
+        has_med_prefix = bool(_MED_PREFIX_RE.search(line))
+        doses = _DOSE_RE.findall(line)
+        freqs = _FREQ_RE.findall(line)
+        durs = _DUR_RE.findall(line)
+        instrs = _INSTR_RE.findall(line)
+
+        if not (has_med_prefix or (doses and (freqs or durs))):
+            continue
+
+        # Extract clean medication name
+        med_name = line
+        # Strip trailing schedule parts after ' - ' or ' — '
+        if " - " in med_name:
+            med_name = med_name.split(" - ")[0].strip()
+        else:
+            for pattern in (_FREQ_RE, _DUR_RE, _INSTR_RE):
+                med_name = pattern.sub("", med_name)
+            med_name = re.sub(r"[\-–,;]+$", "", med_name).strip()
+
+        if not med_name:
+            med_name = line[:40].strip()
+
+        rows.append({
+            "Medication": med_name,
+            "Dosage / Strength": ", ".join(doses) if doses else "As written",
+            "Frequency": ", ".join(freqs) if freqs else "As directed",
+            "Duration": ", ".join(durs).lstrip("xX ").strip() if durs else "As needed",
+            "Instructions": ", ".join(instrs) if instrs else "Standard oral/clinical use",
+        })
+    return rows
+
+
+def _classify_lab_status(val_str: str, ref_str: str) -> str:
+    if not ref_str:
+        return "Not stated"
+    m = re.search(r"(\d+(?:\.\d+)?)\s*[\-–]\s*(\d+(?:\.\d+)?)", ref_str)
+    if not m:
+        return "Not stated"
     try:
-        response = requests.post(
-            settings.GROQ_API_URL,
-            headers=headers,
-            json=payload,
-            timeout=settings.LLM_REQUEST_TIMEOUT,
+        val = float(val_str)
+        low = float(m.group(1))
+        high = float(m.group(2))
+        if val < low:
+            return "Low"
+        if val > high:
+            return "High"
+        return "Normal"
+    except Exception:
+        return "Not stated"
+
+
+def _parse_lab_rows(lines: List[str]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    ignored_headers = {"page", "date", "time", "age", "phone", "mobile", "patient", "doctor", "hospital"}
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("--- Page") or line.startswith("|"):
+            continue
+        m = _LAB_LINE_RE.match(line)
+        if not m:
+            continue
+        test_name, val_str, unit_str, ref_str = m.groups()
+        test_name = test_name.strip(" .:-")
+        if len(test_name) < 2 or test_name.lower() in ignored_headers:
+            continue
+        # Only count as lab row if unit or reference range is present, or known test keyword
+        known_lab = any(
+            k in test_name.lower()
+            for k in (
+                "hemoglobin", "hb", "wbc", "rbc", "platelet", "glucose", "sugar", "hba1c",
+                "cholesterol", "HDL", "LDL", "triglyceride", "creatinine", "urea", "bilirubin",
+                "sgot", "sgpt", "alt", "ast", "tsh", "t3", "t4", "sodium", "potassium",
+                "calcium", "vitamin", "esr", "crp", "neutrophil", "lymphocyte", "pcv", "mcv",
+            )
         )
-        response.raise_for_status()
-        data = response.json()
-        choices = data.get("choices", [])
-        if choices and "message" in choices[0]:
-            content = choices[0]["message"].get("content", "").strip()
-            if content:
-                return content
-    except Exception as exc:
-        logger.warning("Groq API request (%s) failed: %s", settings.GROQ_MODEL, exc)
-    return None
+        if not (unit_str or ref_str or known_lab):
+            continue
+        status = _classify_lab_status(val_str, ref_str or "")
+        rows.append({
+            "Test": test_name,
+            "Value": val_str,
+            "Unit": unit_str or "-",
+            "Reference Range": ref_str or "Not stated",
+            "Status": status,
+        })
+    return rows
 
 
 def refine_prescription_with_context(
     vision_extraction: str, context: PrescriptionReviewContext
 ) -> str:
-    """Reconcile visual OCR with supplied context without creating a prescription.
-
-    This is intentionally a separate stage from image OCR, so later context
-    sources (triage form, clinician note, validated medication history) can be
-    added to ``PrescriptionReviewContext`` without changing the OCR provider.
-    """
-    complaint = context.chief_complaint.strip() or "Not provided"
-    prompt = f"""Reconcile this candidate prescription extraction with the chief
-complaint. This is clerical digitization support, not prescribing.
-
-CHIEF COMPLAINT:
-{complaint}
-
-VISUAL OCR CANDIDATE:
-{vision_extraction}
-
-Return exactly this Markdown format:
-
-### Prescriptions
-| # | Medication | Dosage / Strength | Frequency | Duration | Instructions | Review Status |
-
-Rules:
-- Keep only medicines present in the visual OCR candidate.
-- You may correct an OCR spelling only when the correction is strongly supported
-  by the candidate text and complaint context. Never add a medicine based on
-  the complaint alone.
-- If a name or field is uncertain, preserve the candidate text and set Review
-  Status to `Verify original`; do not use “possible” or “likely”.
-- Use `Not legible` for missing fields, rather than guessing.
-- Do not diagnose, recommend treatment, change a dose, or add patient details.
-
-### Prescription Summary
-- At most three concise bullets: the supplied chief complaint, which medicine
-  names were normalized (if any), and fields that need verification.
-"""
-    system_prompt = (
-        "You are a cautious prescription transcription reviewer. Preserve the "
-        "original visual evidence and never infer or prescribe a drug."
-    )
-    refined = _call_groq(prompt, system_prompt)
-    # A failed optional reconciliation must never discard the vision result.
-    return refined or vision_extraction
+    """Local pass-through reconciliation without external API keys."""
+    return vision_extraction
 
 
 def generate_medical_summary(text: str, page_count: int, document_type: str = "auto") -> str:
     """
-    Format and summarize digitized medical text (prescriptions or lab reports)
-    using Groq LLM API.
+    Format and structure digitized medical text locally (0 API keys used).
+    Works seamlessly with PaddleOCR-VL-1.6 Markdown output, PaddleOCR text, and PyMuPDF text.
     """
     if not text or not text.strip():
         return "No readable clinical information could be extracted from this document. Please upload a clearer photo or scan."
 
-    kind = "handwritten prescription" if document_type == "prescription" else "diagnostic or printed clinical report"
-    prompt = f"""Analyze ALL {page_count} page(s) of this {kind}.
-Transcribe only information supported by the OCR. Do not invent medicine names,
-dosages, diagnoses, patient details, or clinical advice.
+    cleaned = text.strip()
 
-DIGITIZED RAW TEXT:
-{text}
+    # If PaddleOCR-VL-1.6 already produced Markdown tables, keep them and append a summary header if needed
+    existing_tables = extract_markdown_tables(cleaned)
+    if existing_tables:
+        return cleaned
 
-OUTPUT FORMAT — follow exactly:
+    raw_lines = [
+        ln.strip()
+        for ln in cleaned.splitlines()
+        if ln.strip() and not ln.strip().startswith("--- Page")
+    ]
 
-FOR A PRESCRIPTION:
-### Prescriptions
-Output exactly one Markdown table:
-| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |
-Only include rows with a legible medication name. Use `Not legible` for an
-unreadable field. Do not give possible/likely drug-name guesses.
+    med_rows = _parse_prescription_rows(raw_lines)
+    lab_rows = _parse_lab_rows(raw_lines)
 
-### Prescription Summary
-Give at most three short bullets about the prescriptions that were legible and
-critical fields that could not be read. Do not include patient details,
-diagnosis, boilerplate warnings, or raw OCR fragments.
+    sections: List[str] = []
 
-FOR A REPORT:
-### Digitized Results
-Output one Markdown table per test panel:
-| Test | Value | Unit | Reference Range | Status |
-Status must be High, Low, Normal, or Not stated, based only on the stated
-reference range.
+    if med_rows and (document_type in ("auto", "prescription") or not lab_rows):
+        table_lines = [
+            "### Prescriptions",
+            "| # | Medication | Dosage / Strength | Frequency | Duration | Instructions |",
+            "|---|---|---|---|---|---|",
+        ]
+        for idx, r in enumerate(med_rows, start=1):
+            table_lines.append(
+                f"| {idx} | {r['Medication']} | {r['Dosage / Strength']} | {r['Frequency']} | {r['Duration']} | {r['Instructions']} |"
+            )
+        sections.append("\n".join(table_lines))
 
-### Report Summary
-Give concise bullets for High results, Low results, and values that cannot be
-classified. Do not include patient details or restate all normal values.
+        bullets = [
+            f"- **{r['Medication']}** ({r['Dosage / Strength']}) — {r['Frequency']} for {r['Duration']} ({r['Instructions']})"
+            for r in med_rows
+        ]
+        sections.append("### Prescription Summary\n" + "\n".join(bullets))
 
-RULES: Output only Markdown. Never repeat a table or heading. Never make a
-clinical diagnosis or recommend changing a medicine.
-"""
+    if lab_rows and (document_type in ("auto", "printed", "lab_report") or not med_rows):
+        table_lines = [
+            "### Digitized Results",
+            "| Test | Value | Unit | Reference Range | Status |",
+            "|---|---|---|---|---|",
+        ]
+        for r in lab_rows:
+            table_lines.append(
+                f"| {r['Test']} | {r['Value']} | {r['Unit']} | {r['Reference Range']} | {r['Status']} |"
+            )
+        sections.append("\n".join(table_lines))
 
-    summary: Optional[str] = _call_groq(prompt)
+        abnormal = [r for r in lab_rows if r["Status"] in ("High", "Low")]
+        if abnormal:
+            ab_bullets = [
+                f"- **{r['Test']}**: {r['Value']} {r['Unit']} (*{r['Status']}*, Ref: {r['Reference Range']})"
+                for r in abnormal
+            ]
+            sections.append("### Report Summary (Abnormal Findings)\n" + "\n".join(ab_bullets))
+        else:
+            sections.append(
+                f"### Report Summary\n- Extracted {len(lab_rows)} laboratory parameters locally across {page_count} page(s)."
+            )
 
-    if summary:
-        return summary
+    # Always include the full digitized text block so every line read by local OCR is visible
+    sections.append(f"### Digitized Clinical Text ({page_count} Page(s))\n{cleaned}")
 
-    return (
-        "### Digitized Document Content\n\n"
-        f"{text}\n\n"
-        "---\n"
-        f"*Note: Configure GROQ_API_KEY in backend/.env for AI clinical formatting.*"
-    )
+    return "\n\n".join(sections)
