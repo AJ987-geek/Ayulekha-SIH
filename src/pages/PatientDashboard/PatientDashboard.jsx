@@ -221,8 +221,8 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
           }
         }));
         triggerToast(
-          isHi 
-            ? `नया शेयरिंग कोड तैयार: ${data.share_id}` 
+          isHi
+            ? `नया शेयरिंग कोड तैयार: ${data.share_id}`
             : `New Dynamic Sharing ID: ${data.share_id} generated. Share with your doctor.`,
           'success'
         );
@@ -1748,12 +1748,12 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                 <div className="sec-head" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                   <div>
                     <h2 className="sec-title" style={{ fontSize: '24px', fontWeight: 800, color: '#1A5C38' }}>
-                      📜 {isHi ? 'सिस्टम ऑडिट लॉग्स (SQLite लोकल स्टोरेज)' : 'System Audit Trail (SQLite Local Storage)'}
+                      📜 {isHi ? 'सिस्टम ऑडिट लॉग्स ' : 'System Audit Trail '}
                     </h2>
                     <p className="sec-sub" style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
                       {isHi
-                        ? 'स्थानीय SQLite डेटाबेस में संग्रहीत सभी क्लिनिकल सारांश, जुड़े दस्तावेज़ों की संख्या व मेटाडेटा का सुरक्षित रिकॉर्ड।'
-                        : 'Tamper-evident SQLite audit logs tracking clinical consultation summaries, attached document IDs, timestamps, and document metadata.'}
+                        ? 'स्थानीय  डेटाबेस में संग्रहीत सभी क्लिनिकल सारांश, जुड़े दस्तावेज़ों की संख्या व मेटाडेटा का सुरक्षित रिकॉर्ड।'
+                        : 'Tamper-evident audit logs tracking clinical consultation summaries, attached document IDs, timestamps, and document metadata.'}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1866,12 +1866,12 @@ export default function PatientDashboard({ onNavigate, patient, patientId, summa
                         <div style={{ textAlign: 'center', padding: '48px 20px', background: '#ffffff', borderRadius: '14px', border: '1px dashed var(--border)' }}>
                           <div style={{ fontSize: '40px', marginBottom: '12px' }}>📜</div>
                           <h4 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>
-                            {isHi ? 'कोई ऑडिट लॉग नहीं मिला' : 'No SQLite Audit Logs Found'}
+                            {isHi ? 'कोई ऑडिट लॉग नहीं मिला' : 'No Audit Logs Found'}
                           </h4>
                           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', maxWidth: '440px', margin: '0 auto 16px auto' }}>
                             {isHi
                               ? 'वॉइस AI असिस्टेंट से अपनी समस्या बताएं या स्वास्थ्य दस्तावेज़ अपलोड करें जिससे स्वचालित रूप से नया ऑडिट लॉग तैयार हो सके।'
-                              : 'Complete a consultation story with the Voice AI assistant or upload clinical records to automatically record an audit trail in SQLite.'}
+                              : 'Complete a consultation story with the Voice AI assistant or upload clinical records to automatically record an audit trail '}
                           </p>
                           <button
                             type="button"

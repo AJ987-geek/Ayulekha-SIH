@@ -388,8 +388,8 @@ export default function PortalSelection({ onNavigate }) {
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px' }}>
-                 <span style={{ color: 'var(--text-muted)' }}>Sent to +91 {phone}</span>
-                 <button type="button" onClick={handlePhoneContinue} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} disabled={loading}>Resend OTP</button>
+                <span style={{ color: 'var(--text-muted)' }}>Sent to +91 {phone}</span>
+                <button type="button" onClick={handlePhoneContinue} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }} disabled={loading}>Resend OTP</button>
               </div>
               <button
                 className="send-otp-btn"
@@ -409,7 +409,7 @@ export default function PortalSelection({ onNavigate }) {
               >
                 ← Back
               </button>
-              
+
               {/* Direct Bypass in OTP Screen */}
               <button
                 type="button"
@@ -437,31 +437,7 @@ export default function PortalSelection({ onNavigate }) {
           )}
 
           {/* Quick Bypass Button on Main Login Card */}
-          <div style={{ marginTop: '16px' }}>
-            <button
-              type="button"
-              onClick={handleBypassToDashboard}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: '#F0FDF4',
-                border: '1.5px solid #16A34A',
-                borderRadius: '10px',
-                color: '#166534',
-                fontSize: '13px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s'
-              }}
-              title="Click to directly enter Patient Dashboard without waiting for backend email/OTP services"
-            >
-              <span>⚡ Next / Skip Backend Login →</span>
-            </button>
-          </div>
+
 
           <div className="or-divider">{t('portal.orDivider', 'OR')}</div>
 
