@@ -1,0 +1,296 @@
+@import './styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* === AYUSHMAN BHARAT AYULEKHA DESIGN SYSTEM ALIASES === */
+  /* Primary & Brand */
+  --primary:        var(--brand-700);
+  --primary-dark:   var(--brand-900);
+  --primary-light:  var(--brand-500);
+  --primary-hover:  var(--brand-900);
+  --accent:         var(--brand-700);
+  --accent-hover:   var(--brand-900);
+  --accent-light:   var(--brand-50);
+
+  /* Status Colors */
+  --success:        var(--success);
+  --success-light:  var(--success-bg);
+  --warning:        var(--warning);
+  --warning-light:  var(--warning-bg);
+  --error:          var(--danger);
+  --error-light:    var(--danger-bg);
+  --info:           var(--info);
+  --info-light:     var(--info-bg);
+
+  /* Neutrals */
+  --white:          var(--surface);
+  --bg-page:        var(--bg);
+  --bg-card:        var(--surface);
+  --bg-muted:       var(--brand-50);
+  --border:         var(--border);
+  --border-light:   var(--border);
+  --divider:        var(--border);
+
+  /* Text */
+  --text-primary:   #111827;
+  --text-secondary: #374151;
+  --text-muted:     #6B7280;
+  --text-light:     #9CA3AF;
+  --text-inverse:   #FFFFFF;
+
+  /* Header / Sidebar */
+  --header-bg:      #0D2B1E;
+  --sidebar-bg:     #0F2D20;
+  --sidebar-active: #1A5C38;
+  --sidebar-hover:  #1A3D2A;
+  --sidebar-text:   #C8DDD2;
+  --sidebar-text-active: #FFFFFF;
+
+  /* Material Design Semantic Mapping */
+  --surface: #F0F7F3;
+  --surface-dim: #D6E4DB;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #F5F9F6;
+  --surface-container: #EAF2ED;
+  --surface-container-high: #E1ECE5;
+  --surface-container-highest: #D6E4DB;
+  --on-surface: #111827;
+  --on-surface-variant: #374151;
+  --outline: #6B7280;
+  --outline-variant: #C8E0D4;
+  --on-primary: #FFFFFF;
+  --primary-container: #16502F;
+  --on-primary-container: #C8E0D4;
+  --secondary: #E8631A;
+  --on-secondary: #FFFFFF;
+  --secondary-container: #FFF0E8;
+  --on-secondary-container: #CC5516;
+  --tertiary: #0D2B1E;
+  --on-tertiary: #FFFFFF;
+  --tertiary-container: #1A5C38;
+  --on-tertiary-container: #A3D9BE;
+  --error-container: #FFEBEE;
+  --on-error-container: #93000A;
+  --background: #F0F7F3;
+  --on-background: #111827;
+  --inverse-surface: #111827;
+  --inverse-on-surface: #F0F7F3;
+  --inverse-primary: #85D6A5;
+  --primary-fixed: #C8E0D4;
+  --primary-fixed-dim: #A3D9BE;
+  --secondary-fixed: #FFD8C2;
+  --secondary-fixed-dim: #FFB38A;
+  --tertiary-fixed: #A8F2CC;
+
+  /* Brand Semantic Aliases */
+  --canvas-bg: var(--surface);
+  --raised-canvas: var(--surface-container);
+  --data-surface: var(--surface-container-lowest);
+  --ink-primary: var(--on-surface);
+  --ink-secondary: var(--on-surface-variant);
+  --ink-muted: var(--outline);
+  --brand-aubergine-base: var(--primary);
+  --brand-aubergine-deep: var(--primary-dark);
+  --brand-aubergine-light: var(--primary-light);
+  --brand-aubergine-tint: var(--surface-container-high);
+  --brand-brass-base: var(--accent);
+  --brand-brass-text: var(--accent-hover);
+  --status-critical: var(--error);
+  --status-warning: var(--warning);
+  --hairline-border: var(--outline-variant);
+  --hairline-inner: var(--border-light);
+
+  /* Typography */
+  --font-body: 'Noto Sans', 'Noto Sans Devanagari', 'Mukta', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Elevation */
+  --soft-lift: 0 2px 8px rgba(13, 43, 30, 0.08);
+}
+
+/* Global utility */
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 13px;
+}
+
+@media (min-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--canvas-bg);
+  color: var(--ink-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: transparent;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Clean slim scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-muted, #F5F7F5);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border, #C8E0D4);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-light, #2D7A52);
+}
+
+/* ============================================================
+   Script-Specific Typography & Anti-Clipping Line-Heights
+   ============================================================ */
+html[lang="hi"], html[lang="mr"] {
+  font-family: 'Noto Sans Devanagari', 'Mukta', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="pa"] {
+  font-family: 'Noto Sans Gurmukhi', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="ta"] {
+  font-family: 'Noto Sans Tamil', var(--font-body);
+  line-height: 1.75;
+}
+html[lang="te"] {
+  font-family: 'Noto Sans Telugu', var(--font-body);
+  line-height: 1.7;
+}
+html[lang="kn"] {
+  font-family: 'Noto Sans Kannada', var(--font-body);
+  line-height: 1.7;
+}
+html[lang="ml"] {
+  font-family: 'Noto Sans Malayalam', var(--font-body);
+  line-height: 1.75;
+}
+html[lang="bn"] {
+  font-family: 'Noto Sans Bengali', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="gu"] {
+  font-family: 'Noto Sans Gujarati', var(--font-body);
+  line-height: 1.6;
+}
+html[lang="or"] {
+  font-family: 'Noto Sans Oriya', var(--font-body);
+  line-height: 1.65;
+}
+html[lang="ur"] {
+  font-family: 'Noto Nastaliq Urdu', 'Noto Sans Arabic', Tahoma, var(--font-body);
+  line-height: 2.0;
+}
+
+/* ============================================================
+   RTL Layout Mode (Urdu)
+   ============================================================ */
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .dh-left,
+html[dir="rtl"] .sb-brand,
+html[dir="rtl"] .header-actions {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .sb-nav .sb-link {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+html[dir="rtl"] .sb-badge {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+html[dir="rtl"] .card-grid,
+html[dir="rtl"] .lang-grid {
+  direction: rtl;
+}
+
+html[dir="rtl"] .hero-title,
+html[dir="rtl"] .hero-subtitle,
+html[dir="rtl"] .lang-modal-title,
+html[dir="rtl"] .lang-modal-subtitle,
+html[dir="rtl"] .step-card,
+html[dir="rtl"] .info-panel {
+  text-align: right;
+}
+
+/* Responsive mobile-first foundation */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button, input, select, textarea {
+  max-width: 100%;
+}
+
+img, svg, video, canvas, audio, iframe, embed, object {
+  max-width: 100%;
+}

@@ -1,0 +1,323 @@
+/* ============================================================
+   AyuLekha — Mobile Bottom Navigation
+   Global shared component (injected on all doctor portal pages)
+   ============================================================ */
+
+/* ── Bottom Nav Bar ── */
+.ayu-bottom-nav {
+  display: none; /* shown only on mobile via media query */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  height: 60px;
+  background: #ffffff;
+  border-top: 1px solid #E4EDF0;
+  /* iPhone safe area notch support */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.07);
+}
+
+.ayu-bn-inner {
+  display: flex;
+  align-items: stretch;
+  height: 60px;
+}
+
+.ayu-bn-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  text-decoration: none;
+  min-height: 60px; /* 48px tap target minimum satisfied within 60px bar */
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.ayu-bn-tab:active {
+  background: #F0FAF4;
+}
+
+.ayu-bn-icon {
+  font-size: 22px;
+  line-height: 1;
+  display: block;
+  color: #9CA3AF; /* inactive grey */
+  transition: color 0.18s ease;
+}
+
+.ayu-bn-label {
+  font-family: 'Noto Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9CA3AF; /* inactive grey */
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 0.18s ease;
+}
+
+/* Active state */
+.ayu-bn-tab.active .ayu-bn-icon {
+  color: #1A7A4A; /* Ayu Green */
+}
+
+.ayu-bn-tab.active .ayu-bn-label {
+  color: #1A7A4A;
+  font-weight: 700;
+}
+
+/* Active indicator dot above icon */
+.ayu-bn-tab.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  background: #1A7A4A;
+  border-radius: 0 0 3px 3px;
+}
+
+/* ── Show only on mobile ── */
+@media (max-width: 767px) {
+  .ayu-bottom-nav {
+    display: block;
+  }
+  /* Push page content up so it's not hidden behind the nav */
+  body {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+
+/* ============================================================
+   AyuLekha — Global Responsive Breakpoint Rules
+   Applied to all doctor portal pages
+   ============================================================ */
+
+/* ── MOBILE < 768px ── */
+@media (max-width: 767px) {
+
+  /* Typography */
+  body {
+    font-size: 16px !important;
+  }
+  h1, h2, .sec-title-lg, .panel-title, .date-bar-left, .sheet-patient-name {
+    font-size: 22px !important;
+  }
+
+  /* Layout — single column */
+  .cards-grid,
+  .doc-grid,
+  .glance-grid,
+  .vitals-wrap {
+    grid-template-columns: 1fr 1fr !important; /* 2-col for cards to save space */
+  }
+
+  /* Full-width cards */
+  .stat-card, .doc-card, .ai-rec-card, .ai-health-card,
+  .ai-doc-card, .panel, .tl-card, .glance-pill {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Padding */
+  .content, .tab-content, .sheet-body {
+    padding: 14px 16px 20px !important;
+  }
+  .vitals-wrap, .tab-wrap {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  .info-strip {
+    padding: 10px 16px !important;
+  }
+  .panel-header {
+    padding: 14px 16px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .patient-row {
+    padding: 12px 16px !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Buttons — full width, min 48px */
+  .bb-btn-outline, .bb-btn-fill {
+    height: 52px !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+  }
+  .view-btn {
+    width: 100% !important;
+    height: 48px !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    margin-top: 6px !important;
+    font-size: 14px !important;
+  }
+  .nav-done, .nav-back {
+    min-height: 48px !important;
+    min-width: 48px !important;
+  }
+
+  /* Tab bar — scrollable if needed */
+  .tab-bar {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory !important;
+  }
+  .tab-btn {
+    min-width: 90px !important;
+    flex-shrink: 0 !important;
+    scroll-snap-align: start !important;
+  }
+
+  /* Patient rows — stack vertically */
+  .patient-row {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .p-info { min-width: 0; flex: 1; }
+  .status-badge {
+    flex-basis: 100% !important;
+    margin-left: 50px !important;
+  }
+
+  /* Hide sidebar */
+  .sidebar { display: none !important; }
+  .main { margin-left: 0 !important; }
+
+  /* Date bar stacked */
+  .date-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    height: auto !important;
+    padding: 14px 16px !important;
+    gap: 8px !important;
+  }
+  .date-bar-left { font-size: 17px !important; }
+
+  /* No horizontal overflow */
+  * { max-width: 100vw; }
+  .summary-sheet { border-radius: 16px 16px 0 0 !important; }
+}
+
+/* ── TABLET 768px – 1024px ── */
+@media (min-width: 768px) and (max-width: 1024px) {
+
+  /* Sidebar icon-only 60px */
+  .sidebar {
+    width: 60px !important;
+    min-width: 60px !important;
+  }
+  .sb-logo-text, .sb-doc-info, .sb-duty-badge,
+  .nav-label, .sb-logout span:not(.nav-icon) {
+    display: none !important;
+  }
+  .sb-logo { padding: 14px !important; justify-content: center !important; }
+  .sb-doctor { padding: 10px 6px !important; justify-content: center !important; display: flex !important; }
+  .sb-avatar-row { justify-content: center !important; }
+  .sb-doc-info { display: none !important; }
+  .nav-link {
+    justify-content: center !important;
+    padding: 0 !important;
+    border-left: none !important;
+    border-right: 3px solid transparent !important;
+  }
+  .nav-link.active {
+    border-left: none !important;
+    border-right-color: #1A7A4A !important;
+  }
+  .nav-icon { width: auto !important; font-size: 21px !important; }
+  .sb-footer { padding: 8px 6px !important; justify-content: center !important; display: flex !important; }
+  .sb-logout { width: 44px !important; height: 44px !important; border-radius: 10px !important; padding: 0 !important; justify-content: center !important; }
+
+  /* Content fills remaining width */
+  .main { margin-left: 60px !important; }
+
+  /* 2-column grids (desktop shows 4) */
+  .cards-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr) !important; }
+  .home-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .doc-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Padding 24px */
+  .content, .tab-content { padding: 18px 24px 28px !important; }
+  .vitals-wrap, .tab-wrap { padding-left: 24px !important; padding-right: 24px !important; }
+  .info-strip, .date-bar { padding-left: 24px !important; padding-right: 24px !important; }
+  .panel-header { padding: 16px 20px !important; }
+  .patient-row { padding: 13px 20px !important; }
+
+  /* Appointment layout */
+  .apt-cols { grid-template-columns: 1fr 1fr !important; }
+  .booking-panel { grid-column: 1 / -1 !important; }
+
+  /* Bottom bar desktop style at tablet */
+  .bottom-bar {
+    right: 20px !important;
+    bottom: 20px !important;
+    width: auto !important;
+    min-width: 400px !important;
+  }
+}
+
+/* ── DESKTOP > 1024px ── */
+@media (min-width: 1025px) {
+
+  /* Full sidebar */
+  .sidebar { width: 240px !important; }
+  .main { margin-left: 240px !important; }
+
+  /* Multi-column */
+  .cards-grid { grid-template-columns: repeat(4, 1fr) !important; }
+  .quick-actions { grid-template-columns: repeat(4, 1fr) !important; }
+  .home-stats { grid-template-columns: repeat(4, 1fr) !important; }
+  .doc-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* Padding 32px */
+  .content, .tab-content { padding: 24px 32px 36px !important; }
+  .vitals-wrap, .tab-wrap { padding-left: 32px !important; padding-right: 32px !important; }
+  .info-strip, .date-bar { padding-left: 32px !important; padding-right: 32px !important; }
+
+  /* Hover states */
+  .nav-link:hover { cursor: pointer; }
+  .stat-card:hover { transform: translateY(-3px) !important; }
+  .doc-card:hover { transform: translateY(-3px) !important; }
+  .hosp-card:hover, .doc-card:hover { cursor: pointer; }
+  .view-btn:hover { transform: translateY(-1px) !important; }
+  .bb-btn-fill:hover { transform: translateY(-1px) !important; }
+  .bb-btn-outline:hover { border-color: #1B2F5E !important; }
+
+  /* No horizontal scroll */
+  body { overflow-x: hidden; }
+}
+
+/* ── Universal: prevent horizontal scroll ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* ── Universal: touch targets ── */
+button, a, [role="button"], .nav-link, .hosp-card, .doc-card,
+.sym-card, .slot-btn, .bp-date, .tab-btn, .ayu-bn-tab {
+  min-height: 44px;
+}
+@media (max-width: 767px) {
+  button, a.view-btn, .bb-btn-outline, .bb-btn-fill,
+  .nav-back, .nav-done, .doc-view-btn {
+    min-height: 48px !important;
+  }
+}

@@ -1,0 +1,245 @@
+.far-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: inherit;
+}
+
+.far-view-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.far-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #1e3a8a;
+  background: #dbeafe;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.far-toggle-btns {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.far-tb {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.far-tb.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.far-raw-pre {
+  margin: 0;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #1e293b;
+}
+
+.far-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Triage Alert */
+.far-triage-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 10px;
+}
+
+.far-triage-banner.urgent {
+  background: #fef2f2;
+  border: 1.5px solid #f87171;
+  color: #991b1b;
+}
+
+.far-triage-banner.stable {
+  background: #ecfdf5;
+  border: 1.5px solid #6ee7b7;
+  color: #065f46;
+}
+
+.far-triage-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.far-triage-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.far-triage-body {
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+/* Clinical Cards */
+.far-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.far-card-header {
+  background: #f8fafc;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.far-card-icon {
+  font-size: 16px;
+}
+
+.far-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.far-card-body {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+/* Chief Complaint Card */
+.far-cc-card {
+  border-left: 4px solid #2563eb;
+}
+
+.far-cc-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* SOCRATES Grid */
+.far-socrates-grid {
+  display: flex;
+
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.far-soc-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.far-soc-key {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2563eb;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.far-soc-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+/* Impression Card */
+.far-impression-card {
+  border-left: 4px solid #d97706;
+  background: #fffbeb;
+}
+
+.far-impression-card .far-card-header {
+  background: #fef3c7;
+  border-bottom-color: #fde68a;
+}
+
+.far-impression-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+/* Lists */
+.far-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.far-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.far-bullet-icon {
+  color: #10b981;
+  font-weight: 800;
+}
+
+/* Grid 2 */
+.far-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .far-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Handoff Card */
+.far-handoff-card {
+  background: #f8fafc;
+  border-left: 4px solid #475569;
+}
